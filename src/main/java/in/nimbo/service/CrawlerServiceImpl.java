@@ -91,4 +91,9 @@ public class CrawlerServiceImpl implements CrawlerService {
     public List<String> crawl(String link) {
         return null;
     }
+
+    @Override
+    public boolean isCached(String link) {
+        return false;
+    }
 }
