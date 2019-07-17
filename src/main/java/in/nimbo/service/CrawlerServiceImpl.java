@@ -6,13 +6,17 @@ import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.entity.Link;
 import in.nimbo.entity.Page;
+import in.nimbo.service.kafka.KafkaProducerConsumer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 public class CrawlerServiceImpl implements CrawlerService {
+    private Logger logger = LoggerFactory.getLogger(KafkaProducerConsumer.class);
     private Cache<Object, Object> cache;
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
@@ -27,73 +31,19 @@ public class CrawlerServiceImpl implements CrawlerService {
         this.config = config;
     }
 
-    public void crawl() throws MalformedURLException {
-        while (true) {
-//            String poll = kafkaService.receive(config.getLinksTopic());
-            String poll = null;
-            URL url = new URL(poll);
-            Link process = process(url);
-            if (cache.getIfPresent(process.getDomain()) == null) {
-                if (!hBaseDAO.contains(poll)) {
-                    try {
-                        Page page = parserService.parse(poll);
-                        for (String link : page.getLinks()) {
-                            String completeLink = getCompleteLink(poll, url, link);
-//                            kafkaService.send(config.getLinksTopic(), completeLink);
-                        }
-                        elasticDAO.save(poll, page.getContent());
-                        hBaseDAO.add(poll);
-                        cache.put(process.getDomain(), new Date());
-                    } catch (Exception e) {
-                        System.out.println("error: " + poll);
-                    }
-                }
-            } else {
-//                kafkaService.send(config.getLinksTopic(), poll);
-            }
-        }
-    }
-
-    private Link process(URL url) {
-        String protocol = url.getProtocol();
-        int port = url.getPort();
-        String path = url.getPath();
-        String host = url.getHost();
-        return new Link(protocol, host, port, path);
-    }
-
-    private String getCompleteLink(String base, URL url, String href) {
-        if (href.startsWith("//")) {
-            Link process = process(url);
-            return process.getProtocol() + ":" + href;
-        }
-        if (href.startsWith("/")) {
-            Link process = process(url);
-            return process.getProtocol() + "://" + process.getHost() + href;
-        }
-        if (href.startsWith("#")) {
-            return base;
-        }
-        try {
-            URL u = new URL(href);
-            Link process = process(u);
-            return process.getProtocol() + "://" + process.getHost() + process.getUri();
-        } catch (MalformedURLException e) {
-            Link process = process(url);
-            if (process.getUri() == null || process.getUri().isEmpty()) {
-                return base + "/" + href;
-            }
-            return base.substring(0, base.lastIndexOf("/")) + "/" + href;
-        }
-    }
-
     @Override
-    public List<String> crawl(String link) {
+    public List<String> crawl(String site_link) {
         return null;
     }
 
     @Override
     public boolean isCached(String link) {
+        try {
+            Link url = new Link(link);
+            return cache.getIfPresent(url.getDomain()) == null;
+        } catch (MalformedURLException e) {
+            logger.error("Illegal url format: " + link, e);
+        }
         return false;
     }
 }
