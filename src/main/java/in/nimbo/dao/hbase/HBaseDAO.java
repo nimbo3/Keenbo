@@ -1,7 +1,11 @@
 package in.nimbo.dao.hbase;
 
-public interface HBaseDAO {
-    void add(String link);
+import in.nimbo.exception.HBaseException;
 
-    boolean contains(String link);
+import java.io.IOException;
+
+public interface HBaseDAO {
+    void add(String link) throws HBaseException;
+
+    boolean contains(String link) throws HBaseException;
 }

@@ -6,6 +6,21 @@ public class Config {
     private int expireCacheTime;
     private String linksTopic;
 
+    public Config() {
+    }
+
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
+
+    public void setMaximumSize(int maximumSize) {
+        this.maximumSize = maximumSize;
+    }
+
+    public void setExpireCacheTime(int expireCacheTime) {
+        this.expireCacheTime = expireCacheTime;
+    }
+
     public Config(int timeout, int maximumSize, int expireCacheTime, String linksTopic) {
         this.timeout = timeout;
         this.maximumSize = maximumSize;
@@ -31,5 +46,17 @@ public class Config {
 
     public void setLinksTopic(String linksTopic) {
         this.linksTopic = linksTopic;
+    }
+
+    public String getLinksTable() {
+        return "links";
+    }
+
+    public String getReferenceCountColumnFamily() {
+        return "reference_count";
+    }
+
+    public String getReferenceCountColumn() {
+        return "reference";
     }
 }

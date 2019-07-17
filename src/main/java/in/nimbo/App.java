@@ -5,9 +5,11 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.conf.Config;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
 import in.nimbo.service.CrawlerServiceImpl;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,7 +20,7 @@ public class App {
     public static void main(String[] args) throws IOException {
         Config config = loadConfig();
         ElasticDAO elasticDAO = null;
-        HBaseDAO hBaseDAO = null;
+        HBaseDAO hBaseDAO = new HBaseDAOImpl(HBaseConfiguration.create(), config);
         ParserService parserService = new ParserService();
         Cache<Object, Object> cache = Caffeine.newBuilder().maximumSize(config.getMaximumSize())
                 .expireAfterWrite(config.getExpireCacheTime(), TimeUnit.SECONDS).build();
