@@ -1,5 +1,8 @@
 package in.nimbo.entity;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+
 public class Link {
     private String protocol;
     private String host;
@@ -11,14 +14,14 @@ public class Link {
         return domain;
     }
 
-    public Link(String protocol, String host, int port, String uri) {
-        this.protocol = protocol;
-        this.host = host;
-        this.port = port != -1 ? port : protocol.equals("http") ? 80 : 443;
-        this.uri = uri;
-        String[] strs = host.split("\\.");
-        this.domain = strs[strs.length - 2] + "." + strs[strs.length - 1];
-
+    public Link(String link) throws MalformedURLException {
+        URL url = new URL(link);
+        protocol = url.getProtocol();
+        host = url.getHost();
+        port = url.getPort() != -1 ? url.getPort() : protocol.equals("http") ? 80 : 443;
+        uri = url.getPath();
+        String[] hostPart = host.split("\\.");
+        this.domain = hostPart[hostPart.length - 2] + "." + hostPart[hostPart.length - 1];
     }
 
     public String getProtocol() {
