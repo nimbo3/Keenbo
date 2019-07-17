@@ -1,11 +1,13 @@
 package in.nimbo.dao.elastic;
 
+import in.nimbo.exception.ElasticException;
+
 import java.util.List;
 
 public interface ElasticDAO {
-    void save(String link, String text);
+    void save(String link, String text) throws ElasticException;
 
-    void get(String link);
+    String get(String link) throws ElasticException;
 
-    List<String> getAllLinks();
+    List<String> getAllLinks() throws ElasticException;
 }
