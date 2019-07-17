@@ -1,5 +1,6 @@
 package in.nimbo.service.kafka;
 
+import in.nimbo.exception.KafkaServiceException;
 import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.consumer.CommitFailedException;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -47,7 +48,7 @@ public class KafkaProducerConsumer implements Runnable {
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            throw new KafkaServiceException(e);
         } finally {
             if (producer != null)
                 producer.close();

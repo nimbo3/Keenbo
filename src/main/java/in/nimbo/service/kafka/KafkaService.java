@@ -1,5 +1,6 @@
 package in.nimbo.service.kafka;
 
+import in.nimbo.exception.KafkaServiceException;
 import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -48,7 +49,7 @@ public class KafkaService {
                 executorService.submit(new KafkaProducerConsumer(producer, consumer, crawlerService));
             }
         } catch (IOException e) {
-            throw new RuntimeException("Unable to load kafka service", e);
+            throw new KafkaServiceException("Unable to load kafka service", e);
         }
     }
 
@@ -58,7 +59,7 @@ public class KafkaService {
             KafkaProducer<String, String> producer = new KafkaProducer<>(producerProperties);
             producer.send(new ProducerRecord<>(KAFKA_TOPIC, "Producer message", message));
         } catch (IOException e) {
-            throw new RuntimeException("Unable to load kafka service", e);
+            throw new KafkaServiceException("Unable to load kafka service", e);
         }
     }
 }
