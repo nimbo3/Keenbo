@@ -32,9 +32,12 @@ public class KafkaProducerConsumer implements Runnable {
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(10));
                 for (ConsumerRecord<String, String> record : records) {
-                    List<String> crawl = crawlerService.crawl(record.value());
-                    for (String link : crawl) {
-                        producer.send(new ProducerRecord<>(KafkaService.KAFKA_TOPIC, "Producer message", link));
+                    String newLink = record.value();
+                    if (!crawlerService.isCached(newLink)) {
+                        List<String> crawl = crawlerService.crawl(newLink);
+                        for (String link : crawl) {
+                            producer.send(new ProducerRecord<>(KafkaService.KAFKA_TOPIC, "Producer message", link));
+                        }
                     }
                 }
                 try {
