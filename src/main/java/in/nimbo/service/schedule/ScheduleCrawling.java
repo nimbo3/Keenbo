@@ -1,14 +1,14 @@
 package in.nimbo.service.schedule;
 
 import in.nimbo.conf.Config;
-import in.nimbo.service.CrawlerService;
+import in.nimbo.service.CrawlerServiceImpl;
 
 public class ScheduleCrawling {
-    private CrawlerService crawlerService;
+    private CrawlerServiceImpl crawlerServiceImpl;
     private Config config;
 
-    public ScheduleCrawling(CrawlerService crawlerService, Config config) {
-        this.crawlerService = crawlerService;
+    public ScheduleCrawling(CrawlerServiceImpl crawlerServiceImpl, Config config) {
+        this.crawlerServiceImpl = crawlerServiceImpl;
         this.config = config;
     }
 }

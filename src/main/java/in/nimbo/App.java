@@ -7,7 +7,7 @@ import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
-import in.nimbo.service.CrawlerService;
+import in.nimbo.service.CrawlerServiceImpl;
 import in.nimbo.service.schedule.ScheduleCrawling;
 
 import java.io.IOException;
@@ -24,8 +24,8 @@ public class App {
         ParserService parserService = new ParserService();
         Cache<Object, Object> cache = Caffeine.newBuilder().maximumSize(config.getMaximumSize())
                 .expireAfterWrite(config.getExpireCacheTime(), TimeUnit.SECONDS).build();
-        CrawlerService crawlerService = new CrawlerService(cache, kafkaService, hBaseDAO, elasticDAO, parserService, config);
-        ScheduleCrawling scheduleCrawling = new ScheduleCrawling(crawlerService, config);
+        CrawlerServiceImpl crawlerServiceImpl = new CrawlerServiceImpl(cache, kafkaService, hBaseDAO, elasticDAO, parserService, config);
+        ScheduleCrawling scheduleCrawling = new ScheduleCrawling(crawlerServiceImpl, config);
         System.out.println("Hello World!");
     }
 

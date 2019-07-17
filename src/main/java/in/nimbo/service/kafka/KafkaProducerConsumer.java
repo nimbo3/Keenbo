@@ -1,5 +1,6 @@
 package in.nimbo.service.kafka;
 
+import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.consumer.CommitFailedException;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -10,30 +11,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.List;
 
 public class KafkaProducerConsumer implements Runnable {
     private Logger logger = LoggerFactory.getLogger(KafkaProducerConsumer.class);
     private KafkaProducer<String, String> producer;
     private KafkaConsumer<String, String> consumer;
+    private CrawlerService crawlerService;
 
-    public KafkaProducerConsumer(KafkaProducer<String, String> producer, KafkaConsumer<String, String> consumer) {
+    public KafkaProducerConsumer(KafkaProducer<String, String> producer, KafkaConsumer<String, String> consumer,
+                                CrawlerService crawlerService) {
         this.producer = producer;
         this.consumer = consumer;
+        this.crawlerService = crawlerService;
     }
 
     @Override
     public void run() {
         try {
-            producer.send(new ProducerRecord<>("links", "1", "my message 1"));
             while (true) {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(10));
                 for (ConsumerRecord<String, String> record : records) {
-                    System.out.println(String.format("Thread: %s, Topic: %s, Partition: %d, Offset: %d, Key: %s, Value = %s",
-                            Thread.currentThread().getName(), record.topic(), record.partition(), record.offset(), record.key(), record.value()));
-                    String newId = Integer.toString(Integer.valueOf(record.key()) + 1);
-                    producer.send(new ProducerRecord<>("links",
-                            newId,
-                            "my message " + newId));
+                    List<String> crawl = crawlerService.crawl(record.value());
+                    for (String link : crawl) {
+                        producer.send(new ProducerRecord<>(KafkaService.KAFKA_TOPIC, "Producer message", link));
+                    }
                 }
                 try {
                     consumer.commitSync();
