@@ -33,7 +33,20 @@ public class CrawlerServiceImpl implements CrawlerService {
 
     @Override
     public List<String> crawl(String site_link) {
-        return null;
+        List<String> links = new ArrayList<>();
+        try {
+            Link urlLink = new Link(site_link);
+            if (!hBaseDAO.contains(site_link)) {
+                Page page = parserService.parse(site_link);
+                links.addAll(page.getLinks());
+                elasticDAO.save(site_link, page.getContent());
+                hBaseDAO.add(site_link);
+                cache.put(urlLink.getDomain(), LocalDateTime.now());
+            }
+        } catch (MalformedURLException e) {
+            logger.error("Illegal url format: " + site_link, e);
+        }
+        return links;
     }
 
     @Override
