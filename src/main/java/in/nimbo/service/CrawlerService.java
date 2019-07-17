@@ -11,8 +11,6 @@ import in.nimbo.service.kafka.KafkaService;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.Queue;
 
 public class CrawlerService {
     private Cache<Object, Object> cache;
@@ -33,7 +31,8 @@ public class CrawlerService {
 
     public void crawl() throws MalformedURLException {
         while (true) {
-            String poll = kafkaService.receive(config.getLinksTopic());
+//            String poll = kafkaService.receive(config.getLinksTopic());
+            String poll = null;
             URL url = new URL(poll);
             Link process = process(url);
             if (cache.getIfPresent(process.getDomain()) == null) {
@@ -42,7 +41,7 @@ public class CrawlerService {
                         Page page = parserService.parse(poll);
                         for (String link : page.getLinks()) {
                             String completeLink = getCompleteLink(poll, url, link);
-                            kafkaService.send(config.getLinksTopic(), completeLink);
+//                            kafkaService.send(config.getLinksTopic(), completeLink);
                         }
                         elasticDAO.save(poll, page.getContent());
                         hBaseDAO.add(poll);
@@ -52,12 +51,12 @@ public class CrawlerService {
                     }
                 }
             } else {
-                kafkaService.send(config.getLinksTopic(), poll);
+//                kafkaService.send(config.getLinksTopic(), poll);
             }
         }
     }
 
-    private Link process(URL url) throws MalformedURLException {
+    private Link process(URL url) {
         String protocol = url.getProtocol();
         int port = url.getPort();
         String path = url.getPath();
@@ -65,7 +64,7 @@ public class CrawlerService {
         return new Link(protocol, host, port, path);
     }
 
-    private String getCompleteLink(String base, URL url, String href) throws MalformedURLException {
+    private String getCompleteLink(String base, URL url, String href) {
         if (href.startsWith("//")) {
             Link process = process(url);
             return process.getProtocol() + ":" + href;
