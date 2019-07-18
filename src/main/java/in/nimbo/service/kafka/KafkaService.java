@@ -17,7 +17,7 @@ public class KafkaService {
     private Properties producerProperties;
     private Properties consumerProperties;
     private CrawlerService crawlerService;
-    private static final int CONSUMER_COUNT = 2;
+    private static final int CONSUMER_COUNT = 3;
     static final String KAFKA_TOPIC = "links";
 
     public KafkaService(CrawlerService crawlerService) {
@@ -58,6 +58,7 @@ public class KafkaService {
             loadProperties();
             KafkaProducer<String, String> producer = new KafkaProducer<>(producerProperties);
             producer.send(new ProducerRecord<>(KAFKA_TOPIC, "Producer message", message));
+            producer.flush();
         } catch (IOException e) {
             throw new KafkaServiceException("Unable to load kafka service", e);
         }

@@ -1,6 +1,5 @@
 package in.nimbo.service.kafka;
 
-import in.nimbo.exception.KafkaServiceException;
 import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.consumer.CommitFailedException;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -34,10 +33,12 @@ public class KafkaProducerConsumer implements Runnable {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(10));
                 for (ConsumerRecord<String, String> record : records) {
                     String newLink = record.value();
+                    logger.info("get " + newLink);
                     if (!crawlerService.isCached(newLink)) {
                         List<String> crawl = crawlerService.crawl(newLink);
                         for (String link : crawl) {
                             producer.send(new ProducerRecord<>(KafkaService.KAFKA_TOPIC, "Producer message", link));
+                            logger.info("send " + link);
                         }
                     }
                 }
@@ -48,7 +49,7 @@ public class KafkaProducerConsumer implements Runnable {
                 }
             }
         } catch (Exception e) {
-            throw new KafkaServiceException(e);
+            logger.error(e.getMessage(), e);
         } finally {
             if (producer != null)
                 producer.close();
