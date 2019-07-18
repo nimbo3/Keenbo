@@ -10,6 +10,7 @@ import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
 
 import java.time.LocalDateTime;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class App {
@@ -23,5 +24,14 @@ public class App {
         CrawlerService crawlerService = new CrawlerService(appConfig, cache, hBaseDAO, elasticDAO, parserService);
         KafkaService kafkaService = new KafkaService(crawlerService);
         kafkaService.schedule();
+
+        System.out.println("Welcome to Search Engine");
+        System.out.print("engine> ");
+        Scanner in = new Scanner(System.in);
+        while (in.hasNextLine()) {
+            String link = in.nextLine();
+            kafkaService.sendMessage(link);
+            System.out.print("engine> ");
+        }
     }
 }
