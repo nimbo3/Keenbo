@@ -3,6 +3,7 @@ package in.nimbo;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.conf.Config;
+import in.nimbo.conf.ParserConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.service.CrawlerService;
@@ -19,11 +20,14 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class App {
+    private static final int PARSER_TIMEOUT = 3000;
+
     public static void main(String[] args) throws IOException {
         Config config = loadConfig();
         ElasticDAO elasticDAO = null;
         HBaseDAO hBaseDAO = null;
-        ParserService parserService = new ParserService();
+        ParserConfig parserConfig = new ParserConfig(PARSER_TIMEOUT);
+        ParserService parserService = new ParserService(parserConfig);
         Cache<Object, Object> cache = Caffeine.newBuilder().maximumSize(config.getMaximumSize())
                 .expireAfterWrite(config.getExpireCacheTime(), TimeUnit.SECONDS).build();
         CrawlerServiceImpl crawlerServiceImpl = new CrawlerServiceImpl(cache, hBaseDAO, elasticDAO, parserService, config);
