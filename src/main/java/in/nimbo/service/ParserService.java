@@ -1,6 +1,6 @@
 package in.nimbo.service;
 
-import in.nimbo.conf.ParserConfig;
+import in.nimbo.config.ParserConfig;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.ParseLinkException;
 import org.jsoup.Jsoup;

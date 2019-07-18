@@ -1,7 +1,7 @@
 package in.nimbo.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import in.nimbo.conf.Config;
+import in.nimbo.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.entity.Link;
@@ -21,14 +21,14 @@ public class CrawlerServiceImpl implements CrawlerService {
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
     private ParserService parserService;
-    private Config config;
+    private AppConfig appConfig;
 
-    public CrawlerServiceImpl(Cache<Object, Object> cache, HBaseDAO hBaseDAO, ElasticDAO elasticDAO, ParserService parserService, Config config) {
+    public CrawlerServiceImpl(Cache<Object, Object> cache, HBaseDAO hBaseDAO, ElasticDAO elasticDAO, ParserService parserService, AppConfig appConfig) {
         this.cache = cache;
         this.hBaseDAO = hBaseDAO;
         this.elasticDAO = elasticDAO;
         this.parserService = parserService;
-        this.config = config;
+        this.appConfig = appConfig;
     }
 
     @Override
