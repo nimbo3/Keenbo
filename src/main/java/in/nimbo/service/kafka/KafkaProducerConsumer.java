@@ -20,7 +20,7 @@ public class KafkaProducerConsumer implements Runnable {
     private CrawlerService crawlerService;
 
     public KafkaProducerConsumer(KafkaProducer<String, String> producer, KafkaConsumer<String, String> consumer,
-                                CrawlerService crawlerService) {
+                                 CrawlerService crawlerService) {
         this.producer = producer;
         this.consumer = consumer;
         this.crawlerService = crawlerService;
@@ -34,12 +34,10 @@ public class KafkaProducerConsumer implements Runnable {
                 for (ConsumerRecord<String, String> record : records) {
                     String newLink = record.value();
                     logger.info("get " + newLink);
-                    if (!crawlerService.isCached(newLink)) {
-                        List<String> crawl = crawlerService.crawl(newLink);
-                        for (String link : crawl) {
-                            producer.send(new ProducerRecord<>(KafkaService.KAFKA_TOPIC, "Producer message", link));
-                            logger.info("send " + link);
-                        }
+                    List<String> crawl = crawlerService.crawl(newLink);
+                    for (String link : crawl) {
+                        producer.send(new ProducerRecord<>(KafkaService.KAFKA_TOPIC, "Producer message", link));
+                        logger.info("send " + link);
                     }
                 }
                 try {

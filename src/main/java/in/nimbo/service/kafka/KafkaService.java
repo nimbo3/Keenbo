@@ -49,7 +49,7 @@ public class KafkaService {
                 executorService.submit(new KafkaProducerConsumer(producer, consumer, crawlerService));
             }
         } catch (IOException e) {
-            throw new KafkaServiceException("Unable to load kafka service", e);
+            throw new KafkaServiceException(e);
         }
     }
 
@@ -60,7 +60,7 @@ public class KafkaService {
             producer.send(new ProducerRecord<>(KAFKA_TOPIC, "Producer message", message));
             producer.flush();
         } catch (IOException e) {
-            throw new KafkaServiceException("Unable to load kafka service", e);
+            throw new KafkaServiceException(e);
         }
     }
 }
