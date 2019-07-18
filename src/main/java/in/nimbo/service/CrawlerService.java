@@ -4,13 +4,13 @@ import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.entity.Link;
+import in.nimbo.utility.LinkUtility;
 import in.nimbo.entity.Page;
 import in.nimbo.service.kafka.KafkaProducerConsumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,16 +37,21 @@ public class CrawlerService {
     public List<String> crawl(String siteLink) {
         List<String> links = new ArrayList<>();
         try {
-            Link urlLink = new Link(siteLink);
-            if (cache.getIfPresent(urlLink.getDomain()) == null && !hBaseDAO.contains(siteLink)) {
+            String siteDomain = LinkUtility.getDomain(siteLink);
+            // TODO implements interfaces
+//            if (cache.getIfPresent(urlLinkUtility.getDomain()) == null && !hBaseDAO.contains(siteLink)) {
+            if (cache.getIfPresent(siteDomain) == null) {
+                logger.info("get " + siteLink);
                 Page page = parserService.parse(siteLink);
                 links.addAll(page.getLinks());
                 // TODO implements interfaces
 //                elasticDAO.save(siteLink, page.getContent());
 //                hBaseDAO.add(siteLink);
-                cache.put(urlLink.getDomain(), LocalDateTime.now());
+                cache.put(siteDomain, LocalDateTime.now());
+            } else {
+                logger.info("ignore " + siteLink);
             }
-        } catch (MalformedURLException e) {
+        } catch (URISyntaxException e) {
             logger.error("Illegal url format: " + siteLink, e);
         }
         return links;

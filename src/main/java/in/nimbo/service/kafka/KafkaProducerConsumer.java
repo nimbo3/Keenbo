@@ -33,7 +33,6 @@ public class KafkaProducerConsumer implements Runnable {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(10));
                 for (ConsumerRecord<String, String> record : records) {
                     String newLink = record.value();
-                    logger.info("get " + newLink);
                     List<String> crawl = crawlerService.crawl(newLink);
                     for (String link : crawl) {
                         producer.send(new ProducerRecord<>(KafkaService.KAFKA_TOPIC, "Producer message", link));
