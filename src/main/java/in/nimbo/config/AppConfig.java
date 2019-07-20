@@ -1,9 +1,8 @@
 package in.nimbo.config;
 
 import in.nimbo.exception.LoadConfigurationException;
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
-import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 
 public class AppConfig {
     private static final String CONFIG_NAME = "app-config.properties";
@@ -13,9 +12,8 @@ public class AppConfig {
 
     public static AppConfig load() {
         AppConfig appConfig = new AppConfig();
-        Configurations configs = new Configurations();
         try {
-            Configuration config = configs.properties(CONFIG_NAME);
+            PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
             appConfig.setCaffeineMaxSize(config.getInt("caffeine.max.size"));
             appConfig.setCaffeineExpireTime(config.getInt("caffeine.expire.time"));
             appConfig.setJsoupTimeout(config.getInt("jsoup.timeout"));

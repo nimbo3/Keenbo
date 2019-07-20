@@ -22,8 +22,7 @@
         <slf4j.version>1.7.26</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
-        <apache.configuration.version>2.5</apache.configuration.version>
-        <apache.beanutils.version>1.9.3</apache.beanutils.version>
+        <apache.configuration.version>1.10</apache.configuration.version>
     </properties>
 
     <dependencies>
@@ -80,16 +79,10 @@
 
         <!--Apache common library for configuration-->
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-configuration2</artifactId>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
             <version>${apache.configuration.version}</version>
         </dependency>
-        <dependency>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils</artifactId>
-            <version>${apache.beanutils.version}</version>
-        </dependency>
-
 
     </dependencies>
 

@@ -27,7 +27,6 @@ public class ParserService {
             Connection.Response response = Jsoup.connect(siteLink)
                     .ignoreContentType(true)
                     .userAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0")
-                    .referrer("http://www.google.com")
                     .timeout(appConfig.getJsoupTimeout())
                     .followRedirects(true)
                     .execute();
