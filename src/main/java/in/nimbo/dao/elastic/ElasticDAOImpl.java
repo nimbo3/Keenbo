@@ -3,7 +3,6 @@ package in.nimbo.dao.elastic;
 import in.nimbo.conf.ElasticConfig;
 import in.nimbo.exception.ElasticException;
 import org.apache.http.HttpHost;
-import org.elasticsearch.ElasticsearchException;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -30,11 +29,11 @@ public class ElasticDAOImpl implements ElasticDAO {
 
     public ElasticDAOImpl(ElasticConfig config) {
         ES_INDEX = config.getIndexName();
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost("localhost", 9200)));
+        client = new RestHighLevelClient(RestClient.builder(new HttpHost(config.getHost(), config.getPort())));
     }
 
     @Override
-    public void save(String link, String text) throws ElasticsearchException {
+    public void save(String link, String text) throws ElasticException {
         try {
             IndexRequest request = new IndexRequest(ES_INDEX).id(link);
             XContentBuilder builder = XContentFactory.jsonBuilder();
@@ -44,9 +43,9 @@ public class ElasticDAOImpl implements ElasticDAO {
             request.source(builder);
             IndexResponse index = client.index(request, RequestOptions.DEFAULT);
             if (index.getResult() != DocWriteResponse.Result.CREATED)
-                throw new ElasticsearchException("Indexing failed!");
+                throw new ElasticException("Indexing failed!");
         } catch (IOException e) {
-            throw new ElasticsearchException("Indexing failed!", e);
+            throw new ElasticException("Indexing failed!", e);
         }
     }
 
@@ -60,7 +59,7 @@ public class ElasticDAOImpl implements ElasticDAO {
                 throw new ElasticException("Get failed");
             return text;
         } catch (IOException | ClassCastException e) {
-            throw new ElasticsearchException("Get failed", e);
+            throw new ElasticException("Get failed", e);
         }
     }
 
