@@ -1,6 +1,6 @@
 package in.nimbo.dao.hbase;
 
-import in.nimbo.conf.Config;
+import in.nimbo.config.HBaseConfig;
 import in.nimbo.exception.HBaseException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
@@ -11,9 +11,9 @@ import java.io.IOException;
 
 public class HBaseDAOImpl implements HBaseDAO {
     private Configuration conf;
-    private Config config;
+    private HBaseConfig config;
 
-    public HBaseDAOImpl(Configuration conf, Config config) {
+    public HBaseDAOImpl(Configuration conf, HBaseConfig config) {
         this.conf = conf;
         this.config = config;
     }
@@ -24,7 +24,7 @@ public class HBaseDAOImpl implements HBaseDAO {
             Table table = connection.getTable(TableName.valueOf(config.getLinksTable()));
             Put put = new Put(Bytes.toBytes(link));
             put.addColumn(Bytes.toBytes(config.getReferenceCountColumnFamily()),
-                    Bytes.toBytes(config.getReferenceCountColumn()), Bytes.toBytes(1));
+                    Bytes.toBytes(config.getReferenceCountColumn()), Bytes.toBytes("1"));
             table.put(put);
         } catch (IOException e) {
             throw new HBaseException("Unable to establish HBase connection", e);
