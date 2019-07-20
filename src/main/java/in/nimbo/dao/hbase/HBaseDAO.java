@@ -5,7 +5,7 @@ import in.nimbo.exception.HBaseException;
 import java.io.IOException;
 
 public interface HBaseDAO {
-    void add(String link) throws HBaseException;
+    void add(String link);
 
-    boolean contains(String link) throws HBaseException;
+    boolean contains(String link);
 }

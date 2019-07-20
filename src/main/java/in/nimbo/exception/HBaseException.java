@@ -1,10 +1,8 @@
 package in.nimbo.exception;
 
-public class HBaseException extends Exception {
+public class HBaseException extends RuntimeException {
     public HBaseException() {
     }
 
-    public HBaseException(String message, Throwable cause) {
-        super(message, cause);
-    }
+    public HBaseException(Throwable cause){super(cause);}
 }

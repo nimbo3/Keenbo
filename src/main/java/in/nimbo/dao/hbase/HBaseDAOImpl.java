@@ -27,7 +27,7 @@ public class HBaseDAOImpl implements HBaseDAO {
                     Bytes.toBytes(config.getReferenceCountColumn()), Bytes.toBytes("1"));
             table.put(put);
         } catch (IOException e) {
-            throw new HBaseException("Unable to establish HBase connection", e);
+            throw new HBaseException(e);
         }
     }
 
@@ -39,7 +39,7 @@ public class HBaseDAOImpl implements HBaseDAO {
             Result result = table.get(get);
             return result.size() > 0;
         } catch (IOException e) {
-            throw new HBaseException("Unable to establish HBase connection", e);
+            throw new HBaseException(e);
         }
     }
 }
