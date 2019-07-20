@@ -2,7 +2,6 @@ package in.nimbo.service;
 
 import in.nimbo.config.AppConfig;
 import in.nimbo.entity.Page;
-import in.nimbo.exception.ParseLinkException;
 import in.nimbo.utility.LinkUtility;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
@@ -49,12 +48,12 @@ public class ParserService {
             }
             return Optional.of(new Page(document.html(), links));
         } catch (MalformedURLException e) {
-            throw new ParseLinkException("Illegal url format: " + siteLink, e);
+            logger.error("Illegal url format: {}", siteLink);
         } catch (HttpStatusException e) {
             logger.error("Response is not OK. Url: {}, StatusCode: {}" + e.getUrl(), e.getStatusCode());
-            return Optional.empty();
         } catch (IOException e) {
-            throw new ParseLinkException("Unable to parse page with jsoup: " + siteLink, e);
+            logger.error("Unable to parse page with jsoup: {}", siteLink);
         }
+        return Optional.empty();
     }
 }
