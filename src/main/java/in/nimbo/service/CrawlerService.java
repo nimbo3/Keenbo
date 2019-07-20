@@ -49,7 +49,7 @@ public class CrawlerService {
 //                hBaseDAO.add(siteLink);
                 cache.put(siteDomain, LocalDateTime.now());
             } else {
-                logger.info("ignore " + siteLink);
+//                logger.info("ignore " + siteLink);
             }
         } catch (URISyntaxException e) {
             logger.error("Illegal url format: " + siteLink, e);

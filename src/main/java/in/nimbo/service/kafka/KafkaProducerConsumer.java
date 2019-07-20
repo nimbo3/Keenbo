@@ -36,7 +36,7 @@ public class KafkaProducerConsumer implements Runnable {
                     List<String> crawl = crawlerService.crawl(newLink);
                     for (String link : crawl) {
                         producer.send(new ProducerRecord<>(KafkaService.KAFKA_TOPIC, "Producer message", link));
-                        logger.info("send " + link);
+//                        logger.info("send " + link);
                     }
                 }
                 try {
