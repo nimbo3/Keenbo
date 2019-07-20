@@ -14,6 +14,7 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class CrawlerService {
     private Logger logger = LoggerFactory.getLogger(KafkaProducerConsumer.class);
@@ -37,13 +38,13 @@ public class CrawlerService {
     public List<String> crawl(String siteLink) {
         List<String> links = new ArrayList<>();
         try {
-            String siteDomain = LinkUtility.getDomain(siteLink);
+            String siteDomain = LinkUtility.getMainDomain(siteLink);
             // TODO implements interfaces
-//            if (cache.getIfPresent(urlLinkUtility.getDomain()) == null && !hBaseDAO.contains(siteLink)) {
+//            if (cache.getIfPresent(urlLinkUtility.getMainDomain()) == null && !hBaseDAO.contains(siteLink)) {
             if (cache.getIfPresent(siteDomain) == null) {
                 logger.info("get " + siteLink);
-                Page page = parserService.parse(siteLink);
-                links.addAll(page.getLinks());
+                Optional<Page> page = parserService.parse(siteLink);
+                page.ifPresent(value -> links.addAll(value.getLinks()));
                 // TODO implements interfaces
 //                elasticDAO.save(siteLink, page.getContent());
 //                hBaseDAO.add(siteLink);

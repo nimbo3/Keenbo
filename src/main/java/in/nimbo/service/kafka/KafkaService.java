@@ -17,7 +17,7 @@ public class KafkaService {
     private Properties producerProperties;
     private Properties consumerProperties;
     private CrawlerService crawlerService;
-    private static final int CONSUMER_COUNT = 3;
+    private static final int CONSUMER_COUNT = 1;
     static final String KAFKA_TOPIC = "links";
 
     public KafkaService(CrawlerService crawlerService) {
@@ -37,7 +37,7 @@ public class KafkaService {
 
     /**
      * prepare kafka producer and consumer services and start threads to send/receive messages
-     * @throws RuntimeException if unable to prepare services
+     * @throws KafkaServiceException if unable to prepare services
      */
     public void schedule() {
         try {
