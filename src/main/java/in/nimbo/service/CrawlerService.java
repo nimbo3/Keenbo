@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.exception.HBaseException;
 import in.nimbo.utility.LinkUtility;
 import in.nimbo.entity.Page;
 import in.nimbo.service.kafka.KafkaProducerConsumer;
@@ -39,21 +40,20 @@ public class CrawlerService {
         List<String> links = new ArrayList<>();
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
-            // TODO implements interfaces
-//            if (cache.getIfPresent(urlLinkUtility.getMainDomain()) == null && !hBaseDAO.contains(siteLink)) {
-            if (cache.getIfPresent(siteDomain) == null) {
+            if (cache.getIfPresent(siteDomain) == null && !hBaseDAO.contains(siteLink)) {
                 logger.info("get " + siteLink);
                 Optional<Page> page = parserService.parse(siteLink);
                 page.ifPresent(value -> links.addAll(value.getLinks()));
                 // TODO implements interfaces
 //                elasticDAO.save(siteLink, page.getContent());
-//                hBaseDAO.add(siteLink);
+                hBaseDAO.add(siteLink);
                 cache.put(siteDomain, LocalDateTime.now());
-            } else {
-//                logger.info("ignore " + siteLink);
+                logger.info("get " + siteLink);
             }
         } catch (URISyntaxException e) {
             logger.error("Illegal url format: " + siteLink, e);
+        } catch (HBaseException e) {
+            logger.error("Unable to establish HBase connection", e);
         }
         return links;
     }
