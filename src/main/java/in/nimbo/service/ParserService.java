@@ -1,8 +1,9 @@
 package in.nimbo.service;
 
-import in.nimbo.conf.ParserConfig;
+import in.nimbo.config.AppConfig;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.ParseLinkException;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
@@ -10,30 +11,37 @@ import org.jsoup.select.Elements;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ParserService {
-    private ParserConfig config;
+    private AppConfig appConfig;
 
-    public ParserService(ParserConfig config) {
-        this.config = config;
+    public ParserService(AppConfig appConfig) {
+        this.appConfig = appConfig;
     }
 
     public Page parse(String siteLink) {
         List<String> links = new ArrayList<>();
         try {
-            Document document = Jsoup.parse(new URL(siteLink), config.getTimeout());
+            Connection.Response response = Jsoup.connect(siteLink)
+                    .ignoreContentType(true)
+                    .userAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0")
+                    .referrer("http://www.google.com")
+                    .timeout(appConfig.getJsoupTimeout())
+                    .followRedirects(true)
+                    .execute();
+            Document document = response.parse();
             Elements elements = document.getElementsByTag("a");
             for (Element element : elements) {
-                links.add(element.absUrl("href"));
+                if (!element.absUrl("href").isEmpty())
+                    links.add(element.absUrl("href"));
             }
             return new Page(document.html(), links);
         } catch (MalformedURLException e) {
-            throw new ParseLinkException("unable to parse url: " + siteLink, e);
+            throw new ParseLinkException("Illegal url format: " + siteLink, e);
         } catch (IOException e) {
-            throw new ParseLinkException("unable to parse page with jsoup", e);
+            throw new ParseLinkException("Unable to parse page with jsoup", e);
         }
     }
 }
