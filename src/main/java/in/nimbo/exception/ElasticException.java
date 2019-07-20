@@ -1,6 +1,6 @@
 package in.nimbo.exception;
 
-public class ElasticException extends Exception {
+public class ElasticException extends RuntimeException {
 
     public ElasticException() {
         super();
