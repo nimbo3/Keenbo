@@ -7,7 +7,6 @@ import in.nimbo.config.HBaseConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
-import in.nimbo.exception.HBaseException;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
@@ -35,9 +34,14 @@ public class App {
         System.out.println("Welcome to Search Engine");
         System.out.print("engine> ");
         Scanner in = new Scanner(System.in);
-        while (in.hasNextLine()) {
-            String link = in.nextLine();
-            kafkaService.sendMessage(link);
+        while (in.hasNext()) {
+            String cmd = in.next();
+            if (cmd.equals("add")) {
+                String link = in.next();
+                kafkaService.sendMessage(link);
+            } else if (cmd.equals("exit")) {
+                kafkaService.stopSchedule();
+            }
             System.out.print("engine> ");
         }
     }

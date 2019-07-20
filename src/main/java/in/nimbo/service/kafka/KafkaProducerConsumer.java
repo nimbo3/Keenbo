@@ -7,6 +7,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,7 +37,7 @@ public class KafkaProducerConsumer implements Runnable {
                     List<String> crawl = crawlerService.crawl(newLink);
                     for (String link : crawl) {
                         producer.send(new ProducerRecord<>(KafkaService.KAFKA_TOPIC, "Producer message", link));
-//                        logger.info("send " + link);
+                        logger.info("send " + link);
                     }
                 }
                 try {
@@ -45,6 +46,8 @@ public class KafkaProducerConsumer implements Runnable {
                     logger.error("Unable to commit changes", e);
                 }
             }
+        } catch (WakeupException e) {
+            logger.info("Stop producer/consumer service");
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         } finally {
