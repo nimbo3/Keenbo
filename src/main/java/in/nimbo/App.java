@@ -2,43 +2,36 @@ package in.nimbo;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import in.nimbo.conf.Config;
-import in.nimbo.conf.ParserConfig;
+import in.nimbo.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
-import in.nimbo.service.CrawlerServiceImpl;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.Properties;
+import java.time.LocalDateTime;
+import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class App {
-    private static final int PARSER_TIMEOUT = 3000;
+    public static void main(String[] args) {
+        ElasticDAO elasticDAO = null; // TODO must implemented
+        HBaseDAO hBaseDAO = null; // TODO must implemented
+        AppConfig appConfig = AppConfig.load();
+        ParserService parserService = new ParserService(appConfig);
+        Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
+                .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
+        CrawlerService crawlerService = new CrawlerService(appConfig, cache, hBaseDAO, elasticDAO, parserService);
+        KafkaService kafkaService = new KafkaService(crawlerService);
+        kafkaService.schedule();
 
-    public static void main(String[] args) throws IOException {
-        Config config = loadConfig();
-        ElasticDAO elasticDAO = null;
-        HBaseDAO hBaseDAO = null;
-        ParserConfig parserConfig = new ParserConfig(PARSER_TIMEOUT);
-        ParserService parserService = new ParserService(parserConfig);
-        Cache<Object, Object> cache = Caffeine.newBuilder().maximumSize(config.getMaximumSize())
-                .expireAfterWrite(config.getExpireCacheTime(), TimeUnit.SECONDS).build();
-        CrawlerServiceImpl crawlerServiceImpl = new CrawlerServiceImpl(cache, hBaseDAO, elasticDAO, parserService, config);
-        KafkaService kafkaService = new KafkaService(crawlerServiceImpl);
-    }
-
-    private static Config loadConfig() throws IOException {
-        Properties properties = new Properties();
-        InputStream stream = Thread.currentThread().
-                getContextClassLoader().getResourceAsStream("conf.properties");
-        properties.load(stream);
-        int timeoutMillisecond = Integer.valueOf(properties.getProperty("in.nimbo.conf.Conf.timeout.millisecond"));
-        int maximumSize = Integer.valueOf(properties.getProperty("in.nimbo.conf.Conf.size.maximum"));
-        int expireCacheTime = Integer.valueOf(properties.getProperty("in.nimbo.conf.Conf.timeout.cache.second"));
-        String topic = properties.getProperty("in.nimbo.conf.Conf.kafka.topic");
-        return new Config(timeoutMillisecond, maximumSize, expireCacheTime, topic);
+        System.out.println("Welcome to Search Engine");
+        System.out.print("engine> ");
+        Scanner in = new Scanner(System.in);
+        while (in.hasNextLine()) {
+            String link = in.nextLine();
+            kafkaService.sendMessage(link);
+            System.out.print("engine> ");
+        }
     }
 }
