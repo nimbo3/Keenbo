@@ -41,6 +41,7 @@ public class App {
                 kafkaService.sendMessage(link);
             } else if (cmd.equals("exit")) {
                 kafkaService.stopSchedule();
+                break;
             }
             System.out.print("engine> ");
         }
