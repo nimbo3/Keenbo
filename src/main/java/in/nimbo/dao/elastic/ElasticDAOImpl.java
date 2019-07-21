@@ -1,6 +1,6 @@
 package in.nimbo.dao.elastic;
 
-import in.nimbo.conf.ElasticConfig;
+import in.nimbo.config.ElasticConfig;
 import in.nimbo.exception.ElasticException;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.DocWriteResponse;
