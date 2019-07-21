@@ -22,20 +22,26 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class ElasticDAOImpl implements ElasticDAO {
-    private final String ES_INDEX;
+    private final ElasticConfig config;
     private RestHighLevelClient client;
 
+    public ElasticDAOImpl(ElasticConfig config, RestHighLevelClient client) {
+        this.config = config;
+        this.client = client;
+    }
+
     public ElasticDAOImpl(ElasticConfig config) {
-        ES_INDEX = config.getIndexName();
+        this.config = config;
         client = new RestHighLevelClient(RestClient.builder(new HttpHost(config.getHost(), config.getPort())));
     }
 
     @Override
-    public void save(String link, String text) throws ElasticException {
+    public void save(String link, String text) {
         try {
-            IndexRequest request = new IndexRequest(ES_INDEX).id(link);
+            IndexRequest request = new IndexRequest(config.getIndexName()).id(link);
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
             builder.field("text", text);
@@ -50,24 +56,22 @@ public class ElasticDAOImpl implements ElasticDAO {
     }
 
     @Override
-    public String get(String link) throws ElasticException {
+    public Optional<String> get(String link) {
         try {
-            GetRequest getRequest = new GetRequest(ES_INDEX, link);
+            GetRequest getRequest = new GetRequest(config.getIndexName(), link);
             GetResponse response = client.get(getRequest, RequestOptions.DEFAULT);
             String text = (String) response.getSource().get("text");
-            if (text == null)
-                throw new ElasticException("Get failed");
-            return text;
+            return Optional.ofNullable(text);
         } catch (IOException | ClassCastException e) {
             throw new ElasticException("Get failed", e);
         }
     }
 
     @Override
-    public List<String> getAllLinks() throws ElasticException {
+    public List<String> getAllLinks() {
         try {
             ArrayList<String> links = new ArrayList<>();
-            SearchRequest searchRequest = new SearchRequest(ES_INDEX);
+            SearchRequest searchRequest = new SearchRequest(config.getIndexName());
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(QueryBuilders.matchAllQuery());
             searchRequest.source(searchSourceBuilder);
