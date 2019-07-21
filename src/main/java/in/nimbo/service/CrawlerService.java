@@ -7,7 +7,7 @@ import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.exception.HBaseException;
 import in.nimbo.utility.LinkUtility;
 import in.nimbo.entity.Page;
-import in.nimbo.service.kafka.KafkaProducerConsumer;
+import in.nimbo.service.kafka.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class CrawlerService {
-    private Logger logger = LoggerFactory.getLogger(KafkaProducerConsumer.class);
+    private Logger logger = LoggerFactory.getLogger(Consumer.class);
     private Cache<String, LocalDateTime> cache;
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
@@ -41,7 +41,6 @@ public class CrawlerService {
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null && !hBaseDAO.contains(siteLink)) {
-                logger.info("get " + siteLink);
                 Optional<Page> page = parserService.parse(siteLink);
                 page.ifPresent(value -> links.addAll(value.getLinks()));
                 // TODO implements interfaces
@@ -51,9 +50,11 @@ public class CrawlerService {
                 logger.info("get " + siteLink);
             }
         } catch (URISyntaxException e) {
-            logger.error("Illegal url format: " + siteLink, e);
+            logger.warn("Illegal url format: " + siteLink, e);
         } catch (HBaseException e) {
             logger.error("Unable to establish HBase connection", e);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
         return links;
     }

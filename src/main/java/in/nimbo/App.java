@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.config.AppConfig;
 import in.nimbo.config.HBaseConfig;
+import in.nimbo.config.KafkaConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
@@ -23,14 +24,17 @@ public class App {
         ElasticDAO elasticDAO = null; // TODO must implemented
         Configuration configuration = HBaseConfiguration.create();
         HBaseConfig config = HBaseConfig.load();
-        HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, config);
         AppConfig appConfig = AppConfig.load();
+        KafkaConfig kafkaConfig = KafkaConfig.load();
+
+        HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, config);
         ParserService parserService = new ParserService(appConfig);
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         CrawlerService crawlerService = new CrawlerService(appConfig, cache, hBaseDAO, elasticDAO, parserService);
-        KafkaService kafkaService = new KafkaService(crawlerService);
+        KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
         kafkaService.schedule();
+
         System.out.println("Welcome to Search Engine");
         System.out.print("engine> ");
         Scanner in = new Scanner(System.in);

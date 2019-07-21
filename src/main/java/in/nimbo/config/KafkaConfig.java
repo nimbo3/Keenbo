@@ -12,18 +12,28 @@ public class KafkaConfig {
     private Properties consumerProperties;
     private Properties producerProperties;
     private String kafkaTopic;
+    private int producerCount;
 
     public static KafkaConfig load() {
         KafkaConfig config = new KafkaConfig();
         try {
             PropertiesConfiguration configuration = new PropertiesConfiguration(CONFIG_NAME);
             config.setKafkaTopic(configuration.getString("topic.name"));
+            config.setProducerCount(configuration.getInt("producer.count"));
             config.setConsumerProperties(Utility.loadProperties("kafka-consumer.properties"));
             config.setProducerProperties(Utility.loadProperties("kafka-producer.properties"));
             return config;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public int getProducerCount() {
+        return producerCount;
+    }
+
+    public void setProducerCount(int producerCount) {
+        this.producerCount = producerCount;
     }
 
     public Properties getConsumerProperties() {
