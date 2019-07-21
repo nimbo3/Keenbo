@@ -119,6 +119,14 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.4.0</version>
+                <configuration>
+                    <mainClass>in.nimbo.App</mainClass>
+                </configuration>
+            </plugin>
         </plugins>
 
         <pluginManagement>
