@@ -41,7 +41,8 @@ public class ElasticDAOImpl implements ElasticDAO {
     @Override
     public void save(String link, String text) {
         try {
-            IndexRequest request = new IndexRequest(config.getIndexName()).id(link);
+            IndexRequest request = new IndexRequest(config.getIndexName()).id(link).type(config.getType());
+
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
             builder.field("text", text);
@@ -58,13 +59,17 @@ public class ElasticDAOImpl implements ElasticDAO {
     @Override
     public Optional<String> get(String link) {
         try {
-            GetRequest getRequest = new GetRequest(config.getIndexName(), link);
+            GetRequest getRequest = new GetRequest(config.getIndexName(), config.getType(), link);
             GetResponse response = client.get(getRequest, RequestOptions.DEFAULT);
-            String text = (String) response.getSource().get("text");
-            return Optional.ofNullable(text);
-        } catch (IOException | ClassCastException e) {
+            if (response.isExists()) {
+                String text = (String) response.getSource().get("text");
+                return Optional.ofNullable(text);
+            }
+        } catch (IOException e) {
             throw new ElasticException("Get failed", e);
+        } catch (ClassCastException ignored) {
         }
+        return Optional.empty();
     }
 
     @Override
@@ -72,6 +77,7 @@ public class ElasticDAOImpl implements ElasticDAO {
         try {
             ArrayList<String> links = new ArrayList<>();
             SearchRequest searchRequest = new SearchRequest(config.getIndexName());
+            searchRequest.types(config.getType());
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             searchSourceBuilder.query(QueryBuilders.matchAllQuery());
             searchRequest.source(searchSourceBuilder);

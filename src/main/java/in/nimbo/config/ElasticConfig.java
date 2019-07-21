@@ -7,7 +7,7 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 
 public class ElasticConfig {
     private static final String CONFIG_NAME = "elastic-search.properties";
-    private String indexName, host;
+    private String indexName, host, type;
     private int port;
 
     public ElasticConfig() {
@@ -22,6 +22,7 @@ public class ElasticConfig {
             elasticConfig.setHost(config.getString("elastic.host"));
             elasticConfig.setPort(config.getInt("elastic.port"));
             elasticConfig.setIndexName(config.getString("elastic.index"));
+            elasticConfig.setType(config.getString("elastic.type"));
             return elasticConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
@@ -57,5 +58,13 @@ public class ElasticConfig {
 
     public void setPort(int port) {
         this.port = port;
+    }
+
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String type) {
+        this.type = type;
     }
 }
