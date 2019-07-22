@@ -9,6 +9,7 @@ public class AppConfig {
     private int caffeineMaxSize;
     private int caffeineExpireTime;
     private int jsoupTimeout;
+    private String jsoupUserAgent;
 
     public static AppConfig load() {
         AppConfig appConfig = new AppConfig();
@@ -17,10 +18,19 @@ public class AppConfig {
             appConfig.setCaffeineMaxSize(config.getInt("caffeine.max.size"));
             appConfig.setCaffeineExpireTime(config.getInt("caffeine.expire.time"));
             appConfig.setJsoupTimeout(config.getInt("jsoup.timeout"));
+            appConfig.setJsoupUserAgent(config.getString("jsoup.user.agent"));
             return appConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public String getJsoupUserAgent() {
+        return jsoupUserAgent;
+    }
+
+    public void setJsoupUserAgent(String jsoupUserAgent) {
+        this.jsoupUserAgent = jsoupUserAgent;
     }
 
     public int getCaffeineMaxSize() {

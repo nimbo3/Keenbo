@@ -17,16 +17,10 @@ public class LinkUtility {
      * @throws URISyntaxException if link is not a illegal url
      */
     public static String getMainDomain(String link) throws URISyntaxException {
-        try {
-            URI uri = new URI(link);
-            String host = uri.getHost();
-            String[] hostParts = host.split("\\.");
-            return hostParts[hostParts.length - 2] + "." + hostParts[hostParts.length - 1];
-        } catch (NullPointerException e) {
-            e.printStackTrace();
-            System.out.println(link + " " + new URI(link).getHost());
-            throw new URISyntaxException("", "", 1);
-        }
+        URI uri = new URI(link);
+        String host = uri.getHost();
+        String[] hostParts = host.split("\\.");
+        return hostParts[hostParts.length - 2] + "." + hostParts[hostParts.length - 1];
     }
 
     /**

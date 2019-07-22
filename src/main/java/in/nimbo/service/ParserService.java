@@ -30,7 +30,7 @@ public class ParserService {
         List<String> links = new ArrayList<>();
         try {
             Connection.Response response = Jsoup.connect(siteLink)
-                    .userAgent("Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0")
+                    .userAgent(appConfig.getJsoupUserAgent())
                     .timeout(appConfig.getJsoupTimeout())
                     .followRedirects(true)
                     .ignoreContentType(true)
@@ -48,8 +48,6 @@ public class ParserService {
                 }
             }
             return Optional.of(new Page(document.text(), links));
-        } catch (NullPointerException e) {
-            e.printStackTrace();
         } catch (MalformedURLException e) {
             logger.warn("Illegal url format: {}", siteLink);
         } catch (HttpStatusException e) {
