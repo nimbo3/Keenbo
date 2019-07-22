@@ -44,8 +44,7 @@ public class CrawlerService {
                 if (!hBaseDAO.contains(siteLink)) {
                     Optional<Page> page = parserService.parse(siteLink);
                     page.ifPresent(value -> links.addAll(value.getLinks()));
-                    // TODO implements interfaces
-//                  elasticDAO.save(siteLink, page.getContent());
+                    page.ifPresent(value -> elasticDAO.save(siteLink, value.getContent()));
                     hBaseDAO.add(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
                     logger.info("get " + siteLink);

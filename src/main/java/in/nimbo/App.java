@@ -3,9 +3,11 @@ package in.nimbo;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.config.AppConfig;
+import in.nimbo.config.ElasticConfig;
 import in.nimbo.config.HBaseConfig;
 import in.nimbo.config.KafkaConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
+import in.nimbo.dao.elastic.ElasticDAOImpl;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.service.CrawlerService;
@@ -21,12 +23,13 @@ import java.util.concurrent.TimeUnit;
 public class App {
 
     public static void main(String[] args) {
-        ElasticDAO elasticDAO = null; // TODO must implemented
         Configuration configuration = HBaseConfiguration.create();
         HBaseConfig config = HBaseConfig.load();
         AppConfig appConfig = AppConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
+        ElasticConfig elasticConfig = ElasticConfig.load();
 
+        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, config);
         ParserService parserService = new ParserService(appConfig);
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
