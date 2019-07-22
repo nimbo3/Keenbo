@@ -20,7 +20,8 @@ public class ElasticCLI {
                     break;
                 }
                 case "save": {
-                    String link = scanner.next(), text = scanner.next();
+                    String link = scanner.next();
+                    String text = scanner.next();
                     elasticDAO.save(link, text);
                     break;
                 }

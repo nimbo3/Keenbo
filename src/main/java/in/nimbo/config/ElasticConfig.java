@@ -7,12 +7,13 @@ import org.apache.commons.configuration2.ex.ConfigurationException;
 
 public class ElasticConfig {
     private static final String CONFIG_NAME = "elastic-search.properties";
-    private String indexName, host, type;
+    private String indexName;
+    private String host;
+    private String type;
     private int port;
 
     public ElasticConfig() {
     }
-
 
     public static ElasticConfig load() {
         ElasticConfig elasticConfig = new ElasticConfig();

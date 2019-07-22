@@ -61,15 +61,16 @@ public class ElasticDAOImpl implements ElasticDAO {
         try {
             GetRequest getRequest = new GetRequest(config.getIndexName(), config.getType(), link);
             GetResponse response = client.get(getRequest, RequestOptions.DEFAULT);
+            String text = null;
             if (response.isExists()) {
-                String text = (String) response.getSource().get("text");
-                return Optional.ofNullable(text);
+                text = (String) response.getSource().get("text");
             }
+            return Optional.ofNullable(text);
         } catch (IOException e) {
             throw new ElasticException("Get failed", e);
-        } catch (ClassCastException ignored) {
+        } catch (ClassCastException e) {
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     @Override

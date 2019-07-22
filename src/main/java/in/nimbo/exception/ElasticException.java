@@ -17,8 +17,4 @@ public class ElasticException extends RuntimeException {
     public ElasticException(Throwable cause) {
         super(cause);
     }
-
-    protected ElasticException(String message, Throwable cause, boolean enableSuppression, boolean writableStackTrace) {
-        super(message, cause, enableSuppression, writableStackTrace);
-    }
 }
