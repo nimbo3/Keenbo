@@ -94,4 +94,12 @@ public class crawlerServiceTest {
         List<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(answer, actualResult);
     }
+
+    @Test
+    public void crawlInvalidLink() {
+        when(hBaseDAO.contains(link)).thenReturn(true);
+        List<String> answer = crawlerService.crawl("http://");
+        List<String> actualResult = new ArrayList<>();
+        Assert.assertEquals(answer, actualResult);
+    }
 }
