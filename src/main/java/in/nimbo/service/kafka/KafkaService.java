@@ -1,66 +1,64 @@
 package in.nimbo.service.kafka;
 
+import in.nimbo.config.KafkaConfig;
 import in.nimbo.exception.KafkaServiceException;
 import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
-import java.io.IOException;
 import java.util.Collections;
-import java.util.Properties;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedTransferQueue;
 
 public class KafkaService {
-    private ExecutorService executorService;
-    private Properties producerProperties;
-    private Properties consumerProperties;
+    private KafkaConfig kafkaConfig;
     private CrawlerService crawlerService;
-    private static final int CONSUMER_COUNT = 3;
-    static final String KAFKA_TOPIC = "links";
+    private KafkaConsumer<String, String> kafkaConsumer;
 
-    public KafkaService(CrawlerService crawlerService) {
+    public KafkaService(CrawlerService crawlerService, KafkaConfig kafkaConfig) {
         this.crawlerService = crawlerService;
-        executorService = Executors.newFixedThreadPool(CONSUMER_COUNT);
-    }
-
-    private void loadProperties() throws IOException {
-        if (producerProperties == null || consumerProperties == null) {
-            consumerProperties = new Properties();
-            producerProperties = new Properties();
-            ClassLoader classLoader = KafkaService.class.getClassLoader();
-            consumerProperties.load(classLoader.getResourceAsStream("kafka-consumer.properties"));
-            producerProperties.load(classLoader.getResourceAsStream("kafka-producer.properties"));
-        }
+        this.kafkaConfig = kafkaConfig;
     }
 
     /**
      * prepare kafka producer and consumer services and start threads to send/receive messages
-     * @throws RuntimeException if unable to prepare services
+     *
+     * @throws KafkaServiceException if unable to prepare services
      */
     public void schedule() {
-        try {
-            loadProperties();
-            for (int i = 0; i < CONSUMER_COUNT; i++) {
-                KafkaProducer<String, String> producer = new KafkaProducer<>(producerProperties);
-                KafkaConsumer<String, String> consumer = new KafkaConsumer<>(consumerProperties);
-                consumer.subscribe(Collections.singletonList(KAFKA_TOPIC));
-                executorService.submit(new KafkaProducerConsumer(producer, consumer, crawlerService));
-            }
-        } catch (IOException e) {
-            throw new KafkaServiceException(e);
+        ExecutorService executorService = Executors.newFixedThreadPool(kafkaConfig.getProducerCount() + 1);
+        BlockingQueue<String> messageQueue = new LinkedTransferQueue<>();
+
+        // Prepare consumer
+        kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getConsumerProperties());
+        kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
+        executorService.submit(new Consumer(kafkaConsumer, messageQueue));
+
+        // Prepare producer
+        for (int i = 0; i < kafkaConfig.getProducerCount(); i++) {
+            KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
+            executorService.submit(new Producer(producer, kafkaConfig.getKafkaTopic(), messageQueue, crawlerService));
         }
+        executorService.shutdown();
     }
 
+    /**
+     * stop consumer service
+     */
+    public void stopSchedule() {
+        kafkaConsumer.wakeup();
+    }
+
+    /**
+     * send a message to kafka
+     * @param message message value
+     */
     public void sendMessage(String message) {
-        try {
-            loadProperties();
-            KafkaProducer<String, String> producer = new KafkaProducer<>(producerProperties);
-            producer.send(new ProducerRecord<>(KAFKA_TOPIC, "Producer message", message));
-            producer.flush();
-        } catch (IOException e) {
-            throw new KafkaServiceException(e);
-        }
+        KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
+        producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "Producer message", message));
+        producer.flush();
     }
 }

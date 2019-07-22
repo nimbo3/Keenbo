@@ -270,5 +270,7 @@ spark-warehouse/
 # For SBT
 .jvmopts
 
+# Logs
+log.txt
 
 # End of https://www.gitignore.io/api/java,spark,maven,intellij,intellij+all

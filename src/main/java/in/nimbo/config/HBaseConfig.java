@@ -19,7 +19,7 @@ public class HBaseConfig {
             config.setReferenceCountColumn(configuration.getString("column.name"));
             return config;
         } catch (ConfigurationException e) {
-            throw new LoadConfigurationException("hbase.properties", e);
+            throw new LoadConfigurationException(CONFIG_NAME, e);
         }
     }
 
