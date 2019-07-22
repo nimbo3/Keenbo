@@ -51,7 +51,7 @@ public class ParserService {
         } catch (MalformedURLException e) {
             logger.warn("Illegal url format: {}", siteLink);
         } catch (HttpStatusException e) {
-            logger.warn("Response is not OK. Url: {}, StatusCode: {}", e.getUrl(), e.getStatusCode());
+            logger.warn("Response is not OK. Url: \"{}\" StatusCode: {}", e.getUrl(), e.getStatusCode());
         } catch (IOException e) {
             logger.warn("Unable to parse page with jsoup: {}", siteLink);
         } catch (Exception e) {

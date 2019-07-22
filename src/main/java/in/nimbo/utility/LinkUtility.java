@@ -30,9 +30,9 @@ public class LinkUtility {
      */
     public static boolean isValidUrl(String link) {
         try {
-            new URL(link).toURI();
-            return true;
-        } catch (MalformedURLException | URISyntaxException e) {
+            URI uri = new URL(link).toURI();
+            return uri.getHost() != null && uri.getHost().split("\\.").length >= 2;
+        } catch (MalformedURLException | URISyntaxException | NullPointerException e) {
             return false;
         }
     }
