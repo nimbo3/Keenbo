@@ -6,6 +6,7 @@ import in.nimbo.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.entity.Page;
+import in.nimbo.utility.LinkUtility;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.Assert;
@@ -70,5 +71,19 @@ public class crawlerServiceTest {
         when(hBaseDAO.contains(link)).thenReturn(false);
         List<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(answer, crawledLinks);
+    }
+
+    @Test
+    public void crawlCachedLinkTest() throws URISyntaxException {
+        when(hBaseDAO.contains(link)).thenReturn(false);
+        try {
+            cache.put(LinkUtility.getMainDomain(link), LocalDateTime.now());
+        } catch (URISyntaxException e) {
+            Assert.fail();
+        }
+        List<String> actualResult = new ArrayList<>();
+        actualResult.add(link);
+        List<String> answer = crawlerService.crawl(link);
+        Assert.assertEquals(answer, actualResult);
     }
 }
