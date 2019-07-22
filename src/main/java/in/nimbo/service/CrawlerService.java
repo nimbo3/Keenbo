@@ -4,10 +4,10 @@ import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.exception.HBaseException;
-import in.nimbo.utility.LinkUtility;
 import in.nimbo.entity.Page;
-import in.nimbo.service.kafka.KafkaProducerConsumer;
+import in.nimbo.exception.HBaseException;
+import in.nimbo.service.kafka.Consumer;
+import in.nimbo.utility.LinkUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,9 +15,10 @@ import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class CrawlerService {
-    private Logger logger = LoggerFactory.getLogger(KafkaProducerConsumer.class);
+    private Logger logger = LoggerFactory.getLogger(Consumer.class);
     private Cache<String, LocalDateTime> cache;
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
@@ -38,22 +39,25 @@ public class CrawlerService {
     public List<String> crawl(String siteLink) {
         List<String> links = new ArrayList<>();
         try {
-            String siteDomain = LinkUtility.getDomain(siteLink);
-            if (cache.getIfPresent(siteDomain) == null && !hBaseDAO.contains(siteLink)) {
-                Page page = parserService.parse(siteLink);
-                links.addAll(page.getLinks());
-                // TODO implements interfaces
-//                elasticDAO.save(siteLink, page.getContent());
-                hBaseDAO.add(siteLink);
-                cache.put(siteDomain, LocalDateTime.now());
-                logger.info("get " + siteLink);
+            String siteDomain = LinkUtility.getMainDomain(siteLink);
+            if (cache.getIfPresent(siteDomain) == null) {
+                if (!hBaseDAO.contains(siteLink)) {
+                    Optional<Page> page = parserService.parse(siteLink);
+                    page.ifPresent(value -> links.addAll(value.getLinks()));
+                    page.ifPresent(value -> elasticDAO.save(siteLink, value.getContent()));
+                    hBaseDAO.add(siteLink);
+                    cache.put(siteDomain, LocalDateTime.now());
+                    logger.info("get " + siteLink);
+                }
             } else {
-//                logger.info("ignore " + siteLink);
+                links.add(siteLink);
             }
         } catch (URISyntaxException e) {
-            logger.error("Illegal url format: " + siteLink, e);
+            logger.warn("Illegal url format: " + siteLink, e);
         } catch (HBaseException e) {
             logger.error("Unable to establish HBase connection", e);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
         }
         return links;
     }
