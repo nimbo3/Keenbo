@@ -1,9 +1,8 @@
 package in.nimbo.config;
 
 import in.nimbo.exception.LoadConfigurationException;
-import org.apache.commons.configuration2.Configuration;
-import org.apache.commons.configuration2.builder.fluent.Configurations;
-import org.apache.commons.configuration2.ex.ConfigurationException;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 
 public class ElasticConfig {
     private static final String CONFIG_NAME = "elastic-search.properties";
@@ -17,9 +16,8 @@ public class ElasticConfig {
 
     public static ElasticConfig load() {
         ElasticConfig elasticConfig = new ElasticConfig();
-        Configurations configs = new Configurations();
         try {
-            Configuration config = configs.properties(CONFIG_NAME);
+            PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
             elasticConfig.setHost(config.getString("elastic.host"));
             elasticConfig.setPort(config.getInt("elastic.port"));
             elasticConfig.setIndexName(config.getString("elastic.index"));
