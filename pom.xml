@@ -8,8 +8,6 @@
     <artifactId>search-engine</artifactId>
     <version>1.0</version>
 
-    <name>Search Engine</name>
-
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -22,9 +20,9 @@
         <slf4j.version>1.7.26</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
         <elasticsearch.version>6.6.2</elasticsearch.version>
+        <hbase.version>2.2.0</hbase.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
-        <apache.configuration.version>2.5</apache.configuration.version>
-        <apache.beanutils.version>1.9.3</apache.beanutils.version>
+        <apache.configuration.version>1.10</apache.configuration.version>
     </properties>
 
     <dependencies>
@@ -71,6 +69,13 @@
             <version>${slf4j.version}</version>
         </dependency>
 
+        <!--driver for hbase-->
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-client</artifactId>
+            <version>${hbase.version}</version>
+        </dependency>
+
         <!--Jsoup library for parse pages-->
         <dependency>
             <groupId>org.jsoup</groupId>
@@ -91,16 +96,10 @@
             <version>${apache.commons.version}</version>
         </dependency>
 
-        <!--Apache common library for configuration-->
         <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-configuration2</artifactId>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
             <version>${apache.configuration.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>commons-beanutils</groupId>
-            <artifactId>commons-beanutils</artifactId>
-            <version>${apache.beanutils.version}</version>
         </dependency>
 
 
