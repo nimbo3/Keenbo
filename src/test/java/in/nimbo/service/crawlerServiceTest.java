@@ -45,7 +45,7 @@ public class crawlerServiceTest {
         PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
         appConfig.setCaffeineMaxSize(config.getInt("caffeine.max.size"));
         appConfig.setCaffeineExpireTime(config.getInt("caffeine.expire.time"));
-        Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
+        cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         link = "http://nimbo.in/";
         content = "Be your best!";
