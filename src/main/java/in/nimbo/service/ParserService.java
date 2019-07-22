@@ -1,7 +1,12 @@
 package in.nimbo.service;
 
+import com.cybozu.labs.langdetect.Detector;
+import com.cybozu.labs.langdetect.DetectorFactory;
+import com.cybozu.labs.langdetect.LangDetectException;
+import com.cybozu.labs.langdetect.Language;
 import in.nimbo.config.AppConfig;
 import in.nimbo.entity.Page;
+import in.nimbo.exception.LanguageDetectException;
 import in.nimbo.utility.LinkUtility;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
@@ -15,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -36,27 +42,48 @@ public class ParserService {
                     .ignoreContentType(true)
                     .execute();
             if (response.contentType() != null &&
-                    !response.contentType().contains("text/html"))
+                    !response.contentType().contains("text/html")) {
                 return Optional.empty();
-            Document document = response.parse();
-            Elements elements = document.getElementsByTag("a");
-            for (Element element : elements) {
-                String absUrl = element.absUrl("href");
-                if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
-                    && LinkUtility.isValidUrl(absUrl)) {
-                    links.add(absUrl);
-                }
             }
-            return Optional.of(new Page(document.text(), links));
+            Document document = response.parse();
+            String pageContent = document.text();
+            if (isEnglishLanguage(pageContent)) {
+                Elements elements = document.getElementsByTag("a");
+                for (Element element : elements) {
+                    String absUrl = element.absUrl("href");
+                    if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
+                            && LinkUtility.isValidUrl(absUrl)) {
+                        links.add(absUrl);
+                    }
+                }
+                return Optional.of(new Page(pageContent, links));
+            }
         } catch (MalformedURLException e) {
             logger.warn("Illegal url format: {}", siteLink);
         } catch (HttpStatusException e) {
             logger.warn("Response is not OK. Url: \"{}\" StatusCode: {}", e.getUrl(), e.getStatusCode());
+        }catch (LanguageDetectException e){
+            logger.warn("cannot detect language of site : {}", siteLink);
         } catch (IOException e) {
             logger.warn("Unable to parse page with jsoup: {}", siteLink);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
         return Optional.empty();
+    }
+
+    /**
+     * @param text text
+     * @return true if text is in English
+     */
+    private boolean isEnglishLanguage(String text) {
+        try {
+            DetectorFactory.loadProfile("profiles");
+            Detector detector = DetectorFactory.create();
+            detector.append(text);
+            return detector.detect().equals("en");
+        } catch (LangDetectException e) {
+            throw new LanguageDetectException(e);
+        }
     }
 }
