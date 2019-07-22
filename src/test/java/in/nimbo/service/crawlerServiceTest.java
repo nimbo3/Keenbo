@@ -86,4 +86,12 @@ public class crawlerServiceTest {
         List<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(answer, actualResult);
     }
+
+    @Test
+    public void CrawlRepeatedLinkTest() throws URISyntaxException {
+        when(hBaseDAO.contains(link)).thenReturn(true);
+        List<String> actualResult = new ArrayList<>();
+        List<String> answer = crawlerService.crawl(link);
+        Assert.assertEquals(answer, actualResult);
+    }
 }
