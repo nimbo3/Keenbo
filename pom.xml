@@ -18,12 +18,25 @@
         <caffeine.version>2.7.0</caffeine.version>
         <slf4j.version>1.7.26</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
+        <elasticsearch.version>6.6.2</elasticsearch.version>
         <hbase.version>2.2.0</hbase.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
         <apache.configuration.version>1.10</apache.configuration.version>
     </properties>
 
     <dependencies>
+        <!-- elasticsearch high level rest api client -->
+        <dependency>
+            <groupId>org.elasticsearch.client</groupId>
+            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <version>${elasticsearch.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>${elasticsearch.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
@@ -116,10 +129,12 @@
 
         <pluginManagement>
             <plugins>
+
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
                     <version>3.1.0</version>
                 </plugin>
+
                 <plugin>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>3.0.2</version>
@@ -144,6 +159,7 @@
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>2.8.2</version>
                 </plugin>
+
                 <plugin>
                     <artifactId>maven-site-plugin</artifactId>
                     <version>3.7.1</version>
