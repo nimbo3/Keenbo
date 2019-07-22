@@ -35,21 +35,25 @@ public class ParserService {
                     .followRedirects(true)
                     .ignoreContentType(true)
                     .execute();
-            if (!response.contentType().contains("text/html"))
+            if (response.contentType() != null &&
+                    !response.contentType().contains("text/html"))
                 return Optional.empty();
             Document document = response.parse();
             Elements elements = document.getElementsByTag("a");
             for (Element element : elements) {
                 String absUrl = element.absUrl("href");
-                if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")) {
+                if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
+                    && LinkUtility.isValidUrl(absUrl)) {
                     links.add(absUrl);
                 }
             }
-            return Optional.of(new Page(document.html(), links));
+            return Optional.of(new Page(document.text(), links));
+        } catch (NullPointerException e) {
+            e.printStackTrace();
         } catch (MalformedURLException e) {
             logger.warn("Illegal url format: {}", siteLink);
         } catch (HttpStatusException e) {
-            logger.warn("Response is not OK. Url: {}, StatusCode: {}" + e.getUrl(), e.getStatusCode());
+            logger.warn("Response is not OK. Url: {}, StatusCode: {}", e.getUrl(), e.getStatusCode());
         } catch (IOException e) {
             logger.warn("Unable to parse page with jsoup: {}", siteLink);
         } catch (Exception e) {

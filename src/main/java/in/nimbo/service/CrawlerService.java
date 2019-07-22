@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -40,21 +41,26 @@ public class CrawlerService {
         List<String> links = new ArrayList<>();
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
-            if (cache.getIfPresent(siteDomain) == null && !hBaseDAO.contains(siteLink)) {
-                Optional<Page> page = parserService.parse(siteLink);
-                page.ifPresent(value -> links.addAll(value.getLinks()));
-                // TODO implements interfaces
+            if (cache.getIfPresent(siteDomain) == null) {
+                if (!hBaseDAO.contains(siteLink)) {
+                    Optional<Page> page = parserService.parse(siteLink);
+                    page.ifPresent(value -> links.addAll(value.getLinks()));
+                    // TODO implements interfaces
 //                elasticDAO.save(siteLink, page.getContent());
-                hBaseDAO.add(siteLink);
-                cache.put(siteDomain, LocalDateTime.now());
-                logger.info("get " + siteLink);
+                    hBaseDAO.add(siteLink);
+                    cache.put(siteDomain, LocalDateTime.now());
+                    logger.info("get " + siteLink);
+                }
+            } else {
+                links.add(siteLink);
             }
         } catch (URISyntaxException e) {
             logger.warn("Illegal url format: " + siteLink, e);
         } catch (HBaseException e) {
             logger.error("Unable to establish HBase connection", e);
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            logger.error(Arrays.toString(e.getStackTrace()), e);
+            e.printStackTrace();
         }
         return links;
     }
