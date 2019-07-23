@@ -45,8 +45,8 @@ public class CrawlerService {
                     Optional<Page> page = parserService.parse(siteLink);
                     page.ifPresent(value -> value.getLinks().forEach(link -> links.add(link.getHref())));
                     page.ifPresent(value -> elasticDAO.save(siteLink, value.getContentWithTags()));
+                    page.ifPresent(value -> hBaseDAO.add(value));
                     redisDAO.add(siteLink);
-                    hBaseDAO.add(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
                     logger.info("get " + siteLink);
                 }

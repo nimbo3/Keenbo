@@ -50,7 +50,7 @@ public class CrawlerServiceTest {
         crawledLinks.add("https://www.google.com/");
         crawledLinks.add("https://stackoverflow.com/");
         crawledLinks.add("https://www.sahab.ir/");
-        page = Optional.of(new Page(content, crawledLinks));
+//        page = Optional.of(new Page(content, crawledLinks));
         hBaseDAO = mock(HBaseDAO.class);
         redisDAO = mock(RedisDAO.class);
         when(parserService.parse(link)).thenReturn(page);

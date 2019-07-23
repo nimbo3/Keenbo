@@ -35,8 +35,9 @@ public class ParserService {
     public Optional<Page> parse(String siteLink) {
         try {
             Optional<Document> documentOptional = getDocument(siteLink);
-            if (!documentOptional.isPresent())
+            if (!documentOptional.isPresent()) {
                 return Optional.empty();
+            }
             Document document = documentOptional.get();
             String pageContentWithoutTag = document.text();
             String pageContentWithTag = document.html();
@@ -60,7 +61,7 @@ public class ParserService {
                         metas.add(meta);
                     }
                 }
-                return Optional.of(new Page(pageContentWithTag, pageContentWithoutTag, links, metas));
+                return Optional.of(new Page(pageContentWithTag, pageContentWithoutTag, links, metas, siteLink, 1.0, reverseLink(siteLink)));
             }
         } catch (LanguageDetectException e) {
             logger.warn("cannot detect language of site : {}", siteLink);
@@ -106,6 +107,10 @@ public class ParserService {
         } catch (LangDetectException e) {
             throw new LanguageDetectException(e);
         }
+    }
+
+    private String reverseLink(String link){
+        return link;
     }
 
 }
