@@ -8,8 +8,6 @@ import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.HBaseException;
 import in.nimbo.utility.LinkUtility;
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.commons.configuration.PropertiesConfiguration;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -25,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 import static org.mockito.Mockito.*;
 
 public class crawlerServiceTest {
-    private static final String CONFIG_NAME = "app-config.properties";
     private static HBaseDAO hBaseDAO;
     private static ElasticDAO elasticDAO;
     private static ParserService parserService;
@@ -35,29 +32,23 @@ public class crawlerServiceTest {
     private static Optional<Page> page;
     private static String link;
     private static List<String> crawledLinks;
-    private static String content;
 
     @BeforeClass
-    public static void init() throws ConfigurationException {
+    public static void init() {
         elasticDAO = mock(ElasticDAO.class);
         parserService = mock(ParserService.class);
-        appConfig = new AppConfig();
-        PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
-        appConfig.setCaffeineMaxSize(config.getInt("caffeine.max.size"));
-        appConfig.setCaffeineExpireTime(config.getInt("caffeine.expire.time"));
-        cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
-                .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
+        appConfig = AppConfig.load();
+    }
+
+    @Before
+    public void beforeEachTest() {
         link = "http://nimbo.in/";
-        content = "Be your best!";
+        String content = "Be your best!";
         crawledLinks = new ArrayList<>();
         crawledLinks.add("https://www.google.com/");
         crawledLinks.add("https://stackoverflow.com/");
         crawledLinks.add("https://www.sahab.ir/");
         page = Optional.of(new Page(content, crawledLinks));
-    }
-
-    @Before
-    public void createCash() {
         hBaseDAO = mock(HBaseDAO.class);
         when(parserService.parse(link)).thenReturn(page);
         doNothing().when(elasticDAO).save(link, content);
@@ -68,14 +59,14 @@ public class crawlerServiceTest {
     }
 
     @Test
-    public void crawlTest() throws URISyntaxException {
+    public void crawlTest() {
         when(hBaseDAO.contains(link)).thenReturn(false);
         List<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(answer, crawledLinks);
     }
 
     @Test
-    public void crawlCachedLinkTest() throws URISyntaxException {
+    public void crawlCachedLinkTest() {
         when(hBaseDAO.contains(link)).thenReturn(false);
         try {
             cache.put(LinkUtility.getMainDomain(link), LocalDateTime.now());
@@ -89,7 +80,7 @@ public class crawlerServiceTest {
     }
 
     @Test
-    public void crawlRepeatedLinkTest() throws URISyntaxException {
+    public void crawlRepeatedLinkTest() {
         when(hBaseDAO.contains(link)).thenReturn(true);
         List<String> actualResult = new ArrayList<>();
         List<String> answer = crawlerService.crawl(link);
