@@ -87,7 +87,6 @@ public class ParserService {
      */
     public boolean isEnglishLanguage(String text) {
         try {
-            DetectorFactory.loadProfile("profiles");
             Detector detector = DetectorFactory.create();
             detector.append(text);
             return detector.detect().equals("en");
@@ -95,4 +94,5 @@ public class ParserService {
             throw new LanguageDetectException(e);
         }
     }
+
 }

@@ -1,9 +1,7 @@
 package in.nimbo.utility;
 
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 
 public class LinkUtility {
     private LinkUtility() {
@@ -17,10 +15,14 @@ public class LinkUtility {
      * @throws URISyntaxException if link is not a illegal url
      */
     public static String getMainDomain(String link) throws URISyntaxException {
-        URI uri = new URI(link);
-        String host = uri.getHost();
-        String[] hostParts = host.split("\\.");
-        return hostParts[hostParts.length - 2] + "." + hostParts[hostParts.length - 1];
+        try {
+            URI uri = new URI(link);
+            String host = uri.getHost();
+            String[] hostParts = host.split("\\.");
+            return hostParts[hostParts.length - 2] + "." + hostParts[hostParts.length - 1];
+        } catch (IndexOutOfBoundsException | NullPointerException e) {
+            throw new URISyntaxException(link, "unable to detect host of url");
+        }
     }
 
     /**
@@ -30,9 +32,9 @@ public class LinkUtility {
      */
     public static boolean isValidUrl(String link) {
         try {
-            URI uri = new URL(link).toURI();
+            URI uri = new URI(link);
             return uri.getHost() != null && uri.getHost().split("\\.").length >= 2;
-        } catch (MalformedURLException | URISyntaxException | NullPointerException e) {
+        } catch (URISyntaxException | NullPointerException e) {
             return false;
         }
     }
