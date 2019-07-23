@@ -55,7 +55,7 @@ public class crawlerServiceTest {
         doNothing().when(hBaseDAO).add(link);
         cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
-        crawlerService = new CrawlerService(appConfig, cache, hBaseDAO, elasticDAO, parserService);
+//        crawlerService = new CrawlerService(appConfig, cache, hBaseDAO, elasticDAO, parserService);
     }
 
     @Test
