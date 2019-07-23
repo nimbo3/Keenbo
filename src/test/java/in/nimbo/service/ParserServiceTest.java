@@ -44,6 +44,7 @@ public class ParserServiceTest {
     @Test
     public void parseTest() {
         doReturn(Optional.of(document)).when(parserService).getDocument(link);
+        doReturn(true).when(parserService).isEnglishLanguage(anyString());
         Page page = parserService.parse(link).get();
         Assert.assertEquals(page.getContent(), pageContent);
         Assert.assertEquals(page.getLinks(), pageLinks);
@@ -52,6 +53,7 @@ public class ParserServiceTest {
     @Test
     public void parseNotEnglishPageTest() {
         doReturn(Optional.of(persianDocument)).when(parserService).getDocument(link);
+        doReturn(false).when(parserService).isEnglishLanguage(anyString());
         Optional<Page> page = parserService.parse(link);
         Assert.assertFalse(page.isPresent());
     }
@@ -59,6 +61,7 @@ public class ParserServiceTest {
     @Test
     public void emptyDocumentTest() {
         doReturn(Optional.empty()).when(parserService).getDocument(link);
+        doReturn(true).when(parserService).isEnglishLanguage(anyString());
         Optional<Page> page = parserService.parse(link);
         Assert.assertFalse(page.isPresent());
     }

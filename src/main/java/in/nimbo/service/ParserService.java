@@ -89,7 +89,7 @@ public class ParserService {
      * @param text text
      * @return true if text is in English
      */
-    private boolean isEnglishLanguage(String text) {
+    public boolean isEnglishLanguage(String text) {
         try {
             DetectorFactory.loadProfile("profiles");
             Detector detector = DetectorFactory.create();
