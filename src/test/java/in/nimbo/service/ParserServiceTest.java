@@ -55,7 +55,7 @@ public class ParserServiceTest {
         String pageContent = "Nimbo Anchor Header mail at support@nimbo.in. paragraph! another link";
         Assert.assertEquals(page.getContentWithOutTags(), pageContent);
         List<String> list = new ArrayList<>();
-        for (Anchor link : page.getLinks()) {
+        for (Anchor link : page.getAnchors()) {
             list.add(link.getHref());
         }
         Assert.assertEquals(list, pageLinks);
