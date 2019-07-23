@@ -4,6 +4,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.HBaseException;
 import in.nimbo.service.kafka.Consumer;
@@ -23,17 +24,17 @@ public class CrawlerService {
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
     private ParserService parserService;
-    private AppConfig appConfig;
+    private RedisDAO redisDAO;
 
-    public CrawlerService(AppConfig appConfig,
-                          Cache<String, LocalDateTime> cache,
+    public CrawlerService(Cache<String, LocalDateTime> cache,
                           HBaseDAO hBaseDAO, ElasticDAO elasticDAO,
-                          ParserService parserService) {
-        this.appConfig = appConfig;
+                          ParserService parserService,
+                          RedisDAO redisDAO) {
         this.cache = cache;
         this.hBaseDAO = hBaseDAO;
         this.elasticDAO = elasticDAO;
         this.parserService = parserService;
+        this.redisDAO = redisDAO;
     }
 
     public List<String> crawl(String siteLink) {
@@ -41,10 +42,11 @@ public class CrawlerService {
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
-                if (!hBaseDAO.contains(siteLink)) {
+                if (!redisDAO.contains(siteLink)) {
                     Optional<Page> page = parserService.parse(siteLink);
                     page.ifPresent(value -> links.addAll(value.getLinks()));
                     page.ifPresent(value -> elasticDAO.save(siteLink, value.getContent()));
+                    redisDAO.add(siteLink);
                     hBaseDAO.add(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
                     logger.info("get " + siteLink);
