@@ -99,7 +99,7 @@ public class CrawlerServiceTest {
     }
 
     @Test
-    public void throwHBaseExeptionTest() {
+    public void throwHBaseExceptionTest() {
         when(redisDAO.contains(link)).thenThrow(new HBaseException());
         List<String> actualResult = new ArrayList<>();
         List<String> answer = crawlerService.crawl(link);
