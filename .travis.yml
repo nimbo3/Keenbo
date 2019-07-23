@@ -1,7 +1,14 @@
 language: java
-sudo: false
+
+script:
+  - mvn test -B
+
+jdk:
+  - oraclejdk8
+
 cache:
   directories:
-    - $HOME/.m2
+    - '$HOME/.m2/repositories'
+
 after_success:
   - bash <(curl -s https://codecov.io/bash)
