@@ -1,7 +1,6 @@
 package in.nimbo.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
-import in.nimbo.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.redis.RedisDAO;
@@ -44,10 +43,10 @@ public class CrawlerService {
             if (cache.getIfPresent(siteDomain) == null) {
                 if (!redisDAO.contains(siteLink)) {
                     Optional<Page> page = parserService.parse(siteLink);
-                    page.ifPresent(value -> links.addAll(value.getLinks()));
-                    page.ifPresent(value -> elasticDAO.save(siteLink, value.getContent()));
+                    page.ifPresent(value -> value.getLinks().forEach(link -> links.add(link.getHref())));
+                    page.ifPresent(value -> elasticDAO.save(siteLink, value.getContentWithTags()));
+                    page.ifPresent(value -> hBaseDAO.add(value));
                     redisDAO.add(siteLink);
-                    hBaseDAO.add(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
                     logger.info("get " + siteLink);
                 }

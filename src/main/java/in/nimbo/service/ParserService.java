@@ -4,6 +4,8 @@ import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import in.nimbo.config.AppConfig;
+import in.nimbo.entity.Anchor;
+import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.LanguageDetectException;
 import in.nimbo.utility.LinkUtility;
@@ -31,23 +33,35 @@ public class ParserService {
     }
 
     public Optional<Page> parse(String siteLink) {
-        List<String> links = new ArrayList<>();
         try {
             Optional<Document> documentOptional = getDocument(siteLink);
-            if (!documentOptional.isPresent())
+            if (!documentOptional.isPresent()) {
                 return Optional.empty();
+            }
             Document document = documentOptional.get();
-            String pageContent = document.text();
-            if (isEnglishLanguage(pageContent)) {
-                Elements elements = document.getElementsByTag("a");
-                for (Element element : elements) {
-                    String absUrl = element.absUrl("href");
+            String pageContentWithoutTag = document.text();
+            String pageContentWithTag = document.html();
+            if (isEnglishLanguage(pageContentWithoutTag)) {
+                Elements linkElements = document.getElementsByTag("a");
+                List<Anchor> links = new ArrayList<>();
+                for (Element linkElement : linkElements) {
+                    String absUrl = linkElement.absUrl("href");
                     if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
                             && LinkUtility.isValidUrl(absUrl)) {
-                        links.add(absUrl);
+                        links.add(new Anchor(absUrl, linkElement.text()));
                     }
                 }
-                return Optional.of(new Page(pageContent, links));
+                Elements metaElements = document.getElementsByTag("meta");
+                List<Meta> metas = new ArrayList<>();
+                for (Element metaElement : metaElements) {
+                    String name = metaElement.attr("name");
+                    String content = metaElement.attr("content");
+                    if (name != null && content != null && !name.isEmpty() && !content.isEmpty()){
+                        Meta meta = new Meta(name, content);
+                        metas.add(meta);
+                    }
+                }
+                return Optional.of(new Page(pageContentWithTag, pageContentWithoutTag, links, metas, siteLink, 1.0, LinkUtility.reverseLink(siteLink)));
             }
         } catch (LanguageDetectException e) {
             logger.warn("cannot detect language of site : {}", siteLink);
@@ -94,5 +108,4 @@ public class ParserService {
             throw new LanguageDetectException(e);
         }
     }
-
 }

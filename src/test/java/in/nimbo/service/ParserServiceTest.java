@@ -2,6 +2,7 @@ package in.nimbo.service;
 
 import in.nimbo.TestUtility;
 import in.nimbo.config.AppConfig;
+import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Page;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -51,9 +52,13 @@ public class ParserServiceTest {
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
         assertTrue(parserService.parse(link).isPresent());
         Page page = parserService.parse(link).get();
-        String pageContent = "Nimbo Link Header mail at support@nimbo.in. paragraph! another link";
-        Assert.assertEquals(page.getContent(), pageContent);
-        Assert.assertEquals(page.getLinks(), pageLinks);
+        String pageContent = "Nimbo Anchor Header mail at support@nimbo.in. paragraph! another link";
+        Assert.assertEquals(page.getContentWithOutTags(), pageContent);
+        List<String> list = new ArrayList<>();
+        for (Anchor link : page.getLinks()) {
+            list.add(link.getHref());
+        }
+        Assert.assertEquals(list, pageLinks);
     }
 
     @Test

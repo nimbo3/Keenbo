@@ -6,8 +6,8 @@ import in.nimbo.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.redis.RedisDAO;
+import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Page;
-import in.nimbo.exception.HBaseException;
 import in.nimbo.utility.LinkUtility;
 import org.junit.Assert;
 import org.junit.Before;
@@ -50,7 +50,11 @@ public class CrawlerServiceTest {
         crawledLinks.add("https://www.google.com/");
         crawledLinks.add("https://stackoverflow.com/");
         crawledLinks.add("https://www.sahab.ir/");
-        page = Optional.of(new Page(content, crawledLinks));
+        List<Anchor> links = new ArrayList<>();
+        for (String s:crawledLinks) {
+            links.add(new Anchor(s, s));
+        }
+        page = Optional.of(new Page(content, content, links, new ArrayList<>(), link, 1, link));
         hBaseDAO = mock(HBaseDAO.class);
         redisDAO = mock(RedisDAO.class);
         when(parserService.parse(link)).thenReturn(page);
