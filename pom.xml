@@ -24,6 +24,8 @@
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
         <apache.configuration.version>1.10</apache.configuration.version>
         <langdetect.version>1.1-20120112</langdetect.version>
+        <mockito.version>2.10.0</mockito.version>
+        <jacoco-plugin.versio>0.8.4</jacoco-plugin.versio>
     </properties>
 
     <dependencies>
@@ -110,6 +112,14 @@
             <version>${apache.configuration.version}</version>
         </dependency>
 
+        <!-- library for mock classes -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>${mockito.version}</version>
+            <scope>test</scope>
+        </dependency>
+
         <!-- language detector -->
         <dependency>
             <groupId>com.cybozu.labs</groupId>
@@ -153,6 +163,11 @@
                 </executions>
             </plugin>
             <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco-plugin.versio}</version>
+            </plugin>
+            <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.4.0</version>
@@ -164,7 +179,25 @@
 
         <pluginManagement>
             <plugins>
-
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                    <executions>
+                        <execution>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>report</id>
+                            <phase>test</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
                 <plugin>
                     <artifactId>maven-clean-plugin</artifactId>
                     <version>3.1.0</version>
