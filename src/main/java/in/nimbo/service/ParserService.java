@@ -3,7 +3,6 @@ package in.nimbo.service;
 import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
-import com.cybozu.labs.langdetect.Language;
 import in.nimbo.config.AppConfig;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.LanguageDetectException;
@@ -20,7 +19,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,11 +56,14 @@ public class ParserService {
                 }
                 return Optional.of(new Page(pageContent, links));
             }
+//            else {--
+//                logger.info("not english: {}", siteLink);
+//            }
         } catch (MalformedURLException e) {
             logger.warn("Illegal url format: {}", siteLink);
         } catch (HttpStatusException e) {
             logger.warn("Response is not OK. Url: \"{}\" StatusCode: {}", e.getUrl(), e.getStatusCode());
-        }catch (LanguageDetectException e){
+        } catch (LanguageDetectException e) {
             logger.warn("cannot detect language of site : {}", siteLink);
         } catch (IOException e) {
             logger.warn("Unable to parse page with jsoup: {}", siteLink);
@@ -78,7 +79,6 @@ public class ParserService {
      */
     private boolean isEnglishLanguage(String text) {
         try {
-            DetectorFactory.loadProfile("profiles");
             Detector detector = DetectorFactory.create();
             detector.append(text);
             return detector.detect().equals("en");
@@ -86,4 +86,5 @@ public class ParserService {
             throw new LanguageDetectException(e);
         }
     }
+
 }

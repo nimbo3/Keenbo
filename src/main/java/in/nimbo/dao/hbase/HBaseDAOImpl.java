@@ -20,8 +20,8 @@ public class HBaseDAOImpl implements HBaseDAO {
 
     @Override
     public void add(String link) throws HBaseException {
-        try (Connection connection = ConnectionFactory.createConnection(conf)) {
-            Table table = connection.getTable(TableName.valueOf(config.getLinksTable()));
+        try (Connection connection = ConnectionFactory.createConnection(conf);
+             Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
             Put put = new Put(Bytes.toBytes(link));
             put.addColumn(Bytes.toBytes(config.getReferenceCountColumnFamily()),
                     Bytes.toBytes(config.getReferenceCountColumn()), Bytes.toBytes("1"));
@@ -33,8 +33,8 @@ public class HBaseDAOImpl implements HBaseDAO {
 
     @Override
     public boolean contains(String link) throws HBaseException {
-        try (Connection connection = ConnectionFactory.createConnection(conf)) {
-            Table table = connection.getTable(TableName.valueOf(config.getLinksTable()));
+        try (Connection connection = ConnectionFactory.createConnection(conf);
+             Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
             Get get = new Get(Bytes.toBytes(link));
             Result result = table.get(get);
             return result.size() > 0;

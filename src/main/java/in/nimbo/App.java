@@ -1,5 +1,7 @@
 package in.nimbo;
 
+import com.cybozu.labs.langdetect.DetectorFactory;
+import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.config.AppConfig;
@@ -23,6 +25,11 @@ import java.util.concurrent.TimeUnit;
 public class App {
 
     public static void main(String[] args) {
+        try {
+            DetectorFactory.loadProfile("profiles");
+        } catch (LangDetectException e) {
+            System.out.println("Unable to load profiles of language detector");
+        }
         Configuration configuration = HBaseConfiguration.create();
         HBaseConfig config = HBaseConfig.load();
         AppConfig appConfig = AppConfig.load();
