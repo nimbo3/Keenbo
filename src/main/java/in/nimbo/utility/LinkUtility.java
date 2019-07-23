@@ -8,6 +8,14 @@ public class LinkUtility {
     }
 
     /**
+     * @param link link
+     * @return reversed link(only domain)
+     */
+    public static String reverseLink(String link){
+        return link;
+    }
+
+    /**
      * extract domain from a url
      * url must be in absolute format
      * @param link link

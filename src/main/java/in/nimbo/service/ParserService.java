@@ -61,7 +61,7 @@ public class ParserService {
                         metas.add(meta);
                     }
                 }
-                return Optional.of(new Page(pageContentWithTag, pageContentWithoutTag, links, metas, siteLink, 1.0, reverseLink(siteLink)));
+                return Optional.of(new Page(pageContentWithTag, pageContentWithoutTag, links, metas, siteLink, 1.0, LinkUtility.reverseLink(siteLink)));
             }
         } catch (LanguageDetectException e) {
             logger.warn("cannot detect language of site : {}", siteLink);
@@ -108,9 +108,4 @@ public class ParserService {
             throw new LanguageDetectException(e);
         }
     }
-
-    private String reverseLink(String link){
-        return link;
-    }
-
 }
