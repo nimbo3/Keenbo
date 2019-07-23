@@ -55,4 +55,11 @@ public class ParserServiceTest {
         Optional<Page> page = parserService.parse(link);
         Assert.assertFalse(page.isPresent());
     }
+
+    @Test
+    public void emptyDocumentTest() {
+        doReturn(Optional.empty()).when(parserService).getDocument(link);
+        Optional<Page> page = parserService.parse(link);
+        Assert.assertFalse(page.isPresent());
+    }
 }
