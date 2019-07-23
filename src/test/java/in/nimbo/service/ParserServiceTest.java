@@ -15,37 +15,43 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import static junit.framework.TestCase.assertTrue;
 import static org.mockito.Mockito.*;
 
 public class ParserServiceTest {
-    private static String input;
-    private static String persianInput;
     private static Document document;
     private static Document persianDocument;
     private static ParserService parserService;
     private static final String FILE_ADDRESS = "src/test/resources/html/sampleHTML.html";
     private static final String PERSIAN_FILE_ADDRESS = "src/test/resources/html/sampleHTMLper.html";
-    private static String link = "https://google.com";
-    private static String pageContent = "Nimbo Link Header mail at support@nimbo.in. paragraph! another link";
-    private static List<String> pageLinks = new ArrayList<>();
+    private String link;
+    private List<String> pageLinks;
 
     @BeforeClass
     public static void init() {
         AppConfig appConfig = AppConfig.load();
-        input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
-        persianInput = TestUtility.getFileContent(Paths.get(PERSIAN_FILE_ADDRESS));
+        String input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
+        String persianInput = TestUtility.getFileContent(Paths.get(PERSIAN_FILE_ADDRESS));
         document = Jsoup.parse(input, "UTF-8");
         persianDocument = Jsoup.parse(persianInput, "UTF-8");
         parserService = spy(new ParserService(appConfig));
+    }
+
+    @Before
+    public void beforeEachtest() {
+        link = "https://google.com";
+        pageLinks = new ArrayList<>();
         pageLinks.add("http://nimbo.in");
-        pageLinks.add("https://google.com");
+        pageLinks.add(link);
     }
 
     @Test
     public void parseTest() {
         doReturn(Optional.of(document)).when(parserService).getDocument(link);
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
+        assertTrue(parserService.parse(link).isPresent());
         Page page = parserService.parse(link).get();
+        String pageContent = "Nimbo Link Header mail at support@nimbo.in. paragraph! another link";
         Assert.assertEquals(page.getContent(), pageContent);
         Assert.assertEquals(page.getLinks(), pageLinks);
     }
