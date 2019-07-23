@@ -19,8 +19,6 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import redis.clients.jedis.JedisCluster;
 
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -40,22 +38,7 @@ public class App {
         RedisConfig redisConfig = RedisConfig.load();
         JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
 
-        ElasticDAO elasticDAO = new ElasticDAO() {
-            @Override
-            public void save(String link, String text) {
-
-            }
-
-            @Override
-            public Optional<String> get(String link) {
-                return null;
-            }
-
-            @Override
-            public List<String> getAllLinks() {
-                return null;
-            }
-        };
+        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, hBaseConfig);
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
         ParserService parserService = new ParserService(appConfig);
