@@ -5,13 +5,13 @@ import java.util.List;
 public class Page {
     private String contentWithTags;
     private String contentWithOutTags;
-    private List<Link> links;
+    private List<Anchor> links;
     private List<Meta> metas;
     private String link;
     private double pageRate;
     private String reversedLink;
 
-    public Page(String contentWithTags, String contentWithOutTags, List<Link> links, List<Meta> metas,
+    public Page(String contentWithTags, String contentWithOutTags, List<Anchor> links, List<Meta> metas,
                 String link, double pageRate, String reversedLink) {
         this.contentWithTags = contentWithTags;
         this.contentWithOutTags = contentWithOutTags;
@@ -42,7 +42,7 @@ public class Page {
         return contentWithOutTags;
     }
 
-    public List<Link> getLinks() {
+    public List<Anchor> getLinks() {
         return links;
     }
 

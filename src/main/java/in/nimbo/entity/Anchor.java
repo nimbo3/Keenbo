@@ -1,10 +1,10 @@
 package in.nimbo.entity;
 
-public class Link {
+public class Anchor {
     private String href;
     private String anchor;
 
-    public Link(String href, String anchor) {
+    public Anchor(String href, String anchor) {
         this.href = href;
         this.anchor = anchor;
     }

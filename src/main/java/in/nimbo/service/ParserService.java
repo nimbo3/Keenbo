@@ -4,7 +4,7 @@ import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import in.nimbo.config.AppConfig;
-import in.nimbo.entity.Link;
+import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.LanguageDetectException;
@@ -43,12 +43,12 @@ public class ParserService {
             String pageContentWithTag = document.html();
             if (isEnglishLanguage(pageContentWithoutTag)) {
                 Elements linkElements = document.getElementsByTag("a");
-                List<Link> links = new ArrayList<>();
+                List<Anchor> links = new ArrayList<>();
                 for (Element linkElement : linkElements) {
                     String absUrl = linkElement.absUrl("href");
                     if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
                             && LinkUtility.isValidUrl(absUrl)) {
-                        links.add(new Link(absUrl, linkElement.text()));
+                        links.add(new Anchor(absUrl, linkElement.text()));
                     }
                 }
                 Elements metaElements = document.getElementsByTag("meta");

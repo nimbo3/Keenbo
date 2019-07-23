@@ -1,7 +1,7 @@
 package in.nimbo.dao.hbase;
 
 import in.nimbo.config.HBaseConfig;
-import in.nimbo.entity.Link;
+import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.HBaseException;
@@ -55,7 +55,7 @@ public class HBaseDAOImpl implements HBaseDAO {
             put.addColumn(Bytes.toBytes(config.getContentColumnFamily()),
                     Bytes.toBytes(config.getContentColumn()), Bytes.toBytes(page.getContentWithTags()));
 
-            for (Link link : page.getLinks()) {
+            for (Anchor link : page.getLinks()) {
                 put.addColumn(Bytes.toBytes(config.getAnchorsColumnFamily()),
                         Bytes.toBytes(link.getHref()), Bytes.toBytes(link.getAnchor()));
             }
