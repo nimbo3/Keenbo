@@ -22,7 +22,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.mockito.Mockito.*;
 
-public class crawlerServiceTest {
+public class CrawlerServiceTest {
     private static HBaseDAO hBaseDAO;
     private static ElasticDAO elasticDAO;
     private static ParserService parserService;
