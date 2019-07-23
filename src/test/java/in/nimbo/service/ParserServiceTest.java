@@ -48,4 +48,11 @@ public class ParserServiceTest {
         Assert.assertEquals(page.getContent(), pageContent);
         Assert.assertEquals(page.getLinks(), pageLinks);
     }
+
+    @Test
+    public void parseNotEnglishPageTest() {
+        doReturn(Optional.of(persianDocument)).when(parserService).getDocument(link);
+        Optional<Page> page = parserService.parse(link);
+        Assert.assertFalse(page.isPresent());
+    }
 }
