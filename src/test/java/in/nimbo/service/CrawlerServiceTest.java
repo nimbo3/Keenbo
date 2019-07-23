@@ -97,12 +97,4 @@ public class CrawlerServiceTest {
         List<String> actualResult = new ArrayList<>();
         Assert.assertEquals(answer, actualResult);
     }
-
-    @Test
-    public void throwHBaseExceptionTest() {
-        when(redisDAO.contains(link)).thenThrow(new HBaseException());
-        List<String> actualResult = new ArrayList<>();
-        List<String> answer = crawlerService.crawl(link);
-        Assert.assertEquals(answer, actualResult);
-    }
 }
