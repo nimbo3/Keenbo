@@ -52,7 +52,7 @@ public class ParserServiceTest {
         assertTrue(parserService.parse(link).isPresent());
         Page page = parserService.parse(link).get();
         String pageContent = "Nimbo Link Header mail at support@nimbo.in. paragraph! another link";
-        Assert.assertEquals(page.getContent(), pageContent);
+        Assert.assertEquals(page.getContentWithTags(), pageContent);
         Assert.assertEquals(page.getLinks(), pageLinks);
     }
 

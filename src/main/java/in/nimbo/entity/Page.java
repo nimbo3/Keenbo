@@ -3,19 +3,31 @@ package in.nimbo.entity;
 import java.util.List;
 
 public class Page {
-    private String content;
-    private List<String> links;
+    private String contentWithTags;
+    private String contentWithOutTags;
+    private List<Link> links;
+    private List<Meta> metas;
 
-    public Page(String content, List<String> links) {
-        this.content = content;
+    public Page(String contentWithTags, String contentWithOutTags, List<Link> links, List<Meta> metas) {
+        this.contentWithTags = contentWithTags;
+        this.contentWithOutTags = contentWithOutTags;
         this.links = links;
+        this.metas = metas;
     }
 
-    public String getContent() {
-        return content;
+    public String getContentWithTags() {
+        return contentWithTags;
     }
 
-    public List<String> getLinks() {
+    public String getContentWithOutTags() {
+        return contentWithOutTags;
+    }
+
+    public List<Link> getLinks() {
         return links;
+    }
+
+    public List<Meta> getMetas() {
+        return metas;
     }
 }
