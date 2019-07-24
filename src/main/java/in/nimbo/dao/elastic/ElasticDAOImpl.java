@@ -124,7 +124,7 @@ public class ElasticDAOImpl implements ElasticDAO {
                 if (fields.containsKey("link"))
                     page.setLink(fields.get("link").getValue());
                 if (fields.containsKey("title"))
-                    page.setLink(fields.get("title").getValue());
+                    page.setTitle(fields.get("title").getValue());
                 pages.add(page);
             }
             return pages;
