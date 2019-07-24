@@ -53,10 +53,10 @@ public class ParserServiceTest {
         assertTrue(parserService.parse(link).isPresent());
         Page page = parserService.parse(link).get();
         String pageContent = "Nimbo Anchor Header mail at support@nimbo.in. paragraph! another link";
-        Assert.assertEquals(page.getContentWithOutTags(), pageContent);
+        Assert.assertEquals(page.getContentWithoutTags(), pageContent);
         List<String> list = new ArrayList<>();
-        for (Anchor link : page.getLinks()) {
-            list.add(link.getHref());
+        for (Anchor anchor : page.getAnchors()) {
+            list.add(anchor.getHref());
         }
         Assert.assertEquals(list, pageLinks);
     }
