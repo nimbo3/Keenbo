@@ -1,8 +1,12 @@
 package in.nimbo.service;
 
+import com.cybozu.labs.langdetect.Detector;
+import com.cybozu.labs.langdetect.DetectorFactory;
+import com.cybozu.labs.langdetect.LangDetectException;
 import in.nimbo.config.AppConfig;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
+import in.nimbo.exception.LanguageDetectException;
 import in.nimbo.utility.LinkUtility;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
@@ -20,6 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class ParserService {
+    private static final int ENGLISH_PROBABILITY = 80;
     private Logger logger = LoggerFactory.getLogger(LinkUtility.class);
     private AppConfig appConfig;
 
@@ -104,6 +109,22 @@ public class ParserService {
             return titleElements.get(0).text();
         } else {
             return "";
+        }
+    }
+
+    /**
+     * @param text text
+     * @return true if text is in English
+     */
+    public boolean isEnglishLanguage(String text) {
+        try {
+            Detector detector = DetectorFactory.create();
+            detector.append(text);
+            detector.setAlpha(0);
+            return detector.getProbabilities().stream()
+                    .anyMatch(x -> x.lang.equals("en") && x.prob > ENGLISH_PROBABILITY);
+        } catch (LangDetectException e) {
+            throw new LanguageDetectException(e);
         }
     }
 }

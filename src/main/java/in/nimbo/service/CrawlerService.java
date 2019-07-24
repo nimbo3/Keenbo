@@ -1,8 +1,5 @@
 package in.nimbo.service;
 
-import com.cybozu.labs.langdetect.Detector;
-import com.cybozu.labs.langdetect.DetectorFactory;
-import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
@@ -25,7 +22,6 @@ import java.util.List;
 import java.util.Optional;
 
 public class CrawlerService {
-    private static final int ENGLISH_PROBABILITY = 80;
     private Logger logger = LoggerFactory.getLogger(Consumer.class);
     private Cache<String, LocalDateTime> cache;
     private HBaseDAO hBaseDAO;
@@ -88,7 +84,7 @@ public class CrawlerService {
             Document document = documentOptional.get();
             String pageContentWithoutTag = document.text().replace("\n", " ");
             String pageContentWithTag = document.html();
-            if (isEnglishLanguage(pageContentWithoutTag)) {
+            if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
                 List<Anchor> anchors = parserService.getAnchors(document);
                 List<Meta> metas = parserService.getMetas(document);
                 String title = parserService.getTitle(document);
@@ -100,21 +96,5 @@ public class CrawlerService {
             logger.error(e.getMessage(), e);
         }
         return Optional.empty();
-    }
-
-    /**
-     * @param text text
-     * @return true if text is in English
-     */
-    public boolean isEnglishLanguage(String text) {
-        try {
-            Detector detector = DetectorFactory.create();
-            detector.append(text);
-            detector.setAlpha(0);
-            return detector.getProbabilities().stream()
-                    .anyMatch(x -> x.lang.equals("en") && x.prob > ENGLISH_PROBABILITY);
-        } catch (LangDetectException e) {
-            throw new LanguageDetectException(e);
-        }
     }
 }
