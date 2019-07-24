@@ -58,7 +58,7 @@ public class ElasticDAOImpl implements ElasticDAO {
             request.source(builder);
             IndexResponse index = client.index(request, RequestOptions.DEFAULT);
             if (index.getResult() != DocWriteResponse.Result.CREATED)
-                throw new ElasticException("Indexing failed!");
+                throw new ElasticException("Indexing failed: " + index.getResult());
         } catch (IOException e) {
             throw new ElasticException("Indexing failed!", e);
         }
