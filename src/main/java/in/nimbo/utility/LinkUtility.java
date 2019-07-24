@@ -25,7 +25,7 @@ public class LinkUtility {
         int port = url.getPort();
         String uri = url.getPath();
         String query = url.getQuery();
-        String answer = protocol + "://" + newHost + (port != -1 ? "" + port : "") + "/";
+        String answer = protocol + "://" + newHost + (port != -1 ? ":" + port : "");
         if (uri != null) {
             answer += uri;
         }

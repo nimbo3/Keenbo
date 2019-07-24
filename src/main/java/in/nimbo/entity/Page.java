@@ -2,6 +2,7 @@ package in.nimbo.entity;
 
 import in.nimbo.utility.LinkUtility;
 
+import java.net.MalformedURLException;
 import java.util.List;
 
 public class Page {
@@ -34,7 +35,11 @@ public class Page {
 
     public String getReversedLink() {
         if (reversedLink == null)
-            return reversedLink = LinkUtility.reverseLink(link);
+            try {
+                return reversedLink = LinkUtility.reverseLink(link);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
         return reversedLink;
     }
 
