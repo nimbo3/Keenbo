@@ -22,19 +22,6 @@ public class HBaseDAOImpl implements HBaseDAO {
     }
 
     @Override
-    public void add(String link) throws HBaseException {
-        try (Connection connection = ConnectionFactory.createConnection(conf);
-             Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
-            Put put = new Put(Bytes.toBytes(link));
-            put.addColumn(Bytes.toBytes(config.getContentColumnFamily()),
-                    Bytes.toBytes(config.getContentColumn()), Bytes.toBytes("1"));
-            table.put(put);
-        } catch (IOException e) {
-            throw new HBaseException(e);
-        }
-    }
-
-    @Override
     public boolean contains(String link) throws HBaseException {
         try (Connection connection = ConnectionFactory.createConnection(conf);
              Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
