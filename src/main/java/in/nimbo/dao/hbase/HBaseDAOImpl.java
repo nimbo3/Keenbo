@@ -42,9 +42,9 @@ public class HBaseDAOImpl implements HBaseDAO {
             put.addColumn(Bytes.toBytes(config.getContentColumnFamily()),
                     Bytes.toBytes(config.getContentColumn()), Bytes.toBytes(page.getContentWithTags()));
 
-            for (Anchor link : page.getAnchors()) {
+            for (Anchor anchor : page.getAnchors()) {
                 put.addColumn(Bytes.toBytes(config.getAnchorsColumnFamily()),
-                        Bytes.toBytes(link.getHref()), Bytes.toBytes(link.getAnchor()));
+                        Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getAnchor()));
             }
 
             for (Meta meta : page.getMetas()) {

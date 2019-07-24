@@ -1,8 +1,8 @@
 package in.nimbo.dao.elastic;
 
 import in.nimbo.config.ElasticConfig;
+import in.nimbo.entity.Page;
 import in.nimbo.exception.ElasticException;
-import org.apache.http.HttpHost;
 import org.elasticsearch.action.DocWriteResponse;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
@@ -11,41 +11,51 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class ElasticDAOImpl implements ElasticDAO {
     private final ElasticConfig config;
     private RestHighLevelClient client;
 
-    public ElasticDAOImpl(ElasticConfig config, RestHighLevelClient client) {
+    public ElasticDAOImpl(RestHighLevelClient client, ElasticConfig config) {
         this.config = config;
         this.client = client;
     }
 
-    public ElasticDAOImpl(ElasticConfig config) {
-        this.config = config;
-        client = new RestHighLevelClient(RestClient.builder(new HttpHost(config.getHost(), config.getPort())));
-    }
-
+    /**
+     * save necessary page field in elastic search
+     *
+     * @param page page
+     * @throws ElasticException if any exception during indexing happen
+     */
     @Override
-    public void save(String link, String text) {
+    public void save(Page page) {
         try {
-            IndexRequest request = new IndexRequest(config.getIndexName()).id(link).type(config.getType());
+            IndexRequest request = new IndexRequest(config.getIndexName())
+                    .id(page.getLink())
+                    .type(config.getType());
 
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
-            builder.field("text", text);
+            builder.field("link", page.getLink());
+            builder.field("title", page.getTitle());
+            builder.field("content", page.getContentWithoutTags());
+//            builder.field("meta", page.getMetas());
+            builder.field("rank", page.getRank());
             builder.endObject();
             request.source(builder);
             IndexResponse index = client.index(request, RequestOptions.DEFAULT);
@@ -56,40 +66,96 @@ public class ElasticDAOImpl implements ElasticDAO {
         }
     }
 
+    /**
+     * get a page with given link from link from elastic search
+     *
+     * @param link link of page
+     * @return page if it is available at database otherwise return Optional.empty
+     * @throws ElasticException if any exception during indexing happen
+     */
     @Override
-    public Optional<String> get(String link) {
+    public Optional<Page> get(String link) {
         try {
             GetRequest getRequest = new GetRequest(config.getIndexName(), config.getType(), link);
             GetResponse response = client.get(getRequest, RequestOptions.DEFAULT);
-            String text = null;
             if (response.isExists()) {
-                text = (String) response.getSource().get("text");
+                Page page = new Page();
+                Map<String, Object> source = response.getSource();
+                if (source.containsKey("link")) {
+                    page.setLink((String) source.get("link"));
+                }
+                if (source.containsKey("title")) {
+                    page.setTitle((String) source.get("title"));
+                }
+                if (source.containsKey("content"))
+                    page.setContentWithoutTags((String) source.get("content"));
+                if (source.containsKey("rank"))
+                    page.setRank((double) source.get("rank"));
+                return Optional.of(page);
+            } else {
+                return Optional.empty();
             }
-            return Optional.ofNullable(text);
         } catch (IOException e) {
-            throw new ElasticException("Get failed", e);
+            throw new ElasticException("Unable to get page: " + link, e);
         } catch (ClassCastException e) {
-            return Optional.empty();
+            throw new ElasticException("Illegal mapping for a field", e);
         }
     }
 
+    /**
+     * @return all pages in elastic search
+     * @throws ElasticException if any exception during indexing happen
+     */
     @Override
-    public List<String> getAllLinks() {
+    public List<Page> getAllPages() {
         try {
-            ArrayList<String> links = new ArrayList<>();
             SearchRequest searchRequest = new SearchRequest(config.getIndexName());
             searchRequest.types(config.getType());
-            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.query(QueryBuilders.matchAllQuery());
-            searchRequest.source(searchSourceBuilder);
+
+            SearchSourceBuilder searchBuilder = new SearchSourceBuilder();
+            searchBuilder.query(QueryBuilders.matchAllQuery());
+            searchBuilder.fetchSource(new String[]{"link", "title"}, new String[0]);
+
+            searchRequest.source(searchBuilder);
             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
             SearchHit[] hits = response.getHits().getHits();
-            for (SearchHit hit : hits)
-                links.add(hit.getId());
-            return links;
+            return convertHitArrayToPageList(hits);
         } catch (IOException e) {
-            throw new ElasticException("Search failed", e);
+            throw new ElasticException("Unable to get all pages", e);
         }
 
+    }
+
+    private List<Page> convertHitArrayToPageList(SearchHit[] hits){
+        List<Page> pages = new ArrayList<>();
+        for (SearchHit hit : hits) {
+            Page page = new Page();
+            Map<String, Object> fields = hit.getSourceAsMap();
+            if (fields.containsKey("link")) {
+                page.setLink((String) fields.get("link"));
+            }
+            if (fields.containsKey("title")) {
+                page.setTitle((String) fields.get("title"));
+            }
+            pages.add(page);
+        }
+        return pages;
+    }
+
+    @Override
+    public List<Page> search(String query) {
+        try {
+            SearchRequest request = new SearchRequest(config.getIndexName());
+            request.types(config.getType());
+
+            SearchSourceBuilder searchBuilder = new SearchSourceBuilder();
+            searchBuilder.query(QueryBuilders.multiMatchQuery(query));
+            request.source(searchBuilder);
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            SearchHit[] hits = response.getHits().getHits();
+            return convertHitArrayToPageList(hits);
+        } catch (IOException e) {
+            throw new ElasticException("Unable to search in elastic search", e);
+        }
     }
 }
