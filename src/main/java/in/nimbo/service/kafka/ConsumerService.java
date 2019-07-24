@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConsumerService implements Runnable {
@@ -33,7 +34,10 @@ public class ConsumerService implements Runnable {
             while (!closed.get()) {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(10));
                 for (ConsumerRecord<String, String> record : records) {
-                    messageQueue.put(record.value());
+                    boolean isAdded = false;
+                    while (!isAdded) {
+                        isAdded = messageQueue.offer(record.value(), 100, TimeUnit.MILLISECONDS);
+                    }
                 }
                 try {
                     consumer.commitSync();

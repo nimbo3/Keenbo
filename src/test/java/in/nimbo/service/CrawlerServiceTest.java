@@ -7,8 +7,10 @@ import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Anchor;
+import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.utility.LinkUtility;
+import org.jsoup.nodes.Document;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -20,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.*;
 
@@ -28,10 +31,10 @@ public class CrawlerServiceTest {
     private static RedisDAO redisDAO;
     private static ElasticDAO elasticDAO;
     private static ParserService parserService;
+    private static Document document;
     private static AppConfig appConfig;
     private static Cache<String, LocalDateTime> cache;
     private static CrawlerService crawlerService;
-    private static Optional<Page> page;
     private static String link;
     private static List<String> crawledLinks;
 
@@ -45,31 +48,30 @@ public class CrawlerServiceTest {
     @Before
     public void beforeEachTest() {
         link = "http://nimbo.in/";
-        String content = "Be your best!";
-        crawledLinks = new ArrayList<>();
-        crawledLinks.add("https://www.google.com/");
-        crawledLinks.add("https://stackoverflow.com/");
-        crawledLinks.add("https://www.sahab.ir/");
-        List<Anchor> links = new ArrayList<>();
-        for (String s:crawledLinks) {
-            links.add(new Anchor(s, s));
-        }
-        page = Optional.of(new Page(link, "title", content, content, links, new ArrayList<>(), 1));
+        String contentWithTag = "Be your best!";
+        String contentWithoutTag = "<html>Be your best!</html>";
+        String title = "nimbo";
+        List<Anchor> anchors = new ArrayList<>();
+        anchors.add(new Anchor("https://www.google.com/", "google"));
+        anchors.add(new Anchor("https://stackoverflow.com/", "stackoverflow"));
+        anchors.add(new Anchor("https://www.sahab.ir/", "sahab"));
+        crawledLinks = anchors.stream().map(Anchor::getHref).collect(Collectors.toList());
+        List<Meta> metas = new ArrayList<>();
+        metas.add(new Meta("key1", "value1"));
+        metas.add(new Meta("key2", "value2"));
+        Page page = new Page(link, title, contentWithTag, contentWithoutTag, anchors, metas, 1);
         hBaseDAO = mock(HBaseDAO.class);
         redisDAO = mock(RedisDAO.class);
-        when(parserService.parse(link)).thenReturn(page);
+        document = mock(Document.class);
+        when(parserService.getDocument(link)).thenReturn(Optional.of(document));
+        when(parserService.getAnchors(document)).thenReturn(anchors);
+        when(parserService.getMetas(document)).thenReturn(metas);
+        when(parserService.getTitle(document)).thenReturn(title);
         doNothing().when(elasticDAO).save(any(Page.class));
         doNothing().when(hBaseDAO).add(any(Page.class));
         cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
-    }
-
-    @Test
-    public void crawlTest() {
-        when(redisDAO.contains(link)).thenReturn(false);
-        List<String> answer = crawlerService.crawl(link);
-        Assert.assertEquals(answer, crawledLinks);
     }
 
     @Test

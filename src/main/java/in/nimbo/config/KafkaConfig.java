@@ -1,7 +1,6 @@
 package in.nimbo.config;
 
 import in.nimbo.exception.LoadConfigurationException;
-import in.nimbo.utility.Utility;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
@@ -20,8 +19,8 @@ public class KafkaConfig {
             PropertiesConfiguration configuration = new PropertiesConfiguration(CONFIG_NAME);
             config.setKafkaTopic(configuration.getString("topic.name"));
             config.setProducerCount(configuration.getInt("producer.count"));
-            config.setConsumerProperties(Utility.loadProperties("kafka-consumer.properties"));
-            config.setProducerProperties(Utility.loadProperties("kafka-producer.properties"));
+            config.setConsumerProperties(Config.loadProperties("kafka-consumer.properties"));
+            config.setProducerProperties(Config.loadProperties("kafka-producer.properties"));
             return config;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);

@@ -9,7 +9,7 @@ public class LinkUtility {
 
     /**
      * @param link link
-     * @return reversed link(only domain)
+     * @return reversed link (only domain)
      */
     public static String reverseLink(String link){
         return link;

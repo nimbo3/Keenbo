@@ -19,21 +19,28 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCluster;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class App {
+    private static Logger logger = LoggerFactory.getLogger(App.class);
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         try {
+            logger.info("Load application profiles for language detector");
             DetectorFactory.loadProfile("profiles");
         } catch (LangDetectException e) {
             System.out.println("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.");
+            logger.info("Unable to load profiles of language detector.");
             System.exit(1);
         }
+
         Configuration configuration = HBaseConfiguration.create();
         HBaseConfig hBaseConfig = HBaseConfig.load();
         AppConfig appConfig = AppConfig.load();
@@ -42,8 +49,7 @@ public class App {
         RedisConfig redisConfig = RedisConfig.load();
         JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
         RestHighLevelClient restHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort())));
-
-
+        logger.info("Configuration loaded");
 
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, hBaseConfig);
@@ -53,8 +59,10 @@ public class App {
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
         KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
+        logger.info("Start schedule service");
         kafkaService.schedule();
 
+        logger.info("Application started");
         System.out.println("Welcome to Search Engine");
         System.out.print("engine> ");
         Scanner in = new Scanner(System.in);
@@ -65,7 +73,8 @@ public class App {
                 kafkaService.sendMessage(link);
             } else if (cmd.equals("exit")) {
                 kafkaService.stopSchedule();
-                System.exit(0);
+                restHighLevelClient.close();
+                break;
             }
             System.out.print("engine> ");
         }
