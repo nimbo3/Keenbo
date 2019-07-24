@@ -9,7 +9,7 @@ import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.HBaseException;
 import in.nimbo.exception.LanguageDetectException;
-import in.nimbo.service.kafka.Consumer;
+import in.nimbo.service.kafka.ConsumerService;
 import in.nimbo.utility.LinkUtility;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class CrawlerService {
-    private Logger logger = LoggerFactory.getLogger(Consumer.class);
+    private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
     private Cache<String, LocalDateTime> cache;
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;

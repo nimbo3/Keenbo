@@ -13,7 +13,6 @@ import java.util.concurrent.*;
 public class KafkaService {
     private KafkaConfig kafkaConfig;
     private CrawlerService crawlerService;
-    private KafkaConsumer<String, String> kafkaConsumer;
     private BlockingQueue<String> messageQueue;
 
     public KafkaService(CrawlerService crawlerService, KafkaConfig kafkaConfig) {
@@ -31,14 +30,14 @@ public class KafkaService {
         messageQueue = new LinkedBlockingQueue<>();
 
         // Prepare consumer
-        kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getConsumerProperties());
+        KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getConsumerProperties());
         kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
-        executorService.submit(new Consumer(kafkaConsumer, messageQueue));
+        executorService.submit(new ConsumerService(kafkaConsumer, messageQueue));
 
         // Prepare producer
         for (int i = 0; i < kafkaConfig.getProducerCount(); i++) {
             KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
-            executorService.submit(new Producer(producer, kafkaConfig.getKafkaTopic(), messageQueue, crawlerService));
+            executorService.submit(new ProducerService(producer, kafkaConfig.getKafkaTopic(), messageQueue, crawlerService));
         }
         executorService.shutdown();
     }
@@ -47,7 +46,6 @@ public class KafkaService {
      * stop consumer service
      */
     public void stopSchedule() {
-        kafkaConsumer.wakeup();
         KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
         for (String message : messageQueue) {
             producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "Producer message", message));
@@ -61,7 +59,7 @@ public class KafkaService {
      */
     public void sendMessage(String message) {
         KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
-        producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "Producer message", message));
+        producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "ProducerService message", message));
         producer.flush();
     }
 }

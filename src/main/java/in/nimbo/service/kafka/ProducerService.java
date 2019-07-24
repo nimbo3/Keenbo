@@ -1,33 +1,40 @@
 package in.nimbo.service.kafka;
 
 import in.nimbo.service.CrawlerService;
-import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-public class Producer implements Runnable {
-    private Logger logger = LoggerFactory.getLogger(Producer.class);
+public class ProducerService implements Runnable {
+    private Logger logger = LoggerFactory.getLogger(ProducerService.class);
     private BlockingQueue<String> messageQueue;
-    private KafkaProducer<String, String> producer;
+    private Producer<String, String> producer;
     private String topic;
     private CrawlerService crawlerService;
+    private AtomicBoolean closed;
 
-    public Producer(KafkaProducer<String, String> producer, String topic,
-                    BlockingQueue<String> messageQueue, CrawlerService crawlerService) {
+    public ProducerService(Producer<String, String> producer, String topic,
+                           BlockingQueue<String> messageQueue, CrawlerService crawlerService) {
         this.producer = producer;
         this.messageQueue = messageQueue;
         this.topic = topic;
         this.crawlerService = crawlerService;
+        closed = new AtomicBoolean(false);
+    }
+
+    public void close() {
+        closed.set(true);
     }
 
     @Override
     public void run() {
         try {
-            while (true) {
+            while (!closed.get()) {
                 String newLink = messageQueue.take();
                 List<String> crawl = crawlerService.crawl(newLink);
                 for (String link : crawl) {
