@@ -4,10 +4,14 @@ import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.redis.RedisDAO;
+import in.nimbo.entity.Anchor;
+import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.HBaseException;
+import in.nimbo.exception.LanguageDetectException;
 import in.nimbo.service.kafka.ConsumerService;
 import in.nimbo.utility.LinkUtility;
+import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,10 +46,13 @@ public class CrawlerService {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
                 if (!redisDAO.contains(siteLink)) {
-                    Optional<Page> page = parserService.parse(siteLink);
-                    page.ifPresent(value -> value.getAnchors().forEach(link -> links.add(link.getHref())));
-                    page.ifPresent(value -> elasticDAO.save(value));
-                    page.ifPresent(value -> hBaseDAO.add(value));
+                    Optional<Page> pageOptional = getPage(siteLink);
+                    if (pageOptional.isPresent()) {
+                        Page page = pageOptional.get();
+                        page.getAnchors().forEach(link -> links.add(link.getHref()));
+                        elasticDAO.save(page);
+                        hBaseDAO.add(page);
+                    }
                     redisDAO.add(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
                     logger.info("get " + siteLink);
@@ -54,12 +61,40 @@ public class CrawlerService {
                 links.add(siteLink);
             }
         } catch (URISyntaxException e) {
-            logger.warn("Illegal url format: " + siteLink, e);
+            logger.warn("Illegal URL format: " + siteLink, e);
         } catch (HBaseException e) {
             logger.error("Unable to establish HBase connection", e);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
         return links;
+    }
+
+    /**
+     * crawl a site and return it's content as a page
+     * @param link link of site
+     * @return page if able to crawl page
+     */
+    public Optional<Page> getPage(String link) {
+        try {
+            Optional<Document> documentOptional = parserService.getDocument(link);
+            if (!documentOptional.isPresent()) {
+                return Optional.empty();
+            }
+            Document document = documentOptional.get();
+            String pageContentWithoutTag = document.text().replace("\n", " ");
+            String pageContentWithTag = document.html();
+            if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
+                List<Anchor> anchors = parserService.getAnchors(document);
+                List<Meta> metas = parserService.getMetas(document);
+                String title = parserService.getTitle(document);
+                return Optional.of(new Page(link, title, pageContentWithTag, pageContentWithoutTag, anchors, metas, 1.0));
+            }
+        } catch (LanguageDetectException e) {
+            logger.warn("Cannot detect language of site: {}", link);
+        } catch (Exception e) {
+            logger.error(e.getMessage(), e);
+        }
+        return Optional.empty();
     }
 }

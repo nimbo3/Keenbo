@@ -7,7 +7,6 @@ import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.Scanner;
 
 public class ElasticCLI {
@@ -24,24 +23,13 @@ public class ElasticCLI {
                 case "getAllPages":
                     List<Page> allPages = elasticDAO.getAllPages();
                     for (Page page : allPages) {
-                        System.out.println(page.getLink());
-                        System.out.println(page.getTitle());
-                        System.out.println("-----");
+                        System.out.println("link: " + page.getLink());
+                        System.out.println("title: " + page.getTitle());
+                        System.out.println("----------");
                     }
                     break;
-                case "get": {
-                    String link = input.next();
-                    Optional<Page> page = elasticDAO.get(link);
-                    if (page.isPresent()) {
-                        System.out.println(page.get().getLink() + " " + page.get().getTitle());
-                    }
-                    else {
-                        System.out.println("Unable to find link: " + link);
-                    }
-                    break;
-                }
                 case "search":
-                    String query = input.next();
+                    String query = input.nextLine();
                     List<Page> pages = elasticDAO.search(query);
                     for (Page page : pages) {
                         System.out.println("title: " + page.getTitle());
