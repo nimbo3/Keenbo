@@ -15,7 +15,9 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
@@ -107,7 +109,6 @@ public class ElasticDAOImpl implements ElasticDAO {
     @Override
     public List<Page> getAllPages() {
         try {
-            ArrayList<Page> pages = new ArrayList<>();
             SearchRequest searchRequest = new SearchRequest(config.getIndexName());
             searchRequest.types(config.getType());
 
@@ -118,19 +119,43 @@ public class ElasticDAOImpl implements ElasticDAO {
             searchRequest.source(searchBuilder);
             SearchResponse response = client.search(searchRequest, RequestOptions.DEFAULT);
             SearchHit[] hits = response.getHits().getHits();
-            for (SearchHit hit : hits) {
-                Page page = new Page();
-                Map<String, DocumentField> fields = hit.getFields();
-                if (fields.containsKey("link"))
-                    page.setLink(fields.get("link").getValue());
-                if (fields.containsKey("title"))
-                    page.setTitle(fields.get("title").getValue());
-                pages.add(page);
-            }
-            return pages;
+            return convertHitArrayToPageList(hits);
         } catch (IOException e) {
             throw new ElasticException("Unable to get all pages", e);
         }
 
+    }
+
+    private List<Page> convertHitArrayToPageList(SearchHit[] hits){
+        List<Page> pages = new ArrayList<>();
+        for (SearchHit hit : hits) {
+            Page page = new Page();
+            Map<String, Object> fields = hit.getSourceAsMap();
+            if (fields.containsKey("link")) {
+                page.setLink((String) fields.get("link"));
+            }
+            if (fields.containsKey("title")) {
+                page.setTitle((String) fields.get("title"));
+            }
+            pages.add(page);
+        }
+        return pages;
+    }
+
+    @Override
+    public List<Page> search(String query) {
+        try {
+            SearchRequest request = new SearchRequest(config.getIndexName());
+            request.types(config.getType());
+
+            SearchSourceBuilder searchBuilder = new SearchSourceBuilder();
+            searchBuilder.query(QueryBuilders.multiMatchQuery(query));
+            request.source(searchBuilder);
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            SearchHit[] hits = response.getHits().getHits();
+            return convertHitArrayToPageList(hits);
+        } catch (IOException e) {
+            throw new ElasticException("Unable to search in elastic search", e);
+        }
     }
 }

@@ -32,12 +32,23 @@ public class ElasticCLI {
                 case "get": {
                     String link = input.next();
                     Optional<Page> page = elasticDAO.get(link);
-                    if (page.isPresent())
+                    if (page.isPresent()) {
                         System.out.println(page.get().getLink() + " " + page.get().getTitle());
-                    else
+                    }
+                    else {
                         System.out.println("Unable to find link: " + link);
+                    }
                     break;
                 }
+                case "search":
+                    String query = input.next();
+                    List<Page> pages = elasticDAO.search(query);
+                    for (Page page : pages) {
+                        System.out.println("title: " + page.getTitle());
+                        System.out.println("link: " + page.getLink());
+                        System.out.println("----------");
+                    }
+                    break;
                 case "exit":
                     System.out.println("Good bye");
                     System.exit(0);
