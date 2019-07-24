@@ -6,18 +6,26 @@ import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.*;
 
 public class KafkaService {
+    private Logger logger = LoggerFactory.getLogger(KafkaService.class);
     private KafkaConfig kafkaConfig;
     private CrawlerService crawlerService;
     private BlockingQueue<String> messageQueue;
+    private ConsumerService consumerService;
+    private List<ProducerService> producerServices;
 
     public KafkaService(CrawlerService crawlerService, KafkaConfig kafkaConfig) {
         this.crawlerService = crawlerService;
         this.kafkaConfig = kafkaConfig;
+        producerServices = new ArrayList<>();
     }
 
     /**
@@ -32,25 +40,42 @@ public class KafkaService {
         // Prepare consumer
         KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getConsumerProperties());
         kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
-        executorService.submit(new ConsumerService(kafkaConsumer, messageQueue));
+        consumerService = new ConsumerService(kafkaConsumer, messageQueue);
+        executorService.submit(consumerService);
 
         // Prepare producer
         for (int i = 0; i < kafkaConfig.getProducerCount(); i++) {
             KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
-            executorService.submit(new ProducerService(producer, kafkaConfig.getKafkaTopic(), messageQueue, crawlerService));
+            ProducerService producerService = new ProducerService(producer, kafkaConfig.getKafkaTopic(), messageQueue, crawlerService);
+            producerServices.add(producerService);
+            executorService.submit(producerService);
         }
         executorService.shutdown();
     }
 
     /**
-     * stop consumer service
+     * stop services
      */
     public void stopSchedule() {
-        KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
-        for (String message : messageQueue) {
-            producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "Producer message", message));
+        logger.info("Stop schedule service");
+
+        consumerService.close();
+        for (ProducerService producerService : producerServices) {
+            producerService.close();
         }
-        producer.flush();
+        try {
+            TimeUnit.SECONDS.sleep(3);
+            logger.info("All service stopped");
+            logger.info("Start sending " + messageQueue.size() + " messages to kafka");
+            KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
+            for (String message : messageQueue) {
+                producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "Producer message", message));
+            }
+            producer.flush();
+            logger.info("All messages sent to kafka");
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**

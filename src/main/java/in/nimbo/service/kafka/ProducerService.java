@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProducerService implements Runnable {
@@ -35,10 +36,12 @@ public class ProducerService implements Runnable {
     public void run() {
         try {
             while (!closed.get()) {
-                String newLink = messageQueue.take();
-                List<String> crawl = crawlerService.crawl(newLink);
-                for (String link : crawl) {
-                    producer.send(new ProducerRecord<>(topic, "Producer message", link));
+                String newLink = messageQueue.poll(100, TimeUnit.MILLISECONDS);
+                if (newLink != null) {
+                    List<String> crawl = crawlerService.crawl(newLink);
+                    for (String link : crawl) {
+                        producer.send(new ProducerRecord<>(topic, "Producer message", link));
+                    }
                 }
             }
         } catch (InterruptedException e) {
