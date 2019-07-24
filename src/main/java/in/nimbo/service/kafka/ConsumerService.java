@@ -1,27 +1,36 @@
 package in.nimbo.service.kafka;
 
-import org.apache.kafka.clients.consumer.*;
-import org.apache.kafka.common.errors.WakeupException;
+import org.apache.kafka.clients.consumer.CommitFailedException;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConsumerService implements Runnable {
     private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
     private BlockingQueue<String> messageQueue;
     private Consumer<String, String> consumer;
+    private AtomicBoolean closed;
 
     public ConsumerService(Consumer<String, String> consumer, BlockingQueue<String> messageQueue) {
         this.consumer = consumer;
         this.messageQueue = messageQueue;
+        closed = new AtomicBoolean(false);
+    }
+
+    public void close() {
+        closed.set(true);
     }
 
     @Override
     public void run() {
         try {
-            while (true) {
+            while (!closed.get()) {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(10));
                 for (ConsumerRecord<String, String> record : records) {
                     messageQueue.put(record.value());
@@ -32,13 +41,12 @@ public class ConsumerService implements Runnable {
                     logger.error("Unable to commit changes", e);
                 }
             }
-        } catch (WakeupException e) {
-            logger.info("ConsumerService service stopped");
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         } finally {
             if (consumer != null)
                 consumer.close();
+            logger.info("Consumer service stopped");
         }
     }
 }
