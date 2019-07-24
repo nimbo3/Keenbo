@@ -3,6 +3,7 @@ package in.nimbo.entity;
 import java.util.List;
 
 public class Page {
+    private String title;
     private String contentWithTags;
     private String contentWithOutTags;
     private List<Anchor> anchors;
@@ -11,8 +12,9 @@ public class Page {
     private double pageRate;
     private String reversedLink;
 
-    public Page(String contentWithTags, String contentWithOutTags, List<Anchor> anchors, List<Meta> metas,
+    public Page(String title, String contentWithTags, String contentWithOutTags, List<Anchor> anchors, List<Meta> metas,
                 String link, double pageRate, String reversedLink) {
+        this.title = title;
         this.contentWithTags = contentWithTags;
         this.contentWithOutTags = contentWithOutTags;
         this.anchors = anchors;
@@ -20,6 +22,10 @@ public class Page {
         this.link = link;
         this.pageRate = pageRate;
         this.reversedLink = reversedLink;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public String getReversedLink() {
@@ -38,7 +44,7 @@ public class Page {
         return contentWithTags;
     }
 
-    public String getContentWithOutTags() {
+    public String getContentWithoutTags() {
         return contentWithOutTags;
     }
 

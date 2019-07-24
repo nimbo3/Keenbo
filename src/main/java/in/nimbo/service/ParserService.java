@@ -56,12 +56,17 @@ public class ParserService {
                 for (Element metaElement : metaElements) {
                     String name = metaElement.attr("name");
                     String content = metaElement.attr("content");
-                    if (name != null && content != null && !name.isEmpty() && !content.isEmpty()){
+                    if (name != null && content != null && !name.isEmpty() && !content.isEmpty()) {
                         Meta meta = new Meta(name, content);
                         metas.add(meta);
                     }
                 }
-                return Optional.of(new Page(pageContentWithTag, pageContentWithoutTag, links, metas, siteLink, 1.0, LinkUtility.reverseLink(siteLink)));
+                Elements titleElements = document.getElementsByTag("title");
+                String title = "";
+                if (titleElements.size() > 0) {
+                    title = titleElements.get(0).text();
+                }
+                return Optional.of(new Page(title, pageContentWithTag, pageContentWithoutTag, links, metas, siteLink, 1.0, LinkUtility.reverseLink(siteLink)));
             }
         } catch (LanguageDetectException e) {
             logger.warn("cannot detect language of site : {}", siteLink);

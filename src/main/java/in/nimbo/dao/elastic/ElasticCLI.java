@@ -22,7 +22,7 @@ public class ElasticCLI {
                 case "save": {
                     String link = scanner.next();
                     String text = scanner.next();
-                    elasticDAO.save(link, text);
+//                    elasticDAO.save(link, text);
                     break;
                 }
                 case "exit":

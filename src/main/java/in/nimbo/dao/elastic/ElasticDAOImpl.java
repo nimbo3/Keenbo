@@ -1,6 +1,7 @@
 package in.nimbo.dao.elastic;
 
 import in.nimbo.config.ElasticConfig;
+import in.nimbo.entity.Page;
 import in.nimbo.exception.ElasticException;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.DocWriteResponse;
@@ -39,13 +40,18 @@ public class ElasticDAOImpl implements ElasticDAO {
     }
 
     @Override
-    public void save(String link, String text) {
+    public void save(Page page) {
         try {
-            IndexRequest request = new IndexRequest(config.getIndexName()).id(link).type(config.getType());
+            IndexRequest request = new IndexRequest(config.getIndexName())
+                    .id(page.getLink()).type(config.getType());
 
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
-            builder.field("text", text);
+            builder.field("title", page.getTitle());
+            builder.field("link", page.getLink());
+            builder.field("content", page.getContentWithoutTags());
+            builder.field("meta", page.getMetas());
+            builder.field("point", page.getPageRate());
             builder.endObject();
             request.source(builder);
             IndexResponse index = client.index(request, RequestOptions.DEFAULT);
