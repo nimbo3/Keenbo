@@ -1,9 +1,6 @@
 package in.nimbo.service.kafka;
 
-import org.apache.kafka.clients.consumer.CommitFailedException;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
-import org.apache.kafka.clients.consumer.ConsumerRecords;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.consumer.*;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,12 +8,12 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
 
-public class Consumer implements Runnable {
-    private Logger logger = LoggerFactory.getLogger(Consumer.class);
+public class ConsumerService implements Runnable {
+    private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
     private BlockingQueue<String> messageQueue;
-    private KafkaConsumer<String, String> consumer;
+    private Consumer<String, String> consumer;
 
-    public Consumer(KafkaConsumer<String, String> consumer, BlockingQueue<String> messageQueue) {
+    public ConsumerService(Consumer<String, String> consumer, BlockingQueue<String> messageQueue) {
         this.consumer = consumer;
         this.messageQueue = messageQueue;
     }
@@ -36,7 +33,7 @@ public class Consumer implements Runnable {
                 }
             }
         } catch (WakeupException e) {
-            logger.info("Consumer service stopped");
+            logger.info("ConsumerService service stopped");
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         } finally {
