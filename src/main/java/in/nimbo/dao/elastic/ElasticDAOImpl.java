@@ -52,7 +52,7 @@ public class ElasticDAOImpl implements ElasticDAO {
             builder.field("link", page.getLink());
             builder.field("title", page.getTitle());
             builder.field("content", page.getContentWithoutTags());
-            builder.field("meta", page.getMetas());
+//            builder.field("meta", page.getMetas());
             builder.field("rank", page.getRank());
             builder.endObject();
             request.source(builder);

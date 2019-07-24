@@ -43,6 +43,8 @@ public class App {
         JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
         RestHighLevelClient restHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort())));
 
+
+
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, hBaseConfig);
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
@@ -63,7 +65,7 @@ public class App {
                 kafkaService.sendMessage(link);
             } else if (cmd.equals("exit")) {
                 kafkaService.stopSchedule();
-                break;
+                System.exit(0);
             }
             System.out.print("engine> ");
         }
