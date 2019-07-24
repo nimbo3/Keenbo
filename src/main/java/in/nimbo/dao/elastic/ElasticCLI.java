@@ -29,7 +29,7 @@ public class ElasticCLI {
                     }
                     break;
                 case "search":
-                    String query = input.next();
+                    String query = input.nextLine();
                     List<Page> pages = elasticDAO.search(query);
                     for (Page page : pages) {
                         System.out.println("title: " + page.getTitle());

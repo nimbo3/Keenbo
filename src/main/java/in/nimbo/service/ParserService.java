@@ -1,13 +1,8 @@
 package in.nimbo.service;
 
-import com.cybozu.labs.langdetect.Detector;
-import com.cybozu.labs.langdetect.DetectorFactory;
-import com.cybozu.labs.langdetect.LangDetectException;
 import in.nimbo.config.AppConfig;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
-import in.nimbo.entity.Page;
-import in.nimbo.exception.LanguageDetectException;
 import in.nimbo.utility.LinkUtility;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
@@ -32,53 +27,14 @@ public class ParserService {
         this.appConfig = appConfig;
     }
 
-    public Optional<Page> parse(String siteLink) {
+    /**
+     * return document of page if it is present
+     * @param link link of site
+     * @return
+     */
+    public Optional<Document> getDocument(String link) {
         try {
-            Optional<Document> documentOptional = getDocument(siteLink);
-            if (!documentOptional.isPresent()) {
-                return Optional.empty();
-            }
-            Document document = documentOptional.get();
-            String pageContentWithoutTag = document.text().replace("\n", " ");
-            String pageContentWithTag = document.html();
-            if (isEnglishLanguage(pageContentWithoutTag)) {
-                Elements linkElements = document.getElementsByTag("a");
-                List<Anchor> links = new ArrayList<>();
-                for (Element linkElement : linkElements) {
-                    String absUrl = linkElement.absUrl("href");
-                    if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
-                            && LinkUtility.isValidUrl(absUrl)) {
-                        links.add(new Anchor(absUrl, linkElement.text()));
-                    }
-                }
-                Elements metaElements = document.getElementsByTag("meta");
-                List<Meta> metas = new ArrayList<>();
-                for (Element metaElement : metaElements) {
-                    String name = metaElement.attr("name");
-                    String content = metaElement.attr("content");
-                    if (name != null && content != null && !name.isEmpty() && !content.isEmpty()) {
-                        Meta meta = new Meta(name, content);
-                        metas.add(meta);
-                    }
-                }
-                Elements titleElements = document.getElementsByTag("title");
-                String title = "";
-                if (titleElements.size() > 0) {
-                    title = titleElements.get(0).text();
-                }
-                return Optional.of(new Page(siteLink, title, pageContentWithTag, pageContentWithoutTag, links, metas, 1.0));
-            }
-        } catch (LanguageDetectException e) {
-            logger.warn("cannot detect language of site : {}", siteLink);
-        } catch (Exception e) {
-            logger.error(e.getMessage(), e);
-        }
-        return Optional.empty();
-    }
-
-    public Optional<Document> getDocument(String siteLink) {
-        try {
-            Connection.Response response = Jsoup.connect(siteLink)
+            Connection.Response response = Jsoup.connect(link)
                     .userAgent(appConfig.getJsoupUserAgent())
                     .timeout(appConfig.getJsoupTimeout())
                     .followRedirects(true)
@@ -91,26 +47,63 @@ public class ParserService {
                 return Optional.of(response.parse());
             }
         } catch (MalformedURLException e) {
-            logger.warn("Illegal url format: {}", siteLink);
+            logger.warn("Illegal url format: {}", link);
         } catch (HttpStatusException e) {
             logger.warn("Response is not OK. Url: \"{}\" StatusCode: {}", e.getUrl(), e.getStatusCode());
         } catch (IOException e) {
-            logger.warn("Unable to parse page with jsoup: {}", siteLink);
+            logger.warn("Unable to parse page with jsoup: {}", link);
         }
         return Optional.empty();
     }
 
     /**
-     * @param text text
-     * @return true if text is in English
+     *
+     * @param document document contain a site contents
+     * @return list of all anchors in a document
      */
-    public boolean isEnglishLanguage(String text) {
-        try {
-            Detector detector = DetectorFactory.create();
-            detector.append(text);
-            return detector.detect().equals("en");
-        } catch (LangDetectException e) {
-            throw new LanguageDetectException(e);
+    public List<Anchor> getAnchors(Document document) {
+        List<Anchor> anchors = new ArrayList<>();
+        Elements linkElements = document.getElementsByTag("a");
+        for (Element linkElement : linkElements) {
+            String absUrl = linkElement.absUrl("href");
+            if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
+                    && LinkUtility.isValidUrl(absUrl)) {
+                anchors.add(new Anchor(absUrl, linkElement.text()));
+            }
+        }
+        return anchors;
+    }
+
+    /**
+     *
+     * @param document document contain a site contents
+     * @return list of all metas in a document
+     */
+    public List<Meta> getMetas(Document document) {
+        List<Meta> metas = new ArrayList<>();
+        Elements metaElements = document.getElementsByTag("meta");
+        for (Element metaElement : metaElements) {
+            String name = metaElement.attr("name");
+            String content = metaElement.attr("content");
+            if (name != null && content != null && !name.isEmpty() && !content.isEmpty()) {
+                Meta meta = new Meta(name, content);
+                metas.add(meta);
+            }
+        }
+        return metas;
+    }
+
+    /**
+     *
+     * @param document document contain a site contents
+     * @return title of document and empty if there is no title
+     */
+    public String getTitle(Document document) {
+        Elements titleElements = document.getElementsByTag("title");
+        if (titleElements.size() > 0) {
+            return titleElements.get(0).text();
+        } else {
+            return "";
         }
     }
 }
