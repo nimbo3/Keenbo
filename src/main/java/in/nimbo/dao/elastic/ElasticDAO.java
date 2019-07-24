@@ -10,5 +10,5 @@ public interface ElasticDAO {
 
     Optional<Page> get(String link);
 
-    List<String> getAllLinks();
+    List<Page> getAllPages();
 }

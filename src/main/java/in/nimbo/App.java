@@ -42,7 +42,7 @@ public class App {
         JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
         RestHighLevelClient restHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort())));
 
-        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, restHighLevelClient);
+        ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, hBaseConfig);
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
         ParserService parserService = new ParserService(appConfig);
