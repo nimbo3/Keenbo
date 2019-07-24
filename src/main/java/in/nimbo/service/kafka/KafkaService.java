@@ -8,15 +8,13 @@ import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 
 import java.util.Collections;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedTransferQueue;
+import java.util.concurrent.*;
 
 public class KafkaService {
     private KafkaConfig kafkaConfig;
     private CrawlerService crawlerService;
     private KafkaConsumer<String, String> kafkaConsumer;
+    private BlockingQueue<String> messageQueue;
 
     public KafkaService(CrawlerService crawlerService, KafkaConfig kafkaConfig) {
         this.crawlerService = crawlerService;
@@ -30,7 +28,7 @@ public class KafkaService {
      */
     public void schedule() {
         ExecutorService executorService = Executors.newFixedThreadPool(kafkaConfig.getProducerCount() + 1);
-        BlockingQueue<String> messageQueue = new LinkedTransferQueue<>();
+        messageQueue = new LinkedBlockingQueue<>();
 
         // Prepare consumer
         kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getConsumerProperties());
@@ -50,6 +48,11 @@ public class KafkaService {
      */
     public void stopSchedule() {
         kafkaConsumer.wakeup();
+        KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
+        for (String message : messageQueue) {
+            producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "Producer message", message));
+        }
+        producer.flush();
     }
 
     /**

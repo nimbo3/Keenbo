@@ -18,6 +18,8 @@ import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,6 +28,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public class ElasticDAOImpl implements ElasticDAO {
+    private Logger logger = LoggerFactory.getLogger(ElasticDAOImpl.class);
     private final ElasticConfig config;
     private RestHighLevelClient client;
 
@@ -44,7 +47,6 @@ public class ElasticDAOImpl implements ElasticDAO {
     public void save(Page page) {
         try {
             IndexRequest request = new IndexRequest(config.getIndexName())
-                    .id(page.getLink())
                     .type(config.getType());
 
             XContentBuilder builder = XContentFactory.jsonBuilder();
@@ -58,7 +60,7 @@ public class ElasticDAOImpl implements ElasticDAO {
             request.source(builder);
             IndexResponse index = client.index(request, RequestOptions.DEFAULT);
             if (index.getResult() != DocWriteResponse.Result.CREATED)
-                throw new ElasticException("Indexing failed: " + index.getResult());
+                logger.error("Indexing failed: " + index.getResult());
         } catch (IOException e) {
             throw new ElasticException("Indexing failed!", e);
         }

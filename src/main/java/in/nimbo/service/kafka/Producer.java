@@ -32,7 +32,6 @@ public class Producer implements Runnable {
                 List<String> crawl = crawlerService.crawl(newLink);
                 for (String link : crawl) {
                     producer.send(new ProducerRecord<>(topic, "Producer message", link));
-//                    logger.info("send " + link);
                 }
             }
         } catch (InterruptedException e) {
@@ -40,6 +39,7 @@ public class Producer implements Runnable {
         } finally {
             if (producer != null)
                 producer.close();
+            logger.info("Producer service stopped");
         }
     }
 }
