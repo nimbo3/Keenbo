@@ -39,7 +39,7 @@ public class ParserService {
                 return Optional.empty();
             }
             Document document = documentOptional.get();
-            String pageContentWithoutTag = document.text();
+            String pageContentWithoutTag = document.text().replace("\n", " ");
             String pageContentWithTag = document.html();
             if (isEnglishLanguage(pageContentWithoutTag)) {
                 Elements linkElements = document.getElementsByTag("a");
