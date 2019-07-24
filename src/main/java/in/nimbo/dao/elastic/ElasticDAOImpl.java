@@ -69,42 +69,6 @@ public class ElasticDAOImpl implements ElasticDAO {
     }
 
     /**
-     * get a page with given link from link from elastic search
-     *
-     * @param link link of page
-     * @return page if it is available at database otherwise return Optional.empty
-     * @throws ElasticException if any exception during indexing happen
-     */
-    @Override
-    public Optional<Page> get(String link) {
-        try {
-            GetRequest getRequest = new GetRequest(config.getIndexName(), config.getType(), link);
-            GetResponse response = client.get(getRequest, RequestOptions.DEFAULT);
-            if (response.isExists()) {
-                Page page = new Page();
-                Map<String, Object> source = response.getSource();
-                if (source.containsKey("link")) {
-                    page.setLink((String) source.get("link"));
-                }
-                if (source.containsKey("title")) {
-                    page.setTitle((String) source.get("title"));
-                }
-                if (source.containsKey("content"))
-                    page.setContentWithoutTags((String) source.get("content"));
-                if (source.containsKey("rank"))
-                    page.setRank((double) source.get("rank"));
-                return Optional.of(page);
-            } else {
-                return Optional.empty();
-            }
-        } catch (IOException e) {
-            throw new ElasticException("Unable to get page: " + link, e);
-        } catch (ClassCastException e) {
-            throw new ElasticException("Illegal mapping for a field", e);
-        }
-    }
-
-    /**
      * @return all pages in elastic search
      * @throws ElasticException if any exception during indexing happen
      */
