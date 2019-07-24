@@ -23,8 +23,8 @@ public class ParserServiceTest {
     private static Document document;
     private static Document persianDocument;
     private static ParserService parserService;
-    private static final String FILE_ADDRESS = "src/test/resources/html/sampleHTML.html";
-    private static final String PERSIAN_FILE_ADDRESS = "src/test/resources/html/sampleHTMLper.html";
+    private static final String FILE_ADDRESS = "src/test/resources/html/sampleEnglish.html";
+    private static final String PERSIAN_FILE_ADDRESS = "src/test/resources/html/samplePersian.html";
     private String link;
     private List<String> pageLinks;
 
@@ -52,7 +52,7 @@ public class ParserServiceTest {
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
         assertTrue(parserService.parse(link).isPresent());
         Page page = parserService.parse(link).get();
-        String pageContent = "Nimbo Anchor Header mail at support@nimbo.in. paragraph! another link";
+        String pageContent = "Nimbo Hi Header mail at support@nimbo.in. paragraph! another link";
         Assert.assertEquals(page.getContentWithoutTags(), pageContent);
         List<String> list = new ArrayList<>();
         for (Anchor anchor : page.getAnchors()) {
