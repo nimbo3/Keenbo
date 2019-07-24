@@ -66,7 +66,7 @@ public class ParserService {
                 if (titleElements.size() > 0) {
                     title = titleElements.get(0).text();
                 }
-                return Optional.of(new Page(title, pageContentWithTag, pageContentWithoutTag, links, metas, siteLink, 1.0, LinkUtility.reverseLink(siteLink)));
+                return Optional.of(new Page(siteLink, title, pageContentWithTag, pageContentWithoutTag, links, metas, 1.0));
             }
         } catch (LanguageDetectException e) {
             logger.warn("cannot detect language of site : {}", siteLink);

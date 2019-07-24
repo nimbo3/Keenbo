@@ -1,27 +1,28 @@
 package in.nimbo.entity;
 
+import in.nimbo.utility.LinkUtility;
+
 import java.util.List;
 
 public class Page {
+    private String link;
     private String title;
     private String contentWithTags;
-    private String contentWithOutTags;
+    private String contentWithoutTags;
     private List<Anchor> anchors;
     private List<Meta> metas;
-    private String link;
     private double pageRate;
     private String reversedLink;
 
-    public Page(String title, String contentWithTags, String contentWithOutTags, List<Anchor> anchors, List<Meta> metas,
-                String link, double pageRate, String reversedLink) {
+    public Page(String link, String title, String contentWithTags, String contentWithoutTags, List<Anchor> anchors, List<Meta> metas,
+                double pageRate) {
         this.title = title;
         this.contentWithTags = contentWithTags;
-        this.contentWithOutTags = contentWithOutTags;
+        this.contentWithoutTags = contentWithoutTags;
         this.anchors = anchors;
         this.metas = metas;
         this.link = link;
         this.pageRate = pageRate;
-        this.reversedLink = reversedLink;
     }
 
     public String getTitle() {
@@ -29,6 +30,8 @@ public class Page {
     }
 
     public String getReversedLink() {
+        if (reversedLink == null)
+            return reversedLink = LinkUtility.reverseLink(link);
         return reversedLink;
     }
 
@@ -45,7 +48,7 @@ public class Page {
     }
 
     public String getContentWithoutTags() {
-        return contentWithOutTags;
+        return contentWithoutTags;
     }
 
     public List<Anchor> getAnchors() {
