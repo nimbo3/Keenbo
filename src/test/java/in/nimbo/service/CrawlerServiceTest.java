@@ -54,11 +54,11 @@ public class CrawlerServiceTest {
         for (String s:crawledLinks) {
             links.add(new Anchor(s, s));
         }
-        page = Optional.of(new Page(content, content, links, new ArrayList<>(), link, 1, link));
+        page = Optional.of(new Page(link, "title", content, content, links, new ArrayList<>(), 1));
         hBaseDAO = mock(HBaseDAO.class);
         redisDAO = mock(RedisDAO.class);
         when(parserService.parse(link)).thenReturn(page);
-        doNothing().when(elasticDAO).save(link, content);
+        doNothing().when(elasticDAO).save(any(Page.class));
         doNothing().when(hBaseDAO).add(link);
         cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();

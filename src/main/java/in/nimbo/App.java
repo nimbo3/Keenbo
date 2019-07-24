@@ -16,6 +16,9 @@ import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.http.HttpHost;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestHighLevelClient;
 import redis.clients.jedis.JedisCluster;
 
 import java.time.LocalDateTime;
@@ -29,6 +32,7 @@ public class App {
             DetectorFactory.loadProfile("profiles");
         } catch (LangDetectException e) {
             System.out.println("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.");
+            System.exit(1);
         }
         Configuration configuration = HBaseConfiguration.create();
         HBaseConfig hBaseConfig = HBaseConfig.load();
@@ -37,8 +41,11 @@ public class App {
         ElasticConfig elasticConfig = ElasticConfig.load();
         RedisConfig redisConfig = RedisConfig.load();
         JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
+        RestHighLevelClient restHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort())));
 
-        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig);
+
+
+        ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, hBaseConfig);
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
         ParserService parserService = new ParserService(appConfig);
@@ -58,7 +65,7 @@ public class App {
                 kafkaService.sendMessage(link);
             } else if (cmd.equals("exit")) {
                 kafkaService.stopSchedule();
-                break;
+                System.exit(0);
             }
             System.out.print("engine> ");
         }

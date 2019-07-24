@@ -1,28 +1,40 @@
 package in.nimbo.entity;
 
+import in.nimbo.utility.LinkUtility;
+
 import java.util.List;
 
 public class Page {
+    private String link;
+    private String title;
     private String contentWithTags;
-    private String contentWithOutTags;
+    private String contentWithoutTags;
     private List<Anchor> anchors;
     private List<Meta> metas;
-    private String link;
-    private double pageRate;
+    private double rank;
     private String reversedLink;
 
-    public Page(String contentWithTags, String contentWithOutTags, List<Anchor> anchors, List<Meta> metas,
-                String link, double pageRate, String reversedLink) {
+    public Page() {
+    }
+
+    public Page(String link, String title, String contentWithTags, String contentWithoutTags, List<Anchor> anchors, List<Meta> metas,
+                double rank) {
+        this.title = title;
         this.contentWithTags = contentWithTags;
-        this.contentWithOutTags = contentWithOutTags;
+        this.contentWithoutTags = contentWithoutTags;
         this.anchors = anchors;
         this.metas = metas;
         this.link = link;
-        this.pageRate = pageRate;
-        this.reversedLink = reversedLink;
+        this.rank = rank;
+    }
+
+    public String getTitle() {
+        return title;
     }
 
     public String getReversedLink() {
+        if (reversedLink == null)
+            return reversedLink = LinkUtility.reverseLink(link);
         return reversedLink;
     }
 
@@ -30,16 +42,16 @@ public class Page {
         return link;
     }
 
-    public double getPageRate() {
-        return pageRate;
+    public double getRank() {
+        return rank;
     }
 
     public String getContentWithTags() {
         return contentWithTags;
     }
 
-    public String getContentWithOutTags() {
-        return contentWithOutTags;
+    public String getContentWithoutTags() {
+        return contentWithoutTags;
     }
 
     public List<Anchor> getAnchors() {
@@ -48,5 +60,37 @@ public class Page {
 
     public List<Meta> getMetas() {
         return metas;
+    }
+
+    public void setLink(String link) {
+        this.link = link;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void setContentWithTags(String contentWithTags) {
+        this.contentWithTags = contentWithTags;
+    }
+
+    public void setContentWithoutTags(String contentWithoutTags) {
+        this.contentWithoutTags = contentWithoutTags;
+    }
+
+    public void setAnchors(List<Anchor> anchors) {
+        this.anchors = anchors;
+    }
+
+    public void setMetas(List<Meta> metas) {
+        this.metas = metas;
+    }
+
+    public void setRank(double rank) {
+        this.rank = rank;
+    }
+
+    public void setReversedLink(String reversedLink) {
+        this.reversedLink = reversedLink;
     }
 }
