@@ -8,7 +8,7 @@ import java.util.Optional;
 public interface ElasticDAO {
     void save(Page page);
 
-    Optional<String> get(String link);
+    Optional<Page> get(String link);
 
     List<String> getAllLinks();
 }
