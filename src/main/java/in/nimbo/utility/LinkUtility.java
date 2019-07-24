@@ -1,7 +1,11 @@
 package in.nimbo.utility;
 
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Collections;
 
 public class LinkUtility {
     private LinkUtility() {
@@ -11,8 +15,25 @@ public class LinkUtility {
      * @param link link
      * @return reversed link(only domain)
      */
-    public static String reverseLink(String link){
-        return link;
+    public static String reverseLink(String link) throws MalformedURLException {
+        URL url = new URL(link);
+        String host = url.getHost();
+        String[] hostParts = host.split("\\.");
+        Collections.reverse(Arrays.asList(hostParts));
+        String newHost = String.join(".", hostParts);
+        String protocol = url.getProtocol();
+        int port = url.getPort();
+        String uri = url.getPath();
+        String query = url.getQuery();
+        String answer = protocol + "://" + newHost + (port != -1 ? "" + port : "") + "/";
+        if (uri != null) {
+            answer += uri;
+        }
+        if (query != null){
+            answer += "?";
+            answer += query;
+        }
+        return answer;
     }
 
     /**
