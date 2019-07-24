@@ -34,8 +34,9 @@ public class ConsumerService implements Runnable {
             while (!closed.get()) {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(10));
                 for (ConsumerRecord<String, String> record : records) {
-                    while (!closed.get()) {
-                        messageQueue.offer(record.value(), 100, TimeUnit.MILLISECONDS);
+                    boolean isAdded = false;
+                    while (!isAdded) {
+                        isAdded = messageQueue.offer(record.value(), 100, TimeUnit.MILLISECONDS);
                     }
                 }
                 try {

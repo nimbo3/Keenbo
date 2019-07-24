@@ -1,23 +1,19 @@
 package in.nimbo.dao.elastic;
 
 import in.nimbo.config.ElasticConfig;
+import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.ElasticException;
 import org.elasticsearch.action.DocWriteResponse;
-import org.elasticsearch.action.get.GetRequest;
-import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.document.DocumentField;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.QueryStringQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
@@ -27,7 +23,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 public class ElasticDAOImpl implements ElasticDAO {
     private Logger logger = LoggerFactory.getLogger(ElasticDAOImpl.class);
@@ -56,7 +51,15 @@ public class ElasticDAOImpl implements ElasticDAO {
             builder.field("link", page.getLink());
             builder.field("title", page.getTitle());
             builder.field("content", page.getContentWithoutTags());
-//            builder.field("meta", page.getMetas());
+            List<Meta> metas = page.getMetas();
+            builder.startArray("meta");
+            for (Meta meta : metas) {
+                builder.startObject();
+                builder.field("key", meta.getKey());
+                builder.field("content", meta.getContent());
+                builder.endObject();
+            }
+            builder.endArray();
             builder.field("rank", page.getRank());
             builder.endObject();
             request.source(builder);
