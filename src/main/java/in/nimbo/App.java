@@ -32,6 +32,7 @@ public class App {
             DetectorFactory.loadProfile("profiles");
         } catch (LangDetectException e) {
             System.out.println("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.");
+            System.exit(1);
         }
         Configuration configuration = HBaseConfiguration.create();
         HBaseConfig hBaseConfig = HBaseConfig.load();
