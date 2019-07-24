@@ -11,7 +11,6 @@ import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.dao.redis.RedisDAOImpl;
-import in.nimbo.entity.Page;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
@@ -26,7 +25,6 @@ import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
@@ -56,44 +54,6 @@ public class App {
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, hBaseConfig);
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
-        elasticDAO = new ElasticDAO() {
-            @Override
-            public void save(Page page) {
-
-            }
-
-            @Override
-            public List<Page> getAllPages() {
-                return null;
-            }
-
-            @Override
-            public List<Page> search(String query) {
-                return null;
-            }
-        };
-        hBaseDAO = new HBaseDAO() {
-            @Override
-            public boolean contains(String link) {
-                return false;
-            }
-
-            @Override
-            public void add(Page page) {
-
-            }
-        };
-        redisDAO = new RedisDAO() {
-            @Override
-            public void add(String link) {
-
-            }
-
-            @Override
-            public boolean contains(String link) {
-                return false;
-            }
-        };
         ParserService parserService = new ParserService(appConfig);
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
