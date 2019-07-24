@@ -6,7 +6,7 @@ import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.HBaseException;
-import in.nimbo.service.kafka.Consumer;
+import in.nimbo.service.kafka.ConsumerService;
 import in.nimbo.utility.LinkUtility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class CrawlerService {
-    private Logger logger = LoggerFactory.getLogger(Consumer.class);
+    private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
     private Cache<String, LocalDateTime> cache;
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;

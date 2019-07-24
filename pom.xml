@@ -49,7 +49,7 @@
             <scope>test</scope>
         </dependency>
 
-        <!--Producer/Consumer API of Apache Kafka-->
+        <!--ProducerService/ConsumerService API of Apache Kafka-->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>

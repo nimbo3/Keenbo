@@ -35,12 +35,12 @@ public class KafkaService {
         // Prepare consumer
         kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getConsumerProperties());
         kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
-        executorService.submit(new Consumer(kafkaConsumer, messageQueue));
+        executorService.submit(new ConsumerService(kafkaConsumer, messageQueue));
 
         // Prepare producer
         for (int i = 0; i < kafkaConfig.getProducerCount(); i++) {
             KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
-            executorService.submit(new Producer(producer, kafkaConfig.getKafkaTopic(), messageQueue, crawlerService));
+            executorService.submit(new ProducerService(producer, kafkaConfig.getKafkaTopic(), messageQueue, crawlerService));
         }
         executorService.shutdown();
     }
@@ -58,7 +58,7 @@ public class KafkaService {
      */
     public void sendMessage(String message) {
         KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
-        producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "Producer message", message));
+        producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "ProducerService message", message));
         producer.flush();
     }
 }
