@@ -38,8 +38,15 @@ import java.util.concurrent.TimeUnit;
 
 public class App {
     private static Logger logger = LoggerFactory.getLogger(App.class);
+    private RestHighLevelClient restHighLevelClient;
+    private KafkaService kafkaService;
 
-    public static void main(String[] args) throws IOException {
+    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService) {
+        this.restHighLevelClient = restHighLevelClient;
+        this.kafkaService = kafkaService;
+    }
+
+    public static void main(String[] args) {
         try {
             logger.info("Load application profiles for language detector");
             DetectorFactory.loadProfile("profiles");
@@ -86,6 +93,12 @@ public class App {
         kafkaService.schedule();
 
         logger.info("Application started");
+        App app = new App(restHighLevelClient, kafkaService);
+        Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
+        app.startApp();
+    }
+
+    private void startApp() {
         System.out.println("Welcome to Search Engine");
         System.out.print("engine> ");
         Scanner in = new Scanner(System.in);
@@ -95,11 +108,19 @@ public class App {
                 String link = in.next();
                 kafkaService.sendMessage(link);
             } else if (cmd.equals("exit")) {
-                kafkaService.stopSchedule();
-                restHighLevelClient.close();
+                stopApp();
                 break;
             }
             System.out.print("engine> ");
+        }
+    }
+
+    private void stopApp() {
+        try {
+            kafkaService.stopSchedule();
+            restHighLevelClient.close();
+        } catch (IOException e) {
+            logger.warn("Unable to close rest api of ElasticSearch");
         }
     }
 }
