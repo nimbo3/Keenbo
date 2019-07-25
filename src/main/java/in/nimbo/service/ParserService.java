@@ -22,7 +22,7 @@ import java.net.MalformedURLException;
 import java.util.*;
 
 public class ParserService {
-    private static final int ENGLISH_PROBABILITY = 80;
+    private static final double ENGLISH_PROBABILITY = 0.65;
     private Logger logger = LoggerFactory.getLogger(LinkUtility.class);
     private AppConfig appConfig;
 

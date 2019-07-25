@@ -54,6 +54,7 @@ public class App {
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, hBaseConfig);
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
+        
         ParserService parserService = new ParserService(appConfig);
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
