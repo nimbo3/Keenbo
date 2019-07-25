@@ -64,7 +64,7 @@ public class KafkaService {
             producerService.close();
         }
         try {
-            TimeUnit.SECONDS.sleep(3);
+            TimeUnit.SECONDS.sleep(2);
             logger.info("All service stopped");
             logger.info("Start sending " + messageQueue.size() + " messages to kafka");
             KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
@@ -86,5 +86,6 @@ public class KafkaService {
         KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
         producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "ProducerService message", message));
         producer.flush();
+        System.out.println("Site " + message + " added");
     }
 }
