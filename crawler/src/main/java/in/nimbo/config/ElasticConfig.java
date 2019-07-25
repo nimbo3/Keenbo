@@ -11,9 +11,9 @@ public class ElasticConfig {
     private String type;
     private int port;
     private int bulkActions;
-    private int bulkSize;
+    private long bulkSize;
     private String bulkSizeUnit;
-    private String concurrentRequests;
+    private int concurrentRequests;
     private String backoffDelaySeconds;
     private String backoffMaxRetry;
 
@@ -29,9 +29,9 @@ public class ElasticConfig {
             elasticConfig.setIndexName(config.getString("index"));
             elasticConfig.setType(config.getString("type"));
             elasticConfig.setBulkActions(config.getInt("bulk.actions"));
-            elasticConfig.setBulkSize(config.getInt("bulk.size"));
+            elasticConfig.setBulkSize(config.getLong("bulk.size"));
             elasticConfig.setBulkSizeUnit(config.getString("bulk.size.unit"));
-            elasticConfig.setConcurrentRequests(config.getString("concurrent.requests"));
+            elasticConfig.setConcurrentRequests(config.getInt("concurrent.requests"));
             elasticConfig.setBackoffDelaySeconds(config.getString("backoff.delay.seconds"));
             elasticConfig.setBackoffMaxRetry(config.getString("backoff.max.retry"));
             return elasticConfig;
@@ -80,11 +80,11 @@ public class ElasticConfig {
         this.bulkActions = bulkActions;
     }
 
-    public int getBulkSize() {
+    public long getBulkSize() {
         return bulkSize;
     }
 
-    public void setBulkSize(int bulkSize) {
+    public void setBulkSize(long bulkSize) {
         this.bulkSize = bulkSize;
     }
 
@@ -96,11 +96,11 @@ public class ElasticConfig {
         this.bulkSizeUnit = bulkSizeUnit;
     }
 
-    public String getConcurrentRequests() {
+    public int getConcurrentRequests() {
         return concurrentRequests;
     }
 
-    public void setConcurrentRequests(String concurrentRequests) {
+    public void setConcurrentRequests(int concurrentRequests) {
         this.concurrentRequests = concurrentRequests;
     }
 
