@@ -7,7 +7,13 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.lucene.search.function.CombineFunction;
+import org.elasticsearch.common.lucene.search.function.FunctionScoreQuery;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermQueryBuilder;
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.slf4j.Logger;
@@ -28,7 +34,7 @@ public class ElasticDAOImpl implements ElasticDAO {
         this.client = client;
     }
 
-    private List<Page> convertHitArrayToPageList(SearchHit[] hits){
+    private List<Page> convertHitArrayToPageList(SearchHit[] hits) {
         List<Page> pages = new ArrayList<>();
         for (SearchHit hit : hits) {
             Page page = new Page();
@@ -53,6 +59,26 @@ public class ElasticDAOImpl implements ElasticDAO {
             SearchSourceBuilder searchBuilder = new SearchSourceBuilder();
             searchBuilder.query(QueryBuilders.multiMatchQuery(query));
             request.source(searchBuilder);
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            SearchHit[] hits = response.getHits().getHits();
+            return convertHitArrayToPageList(hits);
+        } catch (IOException e) {
+            throw new ElasticException("Unable to search in elastic search", e);
+        }
+    }
+
+    public List<Page> customSearch(String query) {
+        try {
+            SearchRequest request = new SearchRequest(config.getIndexName());
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(query, "title", "link", "content", "meta", "anchors");
+            multiMatchQueryBuilder.field("title", 5);
+            multiMatchQueryBuilder.field("content", 1);
+            multiMatchQueryBuilder.field("meta", 2);
+            multiMatchQueryBuilder.field("anchors", 3);
+            multiMatchQueryBuilder.field("link", 4);
+            searchSourceBuilder.query(multiMatchQueryBuilder);
+            request.source(searchSourceBuilder);
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
             SearchHit[] hits = response.getHits().getHits();
             return convertHitArrayToPageList(hits);
