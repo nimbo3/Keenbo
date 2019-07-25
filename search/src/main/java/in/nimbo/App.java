@@ -33,6 +33,13 @@ public class App {
                 String query = request.queryParams("query");
                 return searchController.search(query != null ? query : "");
             }) , transformer);
+            Spark.get("/exception", ((request, response) -> {
+                throw new Exception("exception");
+            }));
+            Spark.exception(Exception.class, ((e, request, response) -> {
+                logger.error(e.getMessage(), e);
+                return;
+            }));
             Spark.after("/*", (request, response) -> logger.info("response sent successfully: " + request.uri()));
         });
     }
