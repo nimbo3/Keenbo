@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Optional;
 
 public class ParserService {
-    private static final int ENGLISH_PROBABILITY = 80;
+    private static final double ENGLISH_PROBABILITY = 0.65;
     private Logger logger = LoggerFactory.getLogger(LinkUtility.class);
     private AppConfig appConfig;
 

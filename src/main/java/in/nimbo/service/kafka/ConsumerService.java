@@ -35,12 +35,15 @@ public class ConsumerService implements Runnable {
                 ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(10));
                 for (ConsumerRecord<String, String> record : records) {
                     boolean isAdded = false;
-                    while (!isAdded) {
+                    while (!isAdded && !closed.get()) {
                         isAdded = messageQueue.offer(record.value(), 100, TimeUnit.MILLISECONDS);
                     }
+                    if (closed.get())
+                        break;
                 }
                 try {
-                    consumer.commitSync();
+                    if (!closed.get())
+                        consumer.commitSync();
                 } catch (CommitFailedException e) {
                     logger.error("Unable to commit changes", e);
                 }
