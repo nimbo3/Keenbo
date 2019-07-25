@@ -5,6 +5,7 @@ import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.config.*;
+import in.nimbo.dao.elastic.ElasticBulkListener;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
 import in.nimbo.dao.hbase.HBaseDAO;
@@ -17,8 +18,15 @@ import in.nimbo.service.kafka.KafkaService;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.http.HttpHost;
+import org.elasticsearch.action.bulk.BackoffPolicy;
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.unit.ByteSizeUnit;
+import org.elasticsearch.common.unit.ByteSizeValue;
+import org.elasticsearch.common.unit.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCluster;
@@ -47,14 +55,26 @@ public class App {
         KafkaConfig kafkaConfig = KafkaConfig.load();
         ElasticConfig elasticConfig = ElasticConfig.load();
         RedisConfig redisConfig = RedisConfig.load();
-        JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
-        RestHighLevelClient restHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort())));
         logger.info("Configuration loaded");
 
-        ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
+        JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
+        RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
+                .setRequestConfigCallback(requestConfigBuilder ->
+                        requestConfigBuilder.setConnectTimeout(5000).setSocketTimeout(600000)).setMaxRetryTimeoutMillis(600000);
+        RestHighLevelClient restHighLevelClient = new RestHighLevelClient(restClientBuilder);
+        BulkProcessor.Builder builder = BulkProcessor.builder(
+                (request, bulkListener) -> restHighLevelClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener), new ElasticBulkListener());
+        builder.setBulkActions(elasticConfig.getBulkActions());
+        builder.setBulkSize(new ByteSizeValue(elasticConfig.getBulkSize(), ByteSizeUnit.valueOf(elasticConfig.getBulkSizeUnit())));
+        builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
+        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(1L), 10));
+        BulkProcessor bulkProcessor = builder.build();
+
+        ElasticDAO elasticDAO = new ElasticDAOImpl(bulkProcessor, elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, hBaseConfig);
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
-        
+        logger.info("DAO interface created");
+
         ParserService parserService = new ParserService(appConfig);
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();

@@ -6,29 +6,26 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BulkListener implements BulkProcessor.Listener {
-    private Logger logger = LoggerFactory.getLogger(BulkListener.class);
+public class ElasticBulkListener implements BulkProcessor.Listener {
+    private Logger logger = LoggerFactory.getLogger(ElasticBulkListener.class);
 
     @Override
-    public void beforeBulk(long l, BulkRequest bulkRequest) {
-        int numberOfActions = request.numberOfActions();
-        logger.debug("Executing bulk [{}] with {} requests",
-                executionId, numberOfActions);
+    public void beforeBulk(long executionId, BulkRequest bulkRequest) {
+        int numberOfActions = bulkRequest.numberOfActions();
+        logger.info("Executing bulk [{}] with {} requests", executionId, numberOfActions);
     }
 
     @Override
-    public void afterBulk(long l, BulkRequest bulkRequest, BulkResponse bulkResponse) {
-        if (response.hasFailures()) {
+    public void afterBulk(long executionId, BulkRequest bulkRequest, BulkResponse bulkResponse) {
+        if (bulkResponse.hasFailures()) {
             logger.warn("Bulk [{}] executed with failures", executionId);
         } else {
-            logger.debug("Bulk [{}] completed in {} milliseconds",
-                    executionId, response.getTook().getMillis());
+            logger.debug("Bulk [{}] completed in {} milliseconds", executionId, bulkResponse.getTook().getMillis());
         }
     }
 
     @Override
-    public void afterBulk(long l, BulkRequest bulkRequest, Throwable throwable) {
-        logger.error("Failed to execute bulk", failure);
-
+    public void afterBulk(long executionId, BulkRequest bulkRequest, Throwable throwable) {
+        logger.error("Failed to execute bulk {}", executionId, throwable);
     }
 }
