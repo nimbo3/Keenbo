@@ -71,7 +71,7 @@ public class KafkaService {
             logger.info("Start sending " + messageQueue.size() + " messages to kafka");
             KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
             for (String message : messageQueue) {
-                producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "Producer message", message));
+                producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), message));
             }
             producer.flush();
             logger.info("All messages sent to kafka");
@@ -86,7 +86,7 @@ public class KafkaService {
      */
     public void sendMessage(String message) {
         KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
-        producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), "ProducerService message", message));
+        producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), message));
         producer.flush();
         System.out.println("Site " + message + " added");
     }
