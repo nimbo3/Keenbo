@@ -38,12 +38,14 @@ public class ConsumerService implements Runnable {
                     while (!isAdded && !closed.get()) {
                         isAdded = messageQueue.offer(record.value(), 100, TimeUnit.MILLISECONDS);
                     }
-                    if (closed.get())
+                    if (closed.get()) {
                         break;
+                    }
                 }
                 try {
-                    if (!closed.get())
+                    if (!closed.get()) {
                         consumer.commitSync();
+                    }
                 } catch (CommitFailedException e) {
                     logger.error("Unable to commit changes", e);
                 }
