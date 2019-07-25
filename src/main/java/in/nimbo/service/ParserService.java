@@ -19,9 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class ParserService {
     private static final double ENGLISH_PROBABILITY = 0.65;
@@ -66,14 +64,14 @@ public class ParserService {
      * @param document document contain a site contents
      * @return list of all anchors in a document
      */
-    public List<Anchor> getAnchors(Document document) {
-        List<Anchor> anchors = new ArrayList<>();
+    public Set<Anchor> getAnchors(Document document) {
+        Set<Anchor> anchors = new HashSet<>();
         Elements linkElements = document.getElementsByTag("a");
         for (Element linkElement : linkElements) {
             String absUrl = linkElement.absUrl("href");
             if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
                     && LinkUtility.isValidUrl(absUrl)) {
-                anchors.add(new Anchor(absUrl, linkElement.text()));
+                anchors.add(new Anchor(LinkUtility.normalize(absUrl), linkElement.text()));
             }
         }
         return anchors;

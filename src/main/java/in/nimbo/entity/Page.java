@@ -2,14 +2,16 @@ package in.nimbo.entity;
 
 import in.nimbo.utility.LinkUtility;
 
+import java.net.MalformedURLException;
 import java.util.List;
+import java.util.Set;
 
 public class Page {
     private String link;
     private String title;
     private String contentWithTags;
     private String contentWithoutTags;
-    private List<Anchor> anchors;
+    private Set<Anchor> anchors;
     private List<Meta> metas;
     private double rank;
     private String reversedLink;
@@ -17,7 +19,7 @@ public class Page {
     public Page() {
     }
 
-    public Page(String link, String title, String contentWithTags, String contentWithoutTags, List<Anchor> anchors, List<Meta> metas,
+    public Page(String link, String title, String contentWithTags, String contentWithoutTags, Set<Anchor> anchors, List<Meta> metas,
                 double rank) {
         this.title = title;
         this.contentWithTags = contentWithTags;
@@ -34,7 +36,11 @@ public class Page {
 
     public String getReversedLink() {
         if (reversedLink == null)
-            return reversedLink = LinkUtility.reverseLink(link);
+            try {
+                return reversedLink = LinkUtility.reverseLink(link);
+            } catch (MalformedURLException e) {
+                e.printStackTrace();
+            }
         return reversedLink;
     }
 
@@ -54,7 +60,7 @@ public class Page {
         return contentWithoutTags;
     }
 
-    public List<Anchor> getAnchors() {
+    public Set<Anchor> getAnchors() {
         return anchors;
     }
 
@@ -78,7 +84,7 @@ public class Page {
         this.contentWithoutTags = contentWithoutTags;
     }
 
-    public void setAnchors(List<Anchor> anchors) {
+    public void setAnchors(Set<Anchor> anchors) {
         this.anchors = anchors;
     }
 
