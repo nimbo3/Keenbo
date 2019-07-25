@@ -18,9 +18,7 @@ import org.junit.Test;
 
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -51,7 +49,7 @@ public class CrawlerServiceTest {
         String contentWithTag = "Be your best!";
         String contentWithoutTag = "<html>Be your best!</html>";
         String title = "nimbo";
-        List<Anchor> anchors = new ArrayList<>();
+        Set<Anchor> anchors = new HashSet<>();
         anchors.add(new Anchor("https://www.google.com/", "google"));
         anchors.add(new Anchor("https://stackoverflow.com/", "stackoverflow"));
         anchors.add(new Anchor("https://www.sahab.ir/", "sahab"));
@@ -82,25 +80,25 @@ public class CrawlerServiceTest {
         } catch (URISyntaxException e) {
             Assert.fail();
         }
-        List<String> actualResult = new ArrayList<>();
+        Set<String> actualResult = new HashSet<>();
         actualResult.add(link);
-        List<String> answer = crawlerService.crawl(link);
+        Set<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(answer, actualResult);
     }
 
     @Test
     public void crawlRepeatedLinkTest() {
         when(redisDAO.contains(link)).thenReturn(true);
-        List<String> actualResult = new ArrayList<>();
-        List<String> answer = crawlerService.crawl(link);
+        Set<String> actualResult = new HashSet<>();
+        Set<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(answer, actualResult);
     }
 
     @Test
     public void crawlInvalidLink() {
         when(redisDAO.contains(link)).thenReturn(true);
-        List<String> answer = crawlerService.crawl("http://");
-        List<String> actualResult = new ArrayList<>();
+        Set<String> answer = crawlerService.crawl("http://");
+        Set<String> actualResult = new HashSet<>();
         Assert.assertEquals(answer, actualResult);
     }
 }
