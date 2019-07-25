@@ -10,6 +10,12 @@ public class ElasticConfig {
     private String host;
     private String type;
     private int port;
+    private int bulkActions;
+    private int bulkSize;
+    private String bulkSizeUnit;
+    private String concurrentRequests;
+    private String backoffDelaySeconds;
+    private String backoffMaxRetry;
 
     public ElasticConfig() {
     }
@@ -18,21 +24,20 @@ public class ElasticConfig {
         ElasticConfig elasticConfig = new ElasticConfig();
         try {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
-            elasticConfig.setHost(config.getString("elastic.host"));
-            elasticConfig.setPort(config.getInt("elastic.port"));
-            elasticConfig.setIndexName(config.getString("elastic.index"));
-            elasticConfig.setType(config.getString("elastic.type"));
+            elasticConfig.setHost(config.getString("host"));
+            elasticConfig.setPort(config.getInt("port"));
+            elasticConfig.setIndexName(config.getString("index"));
+            elasticConfig.setType(config.getString("type"));
+            elasticConfig.setBulkActions(config.getInt("bulk.actions"));
+            elasticConfig.setBulkSize(config.getInt("bulk.size"));
+            elasticConfig.setBulkSizeUnit(config.getString("bulk.size.unit"));
+            elasticConfig.setConcurrentRequests(config.getString("concurrent.requests"));
+            elasticConfig.setBackoffDelaySeconds(config.getString("backoff.delay.seconds"));
+            elasticConfig.setBackoffMaxRetry(config.getString("backoff.max.retry"));
             return elasticConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
-    }
-
-
-    public ElasticConfig(String indexName, String host, int port) {
-        this.indexName = indexName;
-        this.host = host;
-        this.port = port;
     }
 
     public String getIndexName() {
@@ -65,5 +70,53 @@ public class ElasticConfig {
 
     public void setType(String type) {
         this.type = type;
+    }
+
+    public int getBulkActions() {
+        return bulkActions;
+    }
+
+    public void setBulkActions(int bulkActions) {
+        this.bulkActions = bulkActions;
+    }
+
+    public int getBulkSize() {
+        return bulkSize;
+    }
+
+    public void setBulkSize(int bulkSize) {
+        this.bulkSize = bulkSize;
+    }
+
+    public String getBulkSizeUnit() {
+        return bulkSizeUnit;
+    }
+
+    public void setBulkSizeUnit(String bulkSizeUnit) {
+        this.bulkSizeUnit = bulkSizeUnit;
+    }
+
+    public String getConcurrentRequests() {
+        return concurrentRequests;
+    }
+
+    public void setConcurrentRequests(String concurrentRequests) {
+        this.concurrentRequests = concurrentRequests;
+    }
+
+    public String getBackoffDelaySeconds() {
+        return backoffDelaySeconds;
+    }
+
+    public void setBackoffDelaySeconds(String backoffDelaySeconds) {
+        this.backoffDelaySeconds = backoffDelaySeconds;
+    }
+
+    public String getBackoffMaxRetry() {
+        return backoffMaxRetry;
+    }
+
+    public void setBackoffMaxRetry(String backoffMaxRetry) {
+        this.backoffMaxRetry = backoffMaxRetry;
     }
 }
