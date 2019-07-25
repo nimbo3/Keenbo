@@ -30,18 +30,15 @@ public class App {
         SparkConfig sparkConfig = SparkConfig.load();
 
         RestHighLevelClient restHighLevelClient = new RestHighLevelClient(RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort())));
-        ElasticDAOImpl elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
+        ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         SearchController searchController = new SearchController(elasticDAO);
 
         Spark.port(sparkConfig.getPort());
         Spark.path("/", () -> {
-            Spark.before("/*", (request, response) -> {
-                logger.info("new request for uri: " + request.uri());
-            });
+            Spark.before("/*", (request, response) -> logger.info("new request for uri: " + request.uri()));
             Spark.get("/search",((request, response) -> {
                 String query = request.queryParams("query");
-                return elasticDAO.customSearch(query);
-//                return searchController.search(query != null ? query : "");
+                return searchController.search(query != null ? query : "");
             }) , transformer);
             Spark.after("/*", (request, response) -> logger.info("response sent successfully: " + request.uri()));
         });

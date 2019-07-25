@@ -50,24 +50,7 @@ public class ElasticDAOImpl implements ElasticDAO {
         return pages;
     }
 
-    @Override
     public List<Page> search(String query) {
-        try {
-            SearchRequest request = new SearchRequest(config.getIndexName());
-            request.types(config.getType());
-
-            SearchSourceBuilder searchBuilder = new SearchSourceBuilder();
-            searchBuilder.query(QueryBuilders.multiMatchQuery(query));
-            request.source(searchBuilder);
-            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
-            SearchHit[] hits = response.getHits().getHits();
-            return convertHitArrayToPageList(hits);
-        } catch (IOException e) {
-            throw new ElasticException("Unable to search in elastic search", e);
-        }
-    }
-
-    public List<Page> customSearch(String query) {
         try {
             SearchRequest request = new SearchRequest(config.getIndexName());
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
