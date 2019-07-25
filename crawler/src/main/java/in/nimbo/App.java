@@ -1,5 +1,8 @@
 package in.nimbo;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.jmx.JmxReporter;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -34,7 +37,7 @@ public class App {
     public static void main(String[] args) throws IOException {
         try {
             logger.info("Load application profiles for language detector");
-            DetectorFactory.loadProfile("profiles");
+            DetectorFactory.loadProfile("crawler/src/main/resources/profiles");
         } catch (LangDetectException e) {
             System.out.println("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.");
             logger.info("Unable to load profiles of language detector.");
@@ -54,13 +57,16 @@ public class App {
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, hBaseConfig);
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
-        
-        ParserService parserService = new ParserService(appConfig);
+
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
+        startReporter();
+
+        ParserService parserService = new ParserService(appConfig);
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
         KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
         logger.info("Start schedule service");
+
         kafkaService.schedule();
 
         logger.info("Application started");
@@ -79,5 +85,11 @@ public class App {
             }
             System.out.print("engine> ");
         }
+    }
+
+    private static void startReporter() {
+        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault("Keenbo");
+        JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).build();
+        reporter.start();
     }
 }
