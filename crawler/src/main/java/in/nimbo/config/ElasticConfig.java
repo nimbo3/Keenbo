@@ -16,6 +16,9 @@ public class ElasticConfig {
     private int concurrentRequests;
     private String backoffDelaySeconds;
     private String backoffMaxRetry;
+    private int connectTimeout;
+    private int socketTimeout;
+    private int maxRetryTimeoutMillis;
 
     public ElasticConfig() {
     }
@@ -34,6 +37,9 @@ public class ElasticConfig {
             elasticConfig.setConcurrentRequests(config.getInt("concurrent.requests"));
             elasticConfig.setBackoffDelaySeconds(config.getString("backoff.delay.seconds"));
             elasticConfig.setBackoffMaxRetry(config.getString("backoff.max.retry"));
+            elasticConfig.setConnectTimeout(config.getInt("connect.timeout"));
+            elasticConfig.setSocketTimeout(config.getInt("socket.timeout"));
+            elasticConfig.setMaxRetryTimeoutMillis(config.getInt("max.retry.timeout.millis"));
             return elasticConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
@@ -118,5 +124,29 @@ public class ElasticConfig {
 
     public void setBackoffMaxRetry(String backoffMaxRetry) {
         this.backoffMaxRetry = backoffMaxRetry;
+    }
+
+    public int getConnectTimeout() {
+        return connectTimeout;
+    }
+
+    public void setConnectTimeout(int connectTimeout) {
+        this.connectTimeout = connectTimeout;
+    }
+
+    public int getSocketTimeout() {
+        return socketTimeout;
+    }
+
+    public void setSocketTimeout(int socketTimeout) {
+        this.socketTimeout = socketTimeout;
+    }
+
+    public int getMaxRetryTimeoutMillis() {
+        return maxRetryTimeoutMillis;
+    }
+
+    public void setMaxRetryTimeoutMillis(int maxRetryTimeoutMillis) {
+        this.maxRetryTimeoutMillis = maxRetryTimeoutMillis;
     }
 }

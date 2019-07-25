@@ -59,8 +59,10 @@ public class App {
 
         JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
         RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
-                .setRequestConfigCallback(requestConfigBuilder ->
-                        requestConfigBuilder.setConnectTimeout(5000).setSocketTimeout(600000)).setMaxRetryTimeoutMillis(600000);
+                .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
+                        .setConnectTimeout(elasticConfig.getConnectTimeout())
+                        .setSocketTimeout(elasticConfig.getSocketTimeout()))
+                .setMaxRetryTimeoutMillis(elasticConfig.getMaxRetryTimeoutMillis());
         RestHighLevelClient restHighLevelClient = new RestHighLevelClient(restClientBuilder);
         BulkProcessor.Builder builder = BulkProcessor.builder(
                 (request, bulkListener) -> restHighLevelClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener), new ElasticBulkListener());
