@@ -8,52 +8,33 @@
     <artifactId>search-engine</artifactId>
     <version>1.0</version>
 
+    <packaging>pom</packaging>
+
+    <modules>
+        <module>crawler</module>
+        <module>search</module>
+    </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <kafka.version>2.3.0</kafka.version>
-        <jsoup.version>1.12.1</jsoup.version>
-        <caffeine.version>2.7.0</caffeine.version>
         <slf4j.version>1.7.26</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
         <log4j.core.version>2.12.0</log4j.core.version>
-        <elasticsearch.version>6.6.2</elasticsearch.version>
-        <hbase.version>2.2.0</hbase.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
         <apache.configuration.version>1.10</apache.configuration.version>
-        <langdetect.version>1.1-20120112</langdetect.version>
         <mockito.version>2.10.0</mockito.version>
         <jacoco-plugin.versio>0.8.4</jacoco-plugin.versio>
-        <jedis.version>3.0.1</jedis.version>
     </properties>
 
     <dependencies>
-        <!-- elasticsearch high level rest api client -->
-        <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>${elasticsearch.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${elasticsearch.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.11</version>
             <scope>test</scope>
-        </dependency>
-
-        <!--ProducerService/ConsumerService API of Apache Kafka-->
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
         </dependency>
 
         <!-- slf4j for logging -->
@@ -85,27 +66,6 @@
             <version>${log4j.core.version}</version>
         </dependency>
 
-        <!--driver for hbase-->
-        <dependency>
-            <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
-            <version>${hbase.version}</version>
-        </dependency>
-
-        <!--Jsoup library for parse pages-->
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>${jsoup.version}</version>
-        </dependency>
-
-        <!--Caffeine Cache library-->
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-            <version>${caffeine.version}</version>
-        </dependency>
-
         <!--Apache library for configuration-->
         <dependency>
             <groupId>commons-configuration</groupId>
@@ -120,62 +80,11 @@
             <version>${mockito.version}</version>
             <scope>test</scope>
         </dependency>
-
-        <!-- language detector -->
-        <dependency>
-            <groupId>com.cybozu.labs</groupId>
-            <artifactId>langdetect</artifactId>
-            <version>${langdetect.version}</version>
-        </dependency>
-
-        <!-- redis clients: jedis -->
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>${jedis.version}</version>
-        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <version>${assembly-plugin.version}</version>
-                <configuration>
-                    <descriptorRefs>
-                        <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
 
-                    <archive>
-                        <manifest>
-                            <mainClass>in.nimbo.App</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>assemble-all</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.jacoco</groupId>
-                <artifactId>jacoco-maven-plugin</artifactId>
-                <version>${jacoco-plugin.versio}</version>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.4.0</version>
-                <configuration>
-                    <mainClass>in.nimbo.App</mainClass>
-                </configuration>
-            </plugin>
         </plugins>
 
         <pluginManagement>
