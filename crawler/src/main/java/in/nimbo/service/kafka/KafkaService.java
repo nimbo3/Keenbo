@@ -21,11 +21,13 @@ public class KafkaService {
     private BlockingQueue<String> messageQueue;
     private ConsumerService consumerService;
     private List<ProducerService> producerServices;
+    private CountDownLatch countDownLatch;
 
     public KafkaService(CrawlerService crawlerService, KafkaConfig kafkaConfig) {
         this.crawlerService = crawlerService;
         this.kafkaConfig = kafkaConfig;
         producerServices = new ArrayList<>();
+        countDownLatch = new CountDownLatch(kafkaConfig.getProducerCount() + 1);
     }
 
     /**
@@ -40,13 +42,13 @@ public class KafkaService {
         // Prepare consumer
         KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getConsumerProperties());
         kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
-        consumerService = new ConsumerService(kafkaConsumer, messageQueue);
+        consumerService = new ConsumerService(kafkaConsumer, messageQueue, countDownLatch);
         executorService.submit(consumerService);
 
         // Prepare producer
         for (int i = 0; i < kafkaConfig.getProducerCount(); i++) {
             KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
-            ProducerService producerService = new ProducerService(producer, kafkaConfig.getKafkaTopic(), messageQueue, crawlerService);
+            ProducerService producerService = new ProducerService(producer, kafkaConfig.getKafkaTopic(), messageQueue, crawlerService, countDownLatch);
             producerServices.add(producerService);
             executorService.submit(producerService);
         }
@@ -64,7 +66,7 @@ public class KafkaService {
             producerService.close();
         }
         try {
-            TimeUnit.SECONDS.sleep(2);
+            countDownLatch.await();
             logger.info("All service stopped");
             logger.info("Start sending " + messageQueue.size() + " messages to kafka");
             KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());

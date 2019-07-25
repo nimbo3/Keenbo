@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class ConsumerServiceTest {
@@ -23,6 +24,7 @@ public class ConsumerServiceTest {
     private MockProducer<String, String> kafkaProducer;
     private BlockingQueue<String> messageQueue;
     private ConsumerService consumerService;
+    private CountDownLatch countDownLatch;
 
     @BeforeClass
     public static void init() {
@@ -32,9 +34,10 @@ public class ConsumerServiceTest {
     @Before
     public void beforeEachTest() {
         messageQueue = new LinkedBlockingQueue<>();
+        countDownLatch = new CountDownLatch(1);
         kafkaConsumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
         kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
-        consumerService = new ConsumerService(kafkaConsumer, messageQueue);
+        consumerService = new ConsumerService(kafkaConsumer, messageQueue, countDownLatch);
     }
 
     @Test
@@ -62,6 +65,7 @@ public class ConsumerServiceTest {
             String link = messageQueue.take();
             Assert.assertEquals(link, crawl.get(i));
         }
-        Assert.assertEquals(messageQueue.size(), 0);
+        Assert.assertEquals(0, messageQueue.size());
+        Assert.assertEquals(0, countDownLatch.getCount());
     }
 }

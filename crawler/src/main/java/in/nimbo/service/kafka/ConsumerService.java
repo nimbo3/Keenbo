@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,11 +18,14 @@ public class ConsumerService implements Runnable {
     private BlockingQueue<String> messageQueue;
     private Consumer<String, String> consumer;
     private AtomicBoolean closed;
+    private CountDownLatch countDownLatch;
 
-    public ConsumerService(Consumer<String, String> consumer, BlockingQueue<String> messageQueue) {
+    public ConsumerService(Consumer<String, String> consumer, BlockingQueue<String> messageQueue,
+                           CountDownLatch countDownLatch) {
         this.consumer = consumer;
         this.messageQueue = messageQueue;
         closed = new AtomicBoolean(false);
+        this.countDownLatch = countDownLatch;
     }
 
     public void close() {
@@ -56,6 +60,7 @@ public class ConsumerService implements Runnable {
             if (consumer != null)
                 consumer.close();
             logger.info("Consumer service stopped");
+            countDownLatch.countDown();
         }
     }
 }
