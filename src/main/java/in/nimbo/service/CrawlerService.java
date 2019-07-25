@@ -17,9 +17,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class CrawlerService {
     private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
@@ -40,8 +38,8 @@ public class CrawlerService {
         this.redisDAO = redisDAO;
     }
 
-    public List<String> crawl(String siteLink) {
-        List<String> links = new ArrayList<>();
+    public Set<String> crawl(String siteLink) {
+        Set<String> links = new HashSet<>();
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
@@ -85,7 +83,7 @@ public class CrawlerService {
             String pageContentWithoutTag = document.text().replace("\n", " ");
             String pageContentWithTag = document.html();
             if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
-                List<Anchor> anchors = parserService.getAnchors(document);
+                Set<Anchor> anchors = parserService.getAnchors(document);
                 List<Meta> metas = parserService.getMetas(document);
                 String title = parserService.getTitle(document);
                 return Optional.of(new Page(link, title, pageContentWithTag, pageContentWithoutTag, anchors, metas, 1.0));
