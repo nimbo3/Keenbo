@@ -37,7 +37,7 @@ public class KafkaService {
      */
     public void schedule() {
         ExecutorService executorService = Executors.newFixedThreadPool(kafkaConfig.getProducerCount() + 1);
-        messageQueue = new LinkedBlockingQueue<>();
+        messageQueue = new ArrayBlockingQueue<>(kafkaConfig.getLocalQueueSize());
 
         // Prepare consumer
         KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getConsumerProperties());

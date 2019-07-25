@@ -12,6 +12,7 @@ public class KafkaConfig {
     private Properties producerProperties;
     private String kafkaTopic;
     private int producerCount;
+    private int localQueueSize;
 
     public static KafkaConfig load() {
         KafkaConfig config = new KafkaConfig();
@@ -19,12 +20,21 @@ public class KafkaConfig {
             PropertiesConfiguration configuration = new PropertiesConfiguration(CONFIG_NAME);
             config.setKafkaTopic(configuration.getString("topic.name"));
             config.setProducerCount(configuration.getInt("producer.count"));
+            config.setLocalQueueSize(configuration.getInt("local.queue.size"));
             config.setConsumerProperties(Config.loadProperties("kafka-consumer.properties"));
             config.setProducerProperties(Config.loadProperties("kafka-producer.properties"));
             return config;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public int getLocalQueueSize() {
+        return localQueueSize;
+    }
+
+    public void setLocalQueueSize(int localQueueSize) {
+        this.localQueueSize = localQueueSize;
     }
 
     public int getProducerCount() {

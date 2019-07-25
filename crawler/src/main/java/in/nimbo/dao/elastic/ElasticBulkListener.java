@@ -20,7 +20,7 @@ public class ElasticBulkListener implements BulkProcessor.Listener {
         if (bulkResponse.hasFailures()) {
             logger.warn("Bulk [{}] executed with failures", executionId);
         } else {
-            logger.debug("Bulk [{}] completed in {} milliseconds", executionId, bulkResponse.getTook().getMillis());
+            logger.info("Bulk [{}] completed in {} milliseconds", executionId, bulkResponse.getTook().getMillis());
         }
     }
 
