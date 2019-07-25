@@ -97,7 +97,6 @@ public class App {
             } else if (cmd.equals("exit")) {
                 kafkaService.stopSchedule();
                 restHighLevelClient.close();
-                bulkProcessor.close();
                 break;
             }
             System.out.print("engine> ");
