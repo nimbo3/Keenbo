@@ -25,11 +25,11 @@ public class HBaseDAOImpl implements HBaseDAO {
     }
 
     @Override
-    public boolean contains(String link) throws HBaseException {
+    public boolean contains(String link) {
         try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
             Get get = new Get(Bytes.toBytes(link));
             Result result = table.get(get);
-            return result.size() > 0;
+            return !result.isEmpty();
         } catch (IOException e) {
             throw new HBaseException(e);
         }
@@ -40,16 +40,16 @@ public class HBaseDAOImpl implements HBaseDAO {
         try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
             Put put = new Put(Bytes.toBytes(page.getReversedLink()));
 
-            put.addColumn(Bytes.toBytes(config.getContentColumnFamily()),
-                    Bytes.toBytes(config.getContentColumn()), Bytes.toBytes(page.getContentWithTags()));
+            put.addColumn(config.getContentColumnFamily(),
+                    config.getContentColumn(), Bytes.toBytes(page.getContentWithTags()));
 
             for (Anchor anchor : page.getAnchors()) {
-                put.addColumn(Bytes.toBytes(config.getAnchorsColumnFamily()),
+                put.addColumn(config.getAnchorColumnFamily(),
                         Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getAnchor()));
             }
 
             for (Meta meta : page.getMetas()) {
-                put.addColumn(Bytes.toBytes(config.getMetasColumnFamily()),
+                put.addColumn(config.getMetaColumnFamily(),
                         Bytes.toBytes(meta.getKey()), Bytes.toBytes(meta.getContent()));
             }
 
