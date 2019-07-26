@@ -10,5 +10,11 @@ public interface HBaseDAO extends AutoCloseable {
 
     boolean contains(String link);
 
-    void add(Page page);
+    /**
+     * add a new page to HBase database
+     * @param page page which is added
+     * @return true if page added successfully
+     * @throws in.nimbo.exception.HBaseException if any error happen during adding page
+     */
+    boolean add(Page page);
 }

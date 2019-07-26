@@ -36,7 +36,7 @@ public class HBaseDAOImpl implements HBaseDAO {
     }
 
     @Override
-    public void add(Page page) {
+    public boolean add(Page page) {
         try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
             Put put = new Put(Bytes.toBytes(page.getReversedLink()));
 
@@ -54,6 +54,10 @@ public class HBaseDAOImpl implements HBaseDAO {
             }
 
             table.put(put);
+            return true;
+        } catch (IllegalArgumentException e) {
+            // It will be thrown if size of page will be more than hbase.client.keyvalue.maxsize = 10485760
+            return false;
         } catch (IOException e) {
             throw new HBaseException(e);
         }

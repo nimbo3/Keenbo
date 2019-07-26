@@ -52,8 +52,11 @@ public class CrawlerService {
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
                         page.getAnchors().forEach(link -> links.add(link.getHref()));
-                        elasticDAO.save(page);
-                        hBaseDAO.add(page);
+                        if (hBaseDAO.add(page)) {
+                            elasticDAO.save(page);
+                        } else {
+                            logger.warn("Unable to add page with link {} to HBase", page.getLink());
+                        }
                     }
                     redisDAO.add(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
