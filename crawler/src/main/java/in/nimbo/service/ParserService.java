@@ -129,12 +129,4 @@ public class ParserService {
             throw new LanguageDetectException(e);
         }
     }
-
-    public static void main(String[] args) throws LangDetectException {
-        Logger logger = LoggerFactory.getLogger(ParserService.class);
-        DetectorFactory.loadProfile("crawler/src/main/resources/profiles");
-        ParserService parserService = new ParserService(AppConfig.load());
-        Optional<Document> document = parserService.getDocument("https://event.webcasts.com/starthere.jsp");
-        System.out.println(parserService.isEnglishLanguage(document.get().text()));
-    }
 }
