@@ -4,6 +4,7 @@ import org.apache.kafka.clients.consumer.CommitFailedException;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
+import org.apache.kafka.common.errors.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,7 +52,9 @@ public class ConsumerService implements Runnable {
                         consumer.commitSync();
                     }
                 } catch (CommitFailedException e) {
-                    logger.error("Unable to commit changes", e);
+                    logger.warn("Unable to commit offset for {} records", records.count(), e);
+                } catch (TimeoutException e) {
+                    logger.warn("Timeout expired before successfully committing {} records", records.count(), e);
                 }
             }
         } catch (Exception e) {

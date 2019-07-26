@@ -49,7 +49,7 @@ public class ParserService {
             } else {
                 return Optional.of(response.parse());
             }
-        } catch (MalformedURLException e) {
+        } catch (MalformedURLException | IllegalArgumentException e) {
             logger.warn("Illegal url format: {}", link);
         } catch (HttpStatusException e) {
             logger.warn("Response is not OK. Url: \"{}\" StatusCode: {}", e.getUrl(), e.getStatusCode());
@@ -57,6 +57,12 @@ public class ParserService {
             logger.warn("Unable to parse page with jsoup: {}", link);
         }
         return Optional.empty();
+    }
+
+    public static void main(String[] args) {
+        ParserService s = new ParserService(AppConfig.load());
+        Optional<Document> h = s.getDocument("https://www.amazon.com/PIONEER-Air-Conditioner-WYS020GMHI22M2-Multi/dp/B01EA831JO");
+        System.out.println(h.get().text());
     }
 
     /**
