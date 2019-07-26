@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.*;
 
@@ -59,6 +60,8 @@ public class ParserService {
             logger.warn("Illegal url format: {}", link);
         } catch (HttpStatusException e) {
             logger.warn("Response is not OK. Url: \"{}\" StatusCode: {}", e.getUrl(), e.getStatusCode());
+        } catch (SocketTimeoutException e) {
+            logger.warn("Connection time out with jsoup: {}", link);
         } catch (IOException e) {
             e.printStackTrace();
             logger.warn("Unable to parse page with jsoup: {}", link);
