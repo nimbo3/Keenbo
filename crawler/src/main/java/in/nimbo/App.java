@@ -15,8 +15,8 @@ import in.nimbo.dao.redis.RedisDAOImpl;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.http.HttpHost;
 import org.elasticsearch.action.bulk.BackoffPolicy;
 import org.elasticsearch.action.bulk.BulkProcessor;
@@ -40,10 +40,12 @@ public class App {
     private static Logger logger = LoggerFactory.getLogger(App.class);
     private RestHighLevelClient restHighLevelClient;
     private KafkaService kafkaService;
+    private HBaseDAO hBaseDAO;
 
-    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService) {
+    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService, HBaseDAO hBaseDAO) {
         this.restHighLevelClient = restHighLevelClient;
         this.kafkaService = kafkaService;
+        this.hBaseDAO = hBaseDAO;
     }
 
     public static void main(String[] args) {
@@ -52,11 +54,9 @@ public class App {
             DetectorFactory.loadProfile("profiles");
         } catch (LangDetectException e) {
             System.out.println("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.");
-            logger.info("Unable to load profiles of language detector.");
             System.exit(1);
         }
 
-        Configuration configuration = HBaseConfiguration.create();
         HBaseConfig hBaseConfig = HBaseConfig.load();
         AppConfig appConfig = AppConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
@@ -65,6 +65,8 @@ public class App {
         logger.info("Configuration loaded");
 
         JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
+        logger.info("Redis started");
+
         RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
                 .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
                         .setConnectTimeout(elasticConfig.getConnectTimeout())
@@ -78,9 +80,19 @@ public class App {
         builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
         builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(1L), 10));
         BulkProcessor bulkProcessor = builder.build();
+        logger.info("ElasticSearch started");
+
+        Connection hBaseConnection = null;
+        try {
+            hBaseConnection = ConnectionFactory.createConnection();
+            logger.info("HBase started");
+        } catch (IOException e) {
+            logger.error("Unable to establish HBase connection", e);
+            System.exit(1);
+        }
 
         ElasticDAO elasticDAO = new ElasticDAOImpl(bulkProcessor, elasticConfig);
-        HBaseDAO hBaseDAO = new HBaseDAOImpl(configuration, hBaseConfig);
+        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBaseConfig);
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
         logger.info("DAO interface created");
 
@@ -93,7 +105,7 @@ public class App {
         kafkaService.schedule();
 
         logger.info("Application started");
-        App app = new App(restHighLevelClient, kafkaService);
+        App app = new App(restHighLevelClient, kafkaService, hBaseDAO);
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
         app.startApp();
     }
@@ -116,11 +128,12 @@ public class App {
     }
 
     private void stopApp() {
+        kafkaService.stopSchedule();
         try {
-            kafkaService.stopSchedule();
             restHighLevelClient.close();
+            hBaseDAO.close();
         } catch (IOException e) {
-            logger.warn("Unable to close rest api of ElasticSearch");
+            logger.warn("Unable to close resources", e);
         }
     }
 }

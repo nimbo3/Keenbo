@@ -22,7 +22,6 @@ import java.net.MalformedURLException;
 import java.util.*;
 
 public class ParserService {
-    private static final double ENGLISH_PROBABILITY = 0.65;
     private Logger logger = LoggerFactory.getLogger(LinkUtility.class);
     private AppConfig appConfig;
 
@@ -32,6 +31,7 @@ public class ParserService {
 
     /**
      * return document of page if it is present
+     *
      * @param link link of site
      * @return
      */
@@ -59,14 +59,7 @@ public class ParserService {
         return Optional.empty();
     }
 
-    public static void main(String[] args) {
-        ParserService s = new ParserService(AppConfig.load());
-        Optional<Document> h = s.getDocument("https://www.amazon.com/PIONEER-Air-Conditioner-WYS020GMHI22M2-Multi/dp/B01EA831JO");
-        System.out.println(h.get().text());
-    }
-
     /**
-     *
      * @param document document contain a site contents
      * @return list of all anchors in a document
      */
@@ -84,7 +77,6 @@ public class ParserService {
     }
 
     /**
-     *
      * @param document document contain a site contents
      * @return list of all metas in a document
      */
@@ -103,7 +95,6 @@ public class ParserService {
     }
 
     /**
-     *
      * @param document document contain a site contents
      * @return title of document and empty if there is no title
      */
@@ -126,7 +117,7 @@ public class ParserService {
             detector.append(text);
             detector.setAlpha(0);
             return detector.getProbabilities().stream()
-                    .anyMatch(x -> x.lang.equals("en") && x.prob > ENGLISH_PROBABILITY);
+                    .anyMatch(x -> x.lang.equals("en") && x.prob > appConfig.getEnglishProbability());
         } catch (LangDetectException e) {
             throw new LanguageDetectException(e);
         }

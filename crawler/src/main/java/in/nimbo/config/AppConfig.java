@@ -10,6 +10,7 @@ public class AppConfig {
     private int caffeineExpireTime;
     private int jsoupTimeout;
     private String jsoupUserAgent;
+    private double englishProbability;
 
     public static AppConfig load() {
         AppConfig appConfig = new AppConfig();
@@ -19,6 +20,7 @@ public class AppConfig {
             appConfig.setCaffeineExpireTime(config.getInt("caffeine.expire.time"));
             appConfig.setJsoupTimeout(config.getInt("jsoup.timeout"));
             appConfig.setJsoupUserAgent(config.getString("jsoup.user.agent"));
+            appConfig.setEnglishProbability(config.getDouble("english.probability"));
             return appConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
@@ -55,5 +57,13 @@ public class AppConfig {
 
     public void setJsoupTimeout(int jsoupTimeout) {
         this.jsoupTimeout = jsoupTimeout;
+    }
+
+    public double getEnglishProbability() {
+        return englishProbability;
+    }
+
+    public void setEnglishProbability(double englishProbability) {
+        this.englishProbability = englishProbability;
     }
 }
