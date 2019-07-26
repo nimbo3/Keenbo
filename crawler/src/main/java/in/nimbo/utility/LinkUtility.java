@@ -65,9 +65,9 @@ public class LinkUtility {
      */
     public static boolean isValidUrl(String link) {
         try {
-            URI uri = new URI(link);
+            URI uri = new URL(link).toURI();
             return uri.getHost() != null && uri.getHost().split("\\.").length >= 2;
-        } catch (URISyntaxException | NullPointerException e) {
+        } catch (MalformedURLException | URISyntaxException | NullPointerException e) {
             return false;
         }
     }

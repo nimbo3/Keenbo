@@ -70,6 +70,7 @@ public class CrawlerService {
 
     /**
      * crawl a site and return it's content as a page
+     *
      * @param link link of site
      * @return page if able to crawl page
      */
@@ -82,7 +83,9 @@ public class CrawlerService {
             Document document = documentOptional.get();
             String pageContentWithoutTag = document.text().replace("\n", " ");
             String pageContentWithTag = document.html();
-            if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
+            if (pageContentWithoutTag.isEmpty()) {
+                logger.warn("There is no content for site: {}", link);
+            } else if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
                 Set<Anchor> anchors = parserService.getAnchors(document);
                 List<Meta> metas = parserService.getMetas(document);
                 String title = parserService.getTitle(document);

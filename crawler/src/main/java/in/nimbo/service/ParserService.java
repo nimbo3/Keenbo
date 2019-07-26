@@ -17,8 +17,10 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.UnknownHostException;
 import java.util.*;
 
 public class ParserService {
@@ -49,11 +51,16 @@ public class ParserService {
             } else {
                 return Optional.of(response.parse());
             }
+        } catch (SSLHandshakeException e) {
+            logger.warn("Server certificate verification failed: {}", link);
+        } catch (UnknownHostException e) {
+            logger.warn("Could not resolve host: {}", link);
         } catch (MalformedURLException | IllegalArgumentException e) {
             logger.warn("Illegal url format: {}", link);
         } catch (HttpStatusException e) {
             logger.warn("Response is not OK. Url: \"{}\" StatusCode: {}", e.getUrl(), e.getStatusCode());
         } catch (IOException e) {
+            e.printStackTrace();
             logger.warn("Unable to parse page with jsoup: {}", link);
         }
         return Optional.empty();
@@ -121,5 +128,13 @@ public class ParserService {
         } catch (LangDetectException e) {
             throw new LanguageDetectException(e);
         }
+    }
+
+    public static void main(String[] args) throws LangDetectException {
+        Logger logger = LoggerFactory.getLogger(ParserService.class);
+        DetectorFactory.loadProfile("crawler/src/main/resources/profiles");
+        ParserService parserService = new ParserService(AppConfig.load());
+        Optional<Document> document = parserService.getDocument("https://event.webcasts.com/starthere.jsp");
+        System.out.println(parserService.isEnglishLanguage(document.get().text()));
     }
 }
