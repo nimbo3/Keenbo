@@ -16,6 +16,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -44,7 +45,7 @@ public class CrawlerServiceTest {
     }
 
     @Before
-    public void beforeEachTest() {
+    public void beforeEachTest() throws MalformedURLException {
         link = "http://nimbo.in/";
         String contentWithTag = "Be your best!";
         String contentWithoutTag = "<html>Be your best!</html>";

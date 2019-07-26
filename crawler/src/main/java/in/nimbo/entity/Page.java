@@ -20,7 +20,7 @@ public class Page {
     }
 
     public Page(String link, String title, String contentWithTags, String contentWithoutTags, Set<Anchor> anchors, List<Meta> metas,
-                double rank) {
+                double rank) throws MalformedURLException {
         this.title = title;
         this.contentWithTags = contentWithTags;
         this.contentWithoutTags = contentWithoutTags;
@@ -28,6 +28,7 @@ public class Page {
         this.metas = metas;
         this.link = link;
         this.rank = rank;
+        this.reversedLink = LinkUtility.reverseLink(link);
     }
 
     public String getTitle() {
@@ -35,12 +36,6 @@ public class Page {
     }
 
     public String getReversedLink() {
-        if (reversedLink == null)
-            try {
-                return reversedLink = LinkUtility.reverseLink(link);
-            } catch (MalformedURLException e) {
-                e.printStackTrace();
-            }
         return reversedLink;
     }
 

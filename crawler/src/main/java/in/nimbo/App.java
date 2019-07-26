@@ -78,7 +78,8 @@ public class App {
         builder.setBulkActions(elasticConfig.getBulkActions());
         builder.setBulkSize(new ByteSizeValue(elasticConfig.getBulkSize(), ByteSizeUnit.valueOf(elasticConfig.getBulkSizeUnit())));
         builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
-        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(1L), 10));
+        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
+                elasticConfig.getBackoffMaxRetry()));
         BulkProcessor bulkProcessor = builder.build();
         logger.info("ElasticSearch started");
 

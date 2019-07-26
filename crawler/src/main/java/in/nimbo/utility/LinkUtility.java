@@ -12,6 +12,7 @@ import java.util.Collections;
 
 public class LinkUtility {
     private static Logger logger = LoggerFactory.getLogger(LinkUtility.class);
+
     private LinkUtility() {
     }
 
@@ -33,7 +34,7 @@ public class LinkUtility {
         if (uri != null) {
             answer += uri;
         }
-        if (query != null){
+        if (query != null) {
             answer += "?";
             answer += query;
         }
@@ -43,6 +44,7 @@ public class LinkUtility {
     /**
      * extract domain from a url
      * url must be in absolute format
+     *
      * @param link link
      * @return domain of url without it's subdomains
      * @throws URISyntaxException if link is not a illegal url
@@ -60,6 +62,7 @@ public class LinkUtility {
 
     /**
      * check whether a url is a valid url or not
+     *
      * @param link url
      * @return true if url is a valid url
      */
@@ -72,29 +75,23 @@ public class LinkUtility {
         }
     }
 
-    public static String normalize(String link) {
-        try {
-            URL url = new URL(link);
-            String protocol = url.getProtocol();
-            String host = url.getHost();
-            int port = url.getPort();
-            String uri = url.getPath();
-            String newLink = protocol + "://" + host;
-            if (port != -1) {
-                newLink += ":" + port;
-            }
-            if (uri != null) {
-                if (uri.endsWith("/")) {
-                    newLink += uri.substring(0, uri.length() - 1);
-                }
-                else {
-                    newLink += uri;
-                }
-            }
-            return newLink;
-        } catch (MalformedURLException e) {
-            logger.warn("Unable to parse link: " + link);
-            return null;
+    public static String normalize(String link) throws MalformedURLException {
+        URL url = new URL(link);
+        String protocol = url.getProtocol();
+        String host = url.getHost();
+        int port = url.getPort();
+        String uri = url.getPath();
+        String newLink = protocol + "://" + host;
+        if (port != -1) {
+            newLink += ":" + port;
         }
+        if (uri != null) {
+            if (uri.endsWith("/")) {
+                newLink += uri.substring(0, uri.length() - 1);
+            } else {
+                newLink += uri;
+            }
+        }
+        return newLink;
     }
 }

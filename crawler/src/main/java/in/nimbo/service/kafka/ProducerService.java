@@ -48,7 +48,7 @@ public class ProducerService implements Runnable {
                 }
             }
         } catch (InterruptedException e) {
-            // ignore
+            Thread.currentThread().interrupt();
         } finally {
             if (producer != null)
                 producer.close();

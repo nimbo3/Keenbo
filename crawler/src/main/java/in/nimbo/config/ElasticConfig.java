@@ -14,8 +14,8 @@ public class ElasticConfig {
     private long bulkSize;
     private String bulkSizeUnit;
     private int concurrentRequests;
-    private String backoffDelaySeconds;
-    private String backoffMaxRetry;
+    private long backoffDelaySeconds;
+    private int backoffMaxRetry;
     private int connectTimeout;
     private int socketTimeout;
     private int maxRetryTimeoutMillis;
@@ -35,8 +35,8 @@ public class ElasticConfig {
             elasticConfig.setBulkSize(config.getLong("bulk.size"));
             elasticConfig.setBulkSizeUnit(config.getString("bulk.size.unit"));
             elasticConfig.setConcurrentRequests(config.getInt("concurrent.requests"));
-            elasticConfig.setBackoffDelaySeconds(config.getString("backoff.delay.seconds"));
-            elasticConfig.setBackoffMaxRetry(config.getString("backoff.max.retry"));
+            elasticConfig.setBackoffDelaySeconds(config.getLong("backoff.delay.seconds"));
+            elasticConfig.setBackoffMaxRetry(config.getInt("backoff.max.retry"));
             elasticConfig.setConnectTimeout(config.getInt("connect.timeout"));
             elasticConfig.setSocketTimeout(config.getInt("socket.timeout"));
             elasticConfig.setMaxRetryTimeoutMillis(config.getInt("max.retry.timeout.millis"));
@@ -110,19 +110,19 @@ public class ElasticConfig {
         this.concurrentRequests = concurrentRequests;
     }
 
-    public String getBackoffDelaySeconds() {
+    public long getBackoffDelaySeconds() {
         return backoffDelaySeconds;
     }
 
-    public void setBackoffDelaySeconds(String backoffDelaySeconds) {
+    public void setBackoffDelaySeconds(long backoffDelaySeconds) {
         this.backoffDelaySeconds = backoffDelaySeconds;
     }
 
-    public String getBackoffMaxRetry() {
+    public int getBackoffMaxRetry() {
         return backoffMaxRetry;
     }
 
-    public void setBackoffMaxRetry(String backoffMaxRetry) {
+    public void setBackoffMaxRetry(int backoffMaxRetry) {
         this.backoffMaxRetry = backoffMaxRetry;
     }
 

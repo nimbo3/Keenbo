@@ -47,15 +47,7 @@ public class ConsumerService implements Runnable {
                         break;
                     }
                 }
-                try {
-                    if (!closed.get()) {
-                        consumer.commitSync();
-                    }
-                } catch (CommitFailedException e) {
-                    logger.warn("Unable to commit offset for {} records", records.count(), e);
-                } catch (TimeoutException e) {
-                    logger.warn("Timeout expired before successfully committing {} records", records.count(), e);
-                }
+                commitChanges(records.count());
             }
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
@@ -64,6 +56,18 @@ public class ConsumerService implements Runnable {
                 consumer.close();
             logger.info("Consumer service stopped");
             countDownLatch.countDown();
+        }
+    }
+
+    private void commitChanges(int recordsCount) {
+        try {
+            if (!closed.get()) {
+                consumer.commitSync();
+            }
+        } catch (CommitFailedException e) {
+            logger.warn("Unable to commit offset for {} records", recordsCount, e);
+        } catch (TimeoutException e) {
+            logger.warn("Timeout expired before successfully committing {} records", recordsCount, e);
         }
     }
 }
