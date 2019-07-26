@@ -63,7 +63,6 @@ public class ParserService {
         } catch (SocketTimeoutException e) {
             logger.warn("Connection time out with jsoup: {}", link);
         } catch (IOException e) {
-            e.printStackTrace();
             logger.warn("Unable to parse page with jsoup: {}", link);
         }
         return Optional.empty();
@@ -110,7 +109,7 @@ public class ParserService {
      */
     public String getTitle(Document document) {
         Elements titleElements = document.getElementsByTag("title");
-        if (titleElements.size() > 0) {
+        if (!titleElements.isEmpty()) {
             return titleElements.get(0).text();
         } else {
             return "";
