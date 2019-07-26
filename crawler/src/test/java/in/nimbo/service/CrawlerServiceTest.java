@@ -67,7 +67,7 @@ public class CrawlerServiceTest {
         when(parserService.getMetas(document)).thenReturn(metas);
         when(parserService.getTitle(document)).thenReturn(title);
         doNothing().when(elasticDAO).save(any(Page.class));
-        doNothing().when(hBaseDAO).add(any(Page.class));
+        doReturn(true).when(hBaseDAO).add(any(Page.class));
         cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
