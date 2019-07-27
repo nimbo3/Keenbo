@@ -9,21 +9,15 @@ public class Page {
     @JsonProperty("title")
     private String title;
     @JsonIgnore
-    private String contentWithTags;
-    @JsonIgnore
     private String contentWithoutTags;
-    @JsonIgnore
-    private double rank;
 
     public Page() {
     }
 
-    public Page(String link, String title, String contentWithTags, String contentWithoutTags, double rank) {
+    public Page(String link, String title, String contentWithoutTags) {
         this.title = title;
-        this.contentWithTags = contentWithTags;
         this.contentWithoutTags = contentWithoutTags;
         this.link = link;
-        this.rank = rank;
     }
 
     public String getTitle() {
@@ -33,14 +27,6 @@ public class Page {
 
     public String getLink() {
         return link;
-    }
-
-    public double getRank() {
-        return rank;
-    }
-
-    public String getContentWithTags() {
-        return contentWithTags;
     }
 
     public String getContentWithoutTags() {
@@ -55,15 +41,7 @@ public class Page {
         this.title = title;
     }
 
-    public void setContentWithTags(String contentWithTags) {
-        this.contentWithTags = contentWithTags;
-    }
-
     public void setContentWithoutTags(String contentWithoutTags) {
         this.contentWithoutTags = contentWithoutTags;
-    }
-
-    public void setRank(double rank) {
-        this.rank = rank;
     }
 }
