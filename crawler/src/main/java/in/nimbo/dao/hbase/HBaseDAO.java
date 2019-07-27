@@ -1,6 +1,8 @@
 package in.nimbo.dao.hbase;
 
+import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.Page;
+import in.nimbo.service.ParserService;
 
 import java.io.IOException;
 
@@ -17,4 +19,6 @@ public interface HBaseDAO extends AutoCloseable {
      * @throws in.nimbo.exception.HBaseException if any error happen during adding page
      */
     boolean add(Page page);
+
+    void syncWithElastic(ElasticDAO elasticDAO, ParserService parserService);
 }
