@@ -32,7 +32,7 @@
         </dependency>
         <dependency>
             <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-jmx</artifactId>
+            <artifactId>metrics-graphite</artifactId>
             <version>${dropwizard-metrics.version}</version>
         </dependency>
 

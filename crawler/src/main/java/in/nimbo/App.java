@@ -1,8 +1,10 @@
 package in.nimbo;
 
+import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import com.codahale.metrics.jmx.JmxReporter;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -35,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -146,7 +149,12 @@ public class App {
 
     private static void startReporter() {
         MetricRegistry metricRegistry = SharedMetricRegistries.setDefault("Keenbo");
-        JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).build();
-        reporter.start();
+        final Graphite graphite = new Graphite(new InetSocketAddress("localhost", 2003));
+        final GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
+                .convertRatesTo(TimeUnit.SECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .filter(MetricFilter.ALL)
+                .build(graphite);
+        reporter.start(5, TimeUnit.SECONDS);
     }
 }
