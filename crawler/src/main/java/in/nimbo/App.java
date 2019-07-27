@@ -57,7 +57,7 @@ public class App {
     public static void main(String[] args) {
         try {
             logger.info("Load application profiles for language detector");
-            DetectorFactory.loadProfile("crawler/src/main/resources/profiles");
+            DetectorFactory.loadProfile("profiles");
         } catch (LangDetectException e) {
             System.out.println("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.");
             System.exit(1);
