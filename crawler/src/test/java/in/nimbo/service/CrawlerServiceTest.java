@@ -35,7 +35,7 @@ public class CrawlerServiceTest {
     private static Cache<String, LocalDateTime> cache;
     private static CrawlerService crawlerService;
     private static String link;
-    private static List<String> crawledLinks;
+    private static Set<String> crawledLinks;
 
     @BeforeClass
     public static void init() {
@@ -54,7 +54,7 @@ public class CrawlerServiceTest {
         anchors.add(new Anchor("https://www.google.com/", "google"));
         anchors.add(new Anchor("https://stackoverflow.com/", "stackoverflow"));
         anchors.add(new Anchor("https://www.sahab.ir/", "sahab"));
-        crawledLinks = anchors.stream().map(Anchor::getHref).collect(Collectors.toList());
+        crawledLinks = anchors.stream().map(Anchor::getHref).collect(Collectors.toSet());
         List<Meta> metas = new ArrayList<>();
         metas.add(new Meta("key1", "value1"));
         metas.add(new Meta("key2", "value2"));
@@ -70,7 +70,15 @@ public class CrawlerServiceTest {
         doReturn(true).when(hBaseDAO).add(any(Page.class));
         cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
-        crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
+        crawlerService = spy(new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO));
+        doReturn(Optional.of(page)).when(crawlerService).getPage(anyString());
+    }
+
+    @Test
+    public void crawlTest() {
+        when(redisDAO.contains(link)).thenReturn(false);
+        Set<String> answer = crawlerService.crawl(link);
+        Assert.assertEquals(answer, crawledLinks);
     }
 
     @Test
