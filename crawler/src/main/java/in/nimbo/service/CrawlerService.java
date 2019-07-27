@@ -87,17 +87,13 @@ public class CrawlerService {
                         boolean isAddedToHBase = hBaseDAO.add(page);
                         hBaseAddTimerContext.stop();
                         if (isAddedToHBase) {
-                            Timer.Context elasticSaveTimerContext = elasticSaveTimer.time();
-                            elasticDAO.save(page);
-                            elasticSaveTimerContext.stop();
+                            elasticSaveTimer.time(() -> elasticDAO.save(page));
                         } else {
                             logger.warn("Unable to add page with link {} to HBase", page.getLink());
                         }
 
                     }
-                    Timer.Context redisAddTimerContext = redisAddTimer.time();
-                    redisDAO.add(siteLink);
-                    redisAddTimerContext.stop();
+                    redisAddTimer.time(() -> redisDAO.add(siteLink));
 
                     cache.put(siteDomain, LocalDateTime.now());
                     logger.info("get {}", siteLink);
