@@ -17,12 +17,14 @@ import org.jsoup.select.Elements;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.net.ssl.SSLHandshakeException;
 import java.io.IOException;
 import java.net.MalformedURLException;
+import java.net.SocketTimeoutException;
+import java.net.UnknownHostException;
 import java.util.*;
 
 public class ParserService {
-    private static final double ENGLISH_PROBABILITY = 0.65;
     private Logger logger = LoggerFactory.getLogger(LinkUtility.class);
     private AppConfig appConfig;
 
@@ -32,6 +34,7 @@ public class ParserService {
 
     /**
      * return document of page if it is present
+     *
      * @param link link of site
      * @return
      */
@@ -49,10 +52,16 @@ public class ParserService {
             } else {
                 return Optional.of(response.parse());
             }
-        } catch (MalformedURLException e) {
+        } catch (SSLHandshakeException e) {
+            logger.warn("Server certificate verification failed: {}", link);
+        } catch (UnknownHostException e) {
+            logger.warn("Could not resolve host: {}", link);
+        } catch (MalformedURLException | IllegalArgumentException e) {
             logger.warn("Illegal url format: {}", link);
         } catch (HttpStatusException e) {
             logger.warn("Response is not OK. Url: \"{}\" StatusCode: {}", e.getUrl(), e.getStatusCode());
+        } catch (SocketTimeoutException e) {
+            logger.warn("Connection time out with jsoup: {}", link);
         } catch (IOException e) {
             logger.warn("Unable to parse page with jsoup: {}", link);
         }
@@ -60,7 +69,6 @@ public class ParserService {
     }
 
     /**
-     *
      * @param document document contain a site contents
      * @return list of all anchors in a document
      */
@@ -71,14 +79,17 @@ public class ParserService {
             String absUrl = linkElement.absUrl("href");
             if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
                     && LinkUtility.isValidUrl(absUrl)) {
-                anchors.add(new Anchor(LinkUtility.normalize(absUrl), linkElement.text()));
+                try {
+                    anchors.add(new Anchor(LinkUtility.normalize(absUrl), linkElement.text()));
+                } catch (MalformedURLException e) {
+                    logger.warn("Unable to normalize link: {}", absUrl);
+                }
             }
         }
         return anchors;
     }
 
     /**
-     *
      * @param document document contain a site contents
      * @return list of all metas in a document
      */
@@ -97,13 +108,12 @@ public class ParserService {
     }
 
     /**
-     *
      * @param document document contain a site contents
      * @return title of document and empty if there is no title
      */
     public String getTitle(Document document) {
         Elements titleElements = document.getElementsByTag("title");
-        if (titleElements.size() > 0) {
+        if (!titleElements.isEmpty()) {
             return titleElements.get(0).text();
         } else {
             return "";
@@ -120,7 +130,7 @@ public class ParserService {
             detector.append(text);
             detector.setAlpha(0);
             return detector.getProbabilities().stream()
-                    .anyMatch(x -> x.lang.equals("en") && x.prob > ENGLISH_PROBABILITY);
+                    .anyMatch(x -> x.lang.equals("en") && x.prob > appConfig.getEnglishProbability());
         } catch (LangDetectException e) {
             throw new LanguageDetectException(e);
         }

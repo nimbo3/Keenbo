@@ -15,9 +15,13 @@ import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 public class CrawlerService {
     private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
@@ -48,12 +52,15 @@ public class CrawlerService {
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
                         page.getAnchors().forEach(link -> links.add(link.getHref()));
-                        elasticDAO.save(page);
-                        hBaseDAO.add(page);
+                        if (hBaseDAO.add(page)) {
+                            elasticDAO.save(page);
+                        } else {
+                            logger.warn("Unable to add page with link {} to HBase", page.getLink());
+                        }
                     }
                     redisDAO.add(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
-                    logger.info("get " + siteLink);
+                    logger.info("get {}", siteLink);
                 }
             } else {
                 links.add(siteLink);
@@ -70,6 +77,7 @@ public class CrawlerService {
 
     /**
      * crawl a site and return it's content as a page
+     *
      * @param link link of site
      * @return page if able to crawl page
      */
@@ -82,12 +90,17 @@ public class CrawlerService {
             Document document = documentOptional.get();
             String pageContentWithoutTag = document.text().replace("\n", " ");
             String pageContentWithTag = document.html();
-            if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
+            if (pageContentWithoutTag.isEmpty()) {
+                logger.warn("There is no content for site: {}", link);
+            } else if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
                 Set<Anchor> anchors = parserService.getAnchors(document);
                 List<Meta> metas = parserService.getMetas(document);
                 String title = parserService.getTitle(document);
-                return Optional.of(new Page(link, title, pageContentWithTag, pageContentWithoutTag, anchors, metas, 1.0));
+                Page page = new Page(link, title, pageContentWithTag, pageContentWithoutTag, anchors, metas, 1.0);
+                return Optional.of(page);
             }
+        } catch (MalformedURLException e) {
+            logger.warn("Unable to reverse link: {}", link);
         } catch (LanguageDetectException e) {
             logger.warn("Cannot detect language of site: {}", link);
         } catch (Exception e) {

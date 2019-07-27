@@ -6,15 +6,7 @@ public class ElasticException extends RuntimeException {
         super();
     }
 
-    public ElasticException(String message) {
-        super(message);
-    }
-
     public ElasticException(String message, Throwable cause) {
         super(message, cause);
-    }
-
-    public ElasticException(Throwable cause) {
-        super(cause);
     }
 }

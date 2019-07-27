@@ -5,7 +5,6 @@ import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.HBaseException;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -13,46 +12,52 @@ import org.apache.hadoop.hbase.util.Bytes;
 import java.io.IOException;
 
 public class HBaseDAOImpl implements HBaseDAO {
-    private Configuration conf;
     private HBaseConfig config;
+    private Connection connection;
 
-    public HBaseDAOImpl(Configuration conf, HBaseConfig config) {
-        this.conf = conf;
+    public HBaseDAOImpl(Connection connection, HBaseConfig config) {
+        this.connection = connection;
         this.config = config;
     }
 
+    public void close() throws IOException {
+        connection.close();
+    }
+
     @Override
-    public boolean contains(String link) throws HBaseException {
-        try (Connection connection = ConnectionFactory.createConnection(conf);
-             Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
+    public boolean contains(String link) {
+        try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
             Get get = new Get(Bytes.toBytes(link));
             Result result = table.get(get);
-            return result.size() > 0;
+            return !result.isEmpty();
         } catch (IOException e) {
             throw new HBaseException(e);
         }
     }
 
     @Override
-    public void add(Page page) {
-        try (Connection connection = ConnectionFactory.createConnection(conf);
-             Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
+    public boolean add(Page page) {
+        try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
             Put put = new Put(Bytes.toBytes(page.getReversedLink()));
 
-            put.addColumn(Bytes.toBytes(config.getContentColumnFamily()),
-                    Bytes.toBytes(config.getContentColumn()), Bytes.toBytes(page.getContentWithTags()));
+            put.addColumn(config.getContentColumnFamily(),
+                    config.getContentColumn(), Bytes.toBytes(page.getContentWithTags()));
 
             for (Anchor anchor : page.getAnchors()) {
-                put.addColumn(Bytes.toBytes(config.getAnchorsColumnFamily()),
-                        Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getAnchor()));
+                put.addColumn(config.getAnchorColumnFamily(),
+                        Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getContent()));
             }
 
             for (Meta meta : page.getMetas()) {
-                put.addColumn(Bytes.toBytes(config.getMetasColumnFamily()),
+                put.addColumn(config.getMetaColumnFamily(),
                         Bytes.toBytes(meta.getKey()), Bytes.toBytes(meta.getContent()));
             }
 
             table.put(put);
+            return true;
+        } catch (IllegalArgumentException e) {
+            // It will be thrown if size of page will be more than hbase.client.keyvalue.maxsize = 10485760
+            return false;
         } catch (IOException e) {
             throw new HBaseException(e);
         }
