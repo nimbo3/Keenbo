@@ -16,7 +16,7 @@
         <jsoup.version>1.12.1</jsoup.version>
         <caffeine.version>2.7.0</caffeine.version>
         <elasticsearch.version>6.6.2</elasticsearch.version>
-        <hbase.version>2.2.0</hbase.version>
+        <hbase.version>1.4.10</hbase.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
         <langdetect.version>1.1-20120112</langdetect.version>
         <jedis.version>3.0.1</jedis.version>
@@ -42,19 +42,15 @@
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
             <version>${elasticsearch.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${elasticsearch.version}</version>
-        </dependency>
-        <!--ProducerService/ConsumerService API of Apache Kafka-->
+
+        <!--Producer/Consumer API of Apache Kafka-->
         <dependency>
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>${kafka.version}</version>
         </dependency>
 
-        <!--driver for hbase-->
+        <!--driver for HBase-->
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>

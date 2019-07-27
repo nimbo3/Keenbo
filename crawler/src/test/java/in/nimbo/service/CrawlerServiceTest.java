@@ -16,6 +16,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -44,7 +45,7 @@ public class CrawlerServiceTest {
     }
 
     @Before
-    public void beforeEachTest() {
+    public void beforeEachTest() throws MalformedURLException {
         link = "http://nimbo.in/";
         String contentWithTag = "Be your best!";
         String contentWithoutTag = "<html>Be your best!</html>";
@@ -66,7 +67,7 @@ public class CrawlerServiceTest {
         when(parserService.getMetas(document)).thenReturn(metas);
         when(parserService.getTitle(document)).thenReturn(title);
         doNothing().when(elasticDAO).save(any(Page.class));
-        doNothing().when(hBaseDAO).add(any(Page.class));
+        doReturn(true).when(hBaseDAO).add(any(Page.class));
         cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
