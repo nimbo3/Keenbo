@@ -1,8 +1,6 @@
 package in.nimbo.service;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
-import com.codahale.metrics.Timer;
+import com.codahale.metrics.*;
 import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
@@ -21,6 +19,7 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +31,10 @@ public class CrawlerService {
     private final Timer elasticSaveTimer;
     private final Timer hBaseAddTimer;
     private final Timer redisAddTimer;
-    private final Timer crawlTimer;
+    private final Histogram crawledHistogram;
+    private final Histogram skippedTimeHistogram;
+    private final Counter crawledLinksCounter;
+
 
     private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
     private Cache<String, LocalDateTime> cache;
@@ -56,37 +58,40 @@ public class CrawlerService {
         elasticSaveTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "elasticSave"));
         hBaseAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "hBaseAdd"));
         redisAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisAdd"));
-        crawlTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "crawl"));
+        crawledHistogram = metricRegistry.histogram(MetricRegistry.name(CrawlerService.class, "crawledTimes"));
+        skippedTimeHistogram = metricRegistry.histogram(MetricRegistry.name(CrawlerService.class, "skippedTimes"));
+        crawledLinksCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledLinks"));
     }
 
     public Set<String> crawl(String siteLink) {
-        Timer.Context crawlTimerContext = crawlTimer.time();
         Set<String> links = new HashSet<>();
+        LocalDateTime start = LocalDateTime.now();
+        boolean ignored = true;
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
 
                 Timer.Context redisContainsTimerContext = redisContainsTimer.time();
-                boolean contains = !redisDAO.contains(siteLink);
+                boolean contains = redisDAO.contains(siteLink);
                 redisContainsTimerContext.stop();
 
-                if (contains) {
+                if (!contains) {
+                    ignored = false;
+                    crawledLinksCounter.inc();
                     Optional<Page> pageOptional = getPage(siteLink);
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
                         page.getAnchors().forEach(link -> links.add(link.getHref()));
 
                         Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
-                        boolean hbase = hBaseDAO.add(page);
+                        boolean isAddedToHBase = hBaseDAO.add(page);
                         hBaseAddTimerContext.stop();
-                        if (hbase) {
+                        if (isAddedToHBase) {
                             Timer.Context elasticSaveTimerContext = elasticSaveTimer.time();
                             elasticDAO.save(page);
                             elasticSaveTimerContext.stop();
-                        }
-                        else{
+                        } else {
                             logger.warn("Unable to add page with link {} to HBase", page.getLink());
-
                         }
 
                     }
@@ -107,7 +112,13 @@ public class CrawlerService {
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         } finally {
-            crawlTimerContext.stop();
+            LocalDateTime end = LocalDateTime.now();
+            long until = start.until(end, ChronoUnit.MILLIS);
+            if (ignored) {
+                skippedTimeHistogram.update(until);
+            } else {
+                crawledHistogram.update(until);
+            }
         }
         return links;
     }
