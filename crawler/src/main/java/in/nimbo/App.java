@@ -1,5 +1,10 @@
 package in.nimbo;
 
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -32,6 +37,7 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
@@ -97,12 +103,15 @@ public class App {
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
         logger.info("DAO interface created");
 
-        ParserService parserService = new ParserService(appConfig);
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
+        startReporter();
+
+        ParserService parserService = new ParserService(appConfig);
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
         KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
         logger.info("Start schedule service");
+
         kafkaService.schedule();
 
         logger.info("Application started");
@@ -136,5 +145,16 @@ public class App {
         } catch (IOException e) {
             logger.warn("Unable to close resources", e);
         }
+    }
+
+    private static void startReporter() {
+        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault("Keenbo");
+        Graphite graphite = new Graphite(new InetSocketAddress("localhost", 2003));
+        GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
+                .convertRatesTo(TimeUnit.MILLISECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .filter(MetricFilter.ALL)
+                .build(graphite);
+        reporter.start(5, TimeUnit.SECONDS);
     }
 }

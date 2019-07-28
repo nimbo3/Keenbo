@@ -20,9 +20,22 @@
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
         <langdetect.version>1.1-20120112</langdetect.version>
         <jedis.version>3.0.1</jedis.version>
+        <dropwizard-metrics.version>4.0.0</dropwizard-metrics.version>
     </properties>
 
     <dependencies>
+        <!--        Drop wizard metrics       -->
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-core</artifactId>
+            <version>${dropwizard-metrics.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.dropwizard.metrics</groupId>
+            <artifactId>metrics-graphite</artifactId>
+            <version>${dropwizard-metrics.version}</version>
+        </dependency>
+
         <!-- elasticsearch high level rest api client -->
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
