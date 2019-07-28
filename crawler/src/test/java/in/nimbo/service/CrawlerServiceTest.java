@@ -60,8 +60,8 @@ public class CrawlerServiceTest {
     public void beforeEachTest() throws MalformedURLException {
         link = "http://nimbo.in/";
         invalidLink = "abc";
-        String contentWithTag = "Be your best!";
-        String contentWithoutTag = "<html>Be your best!</html>";
+        String contentWithoutTag = "Be your best!";
+        String contentWithTag = "<html>Be your best!</html>";
         String title = "nimbo";
         anchors = new HashSet<>();
         anchors.add(new Anchor("https://www.google.com/", "google"));
