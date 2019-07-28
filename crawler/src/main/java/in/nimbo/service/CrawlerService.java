@@ -49,6 +49,7 @@ public class CrawlerService {
             if (cache.getIfPresent(siteDomain) == null) {
                 if (!redisDAO.contains(siteLink)) {
                     Optional<Page> pageOptional = getPage(siteLink);
+                    cache.put(siteDomain, LocalDateTime.now());
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
                         page.getAnchors().forEach(link -> links.add(link.getHref()));
@@ -59,7 +60,6 @@ public class CrawlerService {
                         }
                     }
                     redisDAO.add(siteLink);
-                    cache.put(siteDomain, LocalDateTime.now());
                     logger.info("get {}", siteLink);
                 }
             } else {
@@ -69,6 +69,8 @@ public class CrawlerService {
             logger.warn("Illegal URL format: " + siteLink, e);
         } catch (HBaseException e) {
             logger.error("Unable to establish HBase connection", e);
+            links.clear();
+            links.add(siteLink);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         }
