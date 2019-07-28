@@ -38,7 +38,9 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -174,13 +176,19 @@ public class App {
     }
 
     private static void initReporter(AppConfig appConfig) {
-        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(appConfig.getReportName());
-        Graphite graphite = new Graphite(new InetSocketAddress(appConfig.getReportHost(), appConfig.getReportPort()));
-        GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
-                .convertRatesTo(TimeUnit.MILLISECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .filter(MetricFilter.ALL)
-                .build(graphite);
-        reporter.start(appConfig.getReportPeriod(), TimeUnit.SECONDS);
+        try {
+            MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(appConfig.getReportName());
+            Graphite graphite = new Graphite(new InetSocketAddress(appConfig.getReportHost(), appConfig.getReportPort()));
+            GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
+                    .convertRatesTo(TimeUnit.MILLISECONDS)
+                    .convertDurationsTo(TimeUnit.MILLISECONDS)
+                    .prefixedWith(InetAddress.getLocalHost().getHostName())
+                    .filter(MetricFilter.ALL)
+                    .build(graphite);
+            reporter.start(appConfig.getReportPeriod(), TimeUnit.SECONDS);
+        } catch (UnknownHostException e) {
+            System.out.println("Unable to detect host of system");
+            System.exit(1);
+        }
     }
 }
