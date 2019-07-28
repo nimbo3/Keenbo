@@ -69,6 +69,9 @@ public class App {
         RedisConfig redisConfig = RedisConfig.load();
         logger.info("Configuration loaded");
 
+        initReporter(appConfig);
+        logger.info("Reporter started");
+
         JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
         logger.info("Redis started");
 
@@ -103,7 +106,6 @@ public class App {
         App app = new App(restHighLevelClient, kafkaService, hBaseDAO, cluster);
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
 
-        startReporter();
         app.startApp();
     }
 
@@ -171,14 +173,14 @@ public class App {
         }
     }
 
-    private static void startReporter() {
-        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault("Keenbo");
-        Graphite graphite = new Graphite(new InetSocketAddress("localhost", 2003));
+    private static void initReporter(AppConfig appConfig) {
+        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(appConfig.getReportName());
+        Graphite graphite = new Graphite(new InetSocketAddress(appConfig.getReportHost(), appConfig.getReportPort()));
         GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
                 .convertRatesTo(TimeUnit.MILLISECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .filter(MetricFilter.ALL)
                 .build(graphite);
-        reporter.start(5, TimeUnit.SECONDS);
+        reporter.start(appConfig.getReportPeriod(), TimeUnit.SECONDS);
     }
 }
