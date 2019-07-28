@@ -132,6 +132,13 @@ public class CrawlerServiceTest {
     }
 
     @Test
+    public void crawlWithHBaseAddFalse() {
+        when(hBaseDAO.add(any(Page.class))).thenReturn(false);
+        Set<String> answer = crawlerService.crawl(link);
+        Assert.assertEquals(answer, crawledLinks);
+    }
+
+    @Test
     public void getPageWithEmptyDocumentTest() {
         when(parserService.getDocument(link)).thenReturn(Optional.empty());
         Optional<Page> optionalPage = crawlerService.getPage(link);
