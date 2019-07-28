@@ -10,6 +10,7 @@ import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
+import in.nimbo.exception.LanguageDetectException;
 import in.nimbo.utility.LinkUtility;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -132,6 +133,13 @@ public class CrawlerServiceTest {
     @Test
     public void getPageMalformedURLExceptionTest() {
         when(parserService.getDocument(invalidLink)).thenReturn(Optional.of(document));
+        Optional<Page> optionalPage = crawlerService.getPage(invalidLink);
+        Assert.assertFalse(optionalPage.isPresent());
+    }
+
+    @Test
+    public void getPageLanguageDetectExceptionTest() {
+        doThrow(new LanguageDetectException(new Exception())).when(parserService).isEnglishLanguage(anyString());
         Optional<Page> optionalPage = crawlerService.getPage(invalidLink);
         Assert.assertFalse(optionalPage.isPresent());
     }
