@@ -10,6 +10,7 @@ import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
+import in.nimbo.exception.HBaseException;
 import in.nimbo.exception.LanguageDetectException;
 import in.nimbo.utility.LinkUtility;
 import org.jsoup.Jsoup;
@@ -121,6 +122,13 @@ public class CrawlerServiceTest {
         Set<String> answer = crawlerService.crawl("http://");
         Set<String> actualResult = new HashSet<>();
         Assert.assertEquals(answer, actualResult);
+    }
+
+    @Test
+    public void crawlWithHBaseException() {
+        when(hBaseDAO.add(any(Page.class))).thenThrow(HBaseException.class);
+        Set<String> answer = crawlerService.crawl(link);
+        Assert.assertEquals(answer, crawledLinks);
     }
 
     @Test
