@@ -38,6 +38,7 @@ public class CrawlerServiceTest {
     private static Cache<String, LocalDateTime> cache;
     private static CrawlerService crawlerService;
     private static String link;
+    private static String invalidLink;
     private static Set<String> crawledLinks;
     private static Page page;
     private static String input;
@@ -53,6 +54,7 @@ public class CrawlerServiceTest {
     @Before
     public void beforeEachTest() throws MalformedURLException {
         link = "http://nimbo.in/";
+        invalidLink = "abc";
         String contentWithTag = "Be your best!";
         String contentWithoutTag = "<html>Be your best!</html>";
         String title = "nimbo";
@@ -124,6 +126,13 @@ public class CrawlerServiceTest {
     public void getPageWithEmptyDocumentTest() {
         when(parserService.getDocument(link)).thenReturn(Optional.empty());
         Optional<Page> optionalPage = crawlerService.getPage(link);
+        Assert.assertFalse(optionalPage.isPresent());
+    }
+
+    @Test
+    public void getPageMalformedURLExceptionTest() {
+        when(parserService.getDocument(invalidLink)).thenReturn(Optional.of(document));
+        Optional<Page> optionalPage = crawlerService.getPage(invalidLink);
         Assert.assertFalse(optionalPage.isPresent());
     }
 }
