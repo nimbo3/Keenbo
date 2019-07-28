@@ -1,5 +1,9 @@
 package in.nimbo.service;
 
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.Timer;
 import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
@@ -18,12 +22,21 @@ import org.slf4j.LoggerFactory;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
 public class CrawlerService {
+    private final Timer getPageTimer;
+    private final Timer redisContainsTimer;
+    private final Timer elasticSaveTimer;
+    private final Timer hBaseAddTimer;
+    private final Timer redisAddTimer;
+    private final Histogram crawledHistogram;
+    private final Histogram skippedTimeHistogram;
+
     private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
     private Cache<String, LocalDateTime> cache;
     private HBaseDAO hBaseDAO;
@@ -40,27 +53,48 @@ public class CrawlerService {
         this.elasticDAO = elasticDAO;
         this.parserService = parserService;
         this.redisDAO = redisDAO;
+        MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
+        getPageTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "getPage"));
+        redisContainsTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisContains"));
+        elasticSaveTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "elasticSave"));
+        hBaseAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "hBaseAdd"));
+        redisAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisAdd"));
+        crawledHistogram = metricRegistry.histogram(MetricRegistry.name(CrawlerService.class, "crawledTimes"));
+        skippedTimeHistogram = metricRegistry.histogram(MetricRegistry.name(CrawlerService.class, "skippedTimes"));
     }
 
     public Set<String> crawl(String siteLink) {
         Set<String> links = new HashSet<>();
+        LocalDateTime start = LocalDateTime.now();
+        boolean isLinkSkipped = true;
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
-                if (!redisDAO.contains(siteLink)) {
+
+                Timer.Context redisContainsTimerContext = redisContainsTimer.time();
+                boolean contains = redisDAO.contains(siteLink);
+                redisContainsTimerContext.stop();
+
+                if (!contains) {
+                     isLinkSkipped = false;
                     Optional<Page> pageOptional = getPage(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
                         page.getAnchors().forEach(link -> links.add(link.getHref()));
-                        if (hBaseDAO.add(page)) {
-                            elasticDAO.save(page);
+
+                        Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
+                        boolean isAddedToHBase = hBaseDAO.add(page);
+                        hBaseAddTimerContext.stop();
+                        if (isAddedToHBase) {
+                            elasticSaveTimer.time(() -> elasticDAO.save(page));
                         } else {
                             logger.warn("Unable to add page with link {} to HBase", page.getLink());
                         }
+
                     }
-                    redisDAO.add(siteLink);
-                    logger.info("get {}", siteLink);
+                    redisAddTimer.time(() -> redisDAO.add(siteLink));
+                    cache.put(siteDomain, LocalDateTime.now());
                 }
             } else {
                 links.add(siteLink);
@@ -73,6 +107,14 @@ public class CrawlerService {
             links.add(siteLink);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+        } finally {
+            LocalDateTime end = LocalDateTime.now();
+            long duration = start.until(end, ChronoUnit.MILLIS);
+            if (isLinkSkipped) {
+                skippedTimeHistogram.update(duration);
+            } else {
+                crawledHistogram.update(duration);
+            }
         }
         return links;
     }
@@ -84,6 +126,7 @@ public class CrawlerService {
      * @return page if able to crawl page
      */
     public Optional<Page> getPage(String link) {
+        Timer.Context context = getPageTimer.time();
         try {
             Optional<Document> documentOptional = parserService.getDocument(link);
             if (!documentOptional.isPresent()) {
@@ -107,6 +150,8 @@ public class CrawlerService {
             logger.warn("Cannot detect language of site: {}", link);
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
+        } finally {
+            context.stop();
         }
         return Optional.empty();
     }

@@ -1,5 +1,10 @@
 package in.nimbo;
 
+import com.codahale.metrics.MetricFilter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.graphite.Graphite;
+import com.codahale.metrics.graphite.GraphiteReporter;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -33,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -43,16 +49,14 @@ public class App {
     private static Logger logger = LoggerFactory.getLogger(App.class);
     private RestHighLevelClient restHighLevelClient;
     private KafkaService kafkaService;
-    private ParserService parserService;
     private HBaseDAO hBaseDAO;
-    private ElasticDAO elasticDAO;
+    private JedisCluster cluster;
 
-    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService, ParserService parserService, HBaseDAO hBaseDAO, ElasticDAO elasticDAO) {
+    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService, HBaseDAO hBaseDAO, JedisCluster cluster) {
         this.restHighLevelClient = restHighLevelClient;
         this.kafkaService = kafkaService;
-        this.parserService = parserService;
         this.hBaseDAO = hBaseDAO;
-        this.elasticDAO = elasticDAO;
+        this.cluster = cluster;
     }
 
     public static void main(String[] args) {
@@ -88,16 +92,18 @@ public class App {
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
         logger.info("DAO interface created");
 
-        ParserService parserService = new ParserService(appConfig);
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
+
+        ParserService parserService = new ParserService(appConfig);
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
         KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
 
-
         logger.info("Application started");
-        App app = new App(restHighLevelClient, kafkaService, parserService, hBaseDAO, elasticDAO);
+        App app = new App(restHighLevelClient, kafkaService, hBaseDAO, cluster);
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
+
+        startReporter();
         app.startApp();
     }
 
@@ -135,10 +141,6 @@ public class App {
         return bulkProcessor;
     }
 
-    private void runSyncWithElastic() {
-        hBaseDAO.syncWithElastic(elasticDAO, parserService);
-    }
-
     private void startApp() {
         kafkaService.schedule();
         logger.info("Schedule service started");
@@ -163,8 +165,20 @@ public class App {
         try {
             restHighLevelClient.close();
             hBaseDAO.close();
+            cluster.close();
         } catch (IOException e) {
             logger.warn("Unable to close resources", e);
         }
+    }
+
+    private static void startReporter() {
+        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault("Keenbo");
+        Graphite graphite = new Graphite(new InetSocketAddress("localhost", 2003));
+        GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
+                .convertRatesTo(TimeUnit.MILLISECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .filter(MetricFilter.ALL)
+                .build(graphite);
+        reporter.start(5, TimeUnit.SECONDS);
     }
 }

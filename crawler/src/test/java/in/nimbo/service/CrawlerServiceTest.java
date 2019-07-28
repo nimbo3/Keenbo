@@ -1,5 +1,6 @@
 package in.nimbo.service;
 
+import com.codahale.metrics.SharedMetricRegistries;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.config.AppConfig;
@@ -42,6 +43,7 @@ public class CrawlerServiceTest {
         elasticDAO = mock(ElasticDAO.class);
         parserService = mock(ParserService.class);
         appConfig = AppConfig.load();
+        SharedMetricRegistries.setDefault("Keenbo");
     }
 
     @Before
