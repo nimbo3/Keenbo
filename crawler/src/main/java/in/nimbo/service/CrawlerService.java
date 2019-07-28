@@ -1,6 +1,9 @@
 package in.nimbo.service;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.Histogram;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.Timer;
 import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
@@ -33,8 +36,6 @@ public class CrawlerService {
     private final Timer redisAddTimer;
     private final Histogram crawledHistogram;
     private final Histogram skippedTimeHistogram;
-    private final Counter crawledLinksCounter;
-
 
     private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
     private Cache<String, LocalDateTime> cache;
@@ -60,13 +61,12 @@ public class CrawlerService {
         redisAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisAdd"));
         crawledHistogram = metricRegistry.histogram(MetricRegistry.name(CrawlerService.class, "crawledTimes"));
         skippedTimeHistogram = metricRegistry.histogram(MetricRegistry.name(CrawlerService.class, "skippedTimes"));
-        crawledLinksCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledLinks"));
     }
 
     public Set<String> crawl(String siteLink) {
         Set<String> links = new HashSet<>();
         LocalDateTime start = LocalDateTime.now();
-        boolean ignored = true;
+        boolean isLinkSkipped = true;
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
@@ -76,8 +76,7 @@ public class CrawlerService {
                 redisContainsTimerContext.stop();
 
                 if (!contains) {
-                    ignored = false;
-                    crawledLinksCounter.inc();
+                     isLinkSkipped = false;
                     Optional<Page> pageOptional = getPage(siteLink);
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
@@ -109,11 +108,11 @@ public class CrawlerService {
             logger.error(e.getMessage(), e);
         } finally {
             LocalDateTime end = LocalDateTime.now();
-            long until = start.until(end, ChronoUnit.MILLIS);
-            if (ignored) {
-                skippedTimeHistogram.update(until);
+            long duration = start.until(end, ChronoUnit.MILLIS);
+            if (isLinkSkipped) {
+                skippedTimeHistogram.update(duration);
             } else {
-                crawledHistogram.update(until);
+                crawledHistogram.update(duration);
             }
         }
         return links;

@@ -149,9 +149,9 @@ public class App {
 
     private static void startReporter() {
         MetricRegistry metricRegistry = SharedMetricRegistries.setDefault("Keenbo");
-        final Graphite graphite = new Graphite(new InetSocketAddress("localhost", 2003));
-        final GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
-                .convertRatesTo(TimeUnit.SECONDS)
+        Graphite graphite = new Graphite(new InetSocketAddress("localhost", 2003));
+        GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
+                .convertRatesTo(TimeUnit.MILLISECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .filter(MetricFilter.ALL)
                 .build(graphite);
