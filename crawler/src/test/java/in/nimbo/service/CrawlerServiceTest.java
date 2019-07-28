@@ -2,6 +2,7 @@ package in.nimbo.service;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import in.nimbo.TestUtility;
 import in.nimbo.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
@@ -10,6 +11,7 @@ import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.utility.LinkUtility;
+import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Assert;
 import org.junit.Before;
@@ -18,6 +20,7 @@ import org.junit.Test;
 
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -36,6 +39,9 @@ public class CrawlerServiceTest {
     private static CrawlerService crawlerService;
     private static String link;
     private static Set<String> crawledLinks;
+    private static Page page;
+    private static String input;
+    private static final String FILE_ADDRESS = "src/test/resources/html/sampleEnglish.html";
 
     @BeforeClass
     public static void init() {
@@ -58,24 +64,27 @@ public class CrawlerServiceTest {
         List<Meta> metas = new ArrayList<>();
         metas.add(new Meta("key1", "value1"));
         metas.add(new Meta("key2", "value2"));
-        Page page = new Page(link, title, contentWithTag, contentWithoutTag, anchors, metas, 1);
+        page = new Page(link, title, contentWithTag, contentWithoutTag, anchors, metas, 1);
         hBaseDAO = mock(HBaseDAO.class);
         redisDAO = mock(RedisDAO.class);
-        document = mock(Document.class);
+        input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
+        document = Jsoup.parse(input, "UTF-8");
+        //document = mock(Document.class);
         when(parserService.getDocument(link)).thenReturn(Optional.of(document));
         when(parserService.getAnchors(document)).thenReturn(anchors);
         when(parserService.getMetas(document)).thenReturn(metas);
         when(parserService.getTitle(document)).thenReturn(title);
+        doReturn(true).when(parserService).isEnglishLanguage(anyString());
         doNothing().when(elasticDAO).save(any(Page.class));
         doReturn(true).when(hBaseDAO).add(any(Page.class));
         cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         crawlerService = spy(new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO));
-        doReturn(Optional.of(page)).when(crawlerService).getPage(anyString());
     }
 
     @Test
     public void crawlTest() {
+        doReturn(Optional.of(page)).when(crawlerService).getPage(anyString());
         when(redisDAO.contains(link)).thenReturn(false);
         Set<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(answer, crawledLinks);
@@ -109,5 +118,12 @@ public class CrawlerServiceTest {
         Set<String> answer = crawlerService.crawl("http://");
         Set<String> actualResult = new HashSet<>();
         Assert.assertEquals(answer, actualResult);
+    }
+
+    @Test
+    public void getPageWithEmptyDocumentTest() {
+        when(parserService.getDocument(link)).thenReturn(Optional.empty());
+        Optional<Page> optionalPage = crawlerService.getPage(link);
+        Assert.assertFalse(optionalPage.isPresent());
     }
 }
