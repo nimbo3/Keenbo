@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConsumerService implements Runnable {
-    private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
+    private Logger logger = LoggerFactory.getLogger("app");
     private BlockingQueue<String> messageQueue;
     private Consumer<String, String> consumer;
     private AtomicBoolean closed;

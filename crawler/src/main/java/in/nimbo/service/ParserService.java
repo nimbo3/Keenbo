@@ -25,7 +25,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 public class ParserService {
-    private Logger logger = LoggerFactory.getLogger(LinkUtility.class);
+    private Logger logger = LoggerFactory.getLogger("parser");
     private AppConfig appConfig;
 
     public ParserService(AppConfig appConfig) {

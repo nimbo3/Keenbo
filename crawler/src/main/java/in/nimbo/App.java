@@ -48,7 +48,7 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class App {
-    private static Logger logger = LoggerFactory.getLogger(App.class);
+    private static Logger logger = LoggerFactory.getLogger("app");
     private RestHighLevelClient restHighLevelClient;
     private KafkaService kafkaService;
     private HBaseDAO hBaseDAO;
@@ -62,6 +62,7 @@ public class App {
     }
 
     public static void main(String[] args) {
+        System.exit(0);
         loadLanguageDetector();
 
         HBaseConfig hBaseConfig = HBaseConfig.load();

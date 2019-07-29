@@ -10,7 +10,6 @@ import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.HBaseException;
 import in.nimbo.exception.LanguageDetectException;
-import in.nimbo.service.kafka.ConsumerService;
 import in.nimbo.utility.LinkUtility;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
@@ -24,7 +23,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicLong;
 
 public class CrawlerService {
     private final Counter crawledPages;
@@ -33,20 +31,16 @@ public class CrawlerService {
     private final Timer elasticSaveTimer;
     private final Timer hBaseAddTimer;
     private final Timer redisAddTimer;
-    private final Histogram crawledHistogram;
-    private final Histogram skippedTimeHistogram;
     private final Counter skippedCounter;
     private final Counter crawledCounter;
 
-    private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
+    private Logger appLogger = LoggerFactory.getLogger("app");
+    private Logger parserLogger = LoggerFactory.getLogger("parser");
     private Cache<String, LocalDateTime> cache;
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
     private ParserService parserService;
     private RedisDAO redisDAO;
-
-    private AtomicLong TotalCrawl = new AtomicLong(0);
-    private AtomicLong TotalSkip = new AtomicLong(0);
 
     public CrawlerService(Cache<String, LocalDateTime> cache,
                           HBaseDAO hBaseDAO, ElasticDAO elasticDAO,
@@ -64,8 +58,6 @@ public class CrawlerService {
         elasticSaveTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "elasticSave"));
         hBaseAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "hBaseAdd"));
         redisAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisAdd"));
-        crawledHistogram = metricRegistry.histogram(MetricRegistry.name(CrawlerService.class, "crawledTimes"));
-        skippedTimeHistogram = metricRegistry.histogram(MetricRegistry.name(CrawlerService.class, "skippedTimes"));
         skippedCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "skipCounter"));
         crawledCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledCounter"));
     }
@@ -101,7 +93,7 @@ public class CrawlerService {
                         if (isAddedToHBase) {
                             elasticSaveTimer.time(() -> elasticDAO.save(page));
                         } else {
-                            logger.warn("Unable to add page with link {} to HBase", page.getLink());
+                            appLogger.warn("Unable to add page with link {} to HBase", page.getLink());
                         }
                         crawledPages.inc();
                     }
@@ -112,29 +104,21 @@ public class CrawlerService {
                 links.add(siteLink);
             }
         } catch (URISyntaxException e) {
-            logger.warn("Illegal URL format: " + siteLink, e);
+            parserLogger.warn("Illegal URL format: " + siteLink, e);
         } catch (HBaseException e) {
-            logger.error("Unable to establish HBase connection", e);
+            appLogger.error("Unable to establish HBase connection", e);
             links.clear();
             links.add(siteLink);
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            appLogger.error(e.getMessage(), e);
         } finally {
             LocalDateTime end = LocalDateTime.now();
             long duration = start.until(end, ChronoUnit.MILLIS);
             if (isLinkSkipped) {
-                skippedTimeHistogram.update(duration);
                 skippedCounter.inc(duration);
-                TotalSkip.addAndGet(duration);
             } else {
-                crawledHistogram.update(duration);
                 crawledCounter.inc(duration);
             }
-            TotalCrawl.addAndGet(duration);
-            System.out.println("skip: " + TotalSkip.get());
-            System.out.println("crawl: " + TotalCrawl.get());
-            System.out.println("divide: " + (TotalSkip.get() * 1.0) / TotalCrawl.get());
-            System.out.println("---------");
         }
         return links;
     }
@@ -155,7 +139,7 @@ public class CrawlerService {
             Document document = documentOptional.get();
             String pageContentWithoutTag = document.text().replace("\n", " ");
             if (pageContentWithoutTag.isEmpty()) {
-                logger.warn("There is no content for site: {}", link);
+                parserLogger.warn("There is no content for site: {}", link);
             } else if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
                 Set<Anchor> anchors = parserService.getAnchors(document);
                 List<Meta> metas = parserService.getMetas(document);
@@ -164,11 +148,11 @@ public class CrawlerService {
                 return Optional.of(page);
             }
         } catch (MalformedURLException e) {
-            logger.warn("Unable to reverse link: {}", link);
+            appLogger.warn("Unable to reverse link: {}", link);
         } catch (LanguageDetectException e) {
-            logger.warn("Cannot detect language of site: {}", link);
+            appLogger.warn("Cannot detect language of site: {}", link);
         } catch (Exception e) {
-            logger.error(e.getMessage(), e);
+            appLogger.error(e.getMessage(), e);
         } finally {
             context.stop();
         }

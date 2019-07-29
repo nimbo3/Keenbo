@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class KafkaService {
-    private Logger logger = LoggerFactory.getLogger(KafkaService.class);
+    private Logger logger = LoggerFactory.getLogger("app");
     private KafkaConfig kafkaConfig;
     private CrawlerService crawlerService;
     private BlockingQueue<String> messageQueue;
