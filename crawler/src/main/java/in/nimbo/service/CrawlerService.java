@@ -151,7 +151,7 @@ public class CrawlerService {
         } catch (MalformedURLException e) {
             appLogger.warn("Unable to reverse link: {}", link);
         } catch (LanguageDetectException e) {
-            appLogger.warn("Cannot detect language of site: {}", link);
+            parserLogger.warn("Cannot detect language of site: {}", link);
         } catch (Exception e) {
             appLogger.error(e.getMessage(), e);
         } finally {
