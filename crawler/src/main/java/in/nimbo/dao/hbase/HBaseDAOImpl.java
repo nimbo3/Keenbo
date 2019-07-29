@@ -34,17 +34,6 @@ public class HBaseDAOImpl implements HBaseDAO {
     }
 
     @Override
-    public boolean contains(String link) {
-        try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
-            Get get = new Get(Bytes.toBytes(link));
-            Result result = table.get(get);
-            return !result.isEmpty();
-        } catch (IOException e) {
-            throw new HBaseException(e);
-        }
-    }
-
-    @Override
     public boolean add(Page page) {
         try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
             Put put = new Put(Bytes.toBytes(page.getReversedLink()));
@@ -67,31 +56,6 @@ public class HBaseDAOImpl implements HBaseDAO {
         } catch (IllegalArgumentException e) {
             // It will be thrown if size of page will be more than hbase.client.keyvalue.maxsize = 10485760
             return false;
-        } catch (IOException e) {
-            throw new HBaseException(e);
-        }
-    }
-
-    @Override
-    public void syncWithElastic(ElasticDAO elasticDAO, ParserService parserService) {
-        try (Table table = connection.getTable(TableName.valueOf("test"))) {
-            Scan scan = new Scan();
-            scan.setFilter(new FamilyFilter(CompareFilter.CompareOp.EQUAL,
-                    new BinaryComparator(config.getContentColumnFamily())));
-            try (ResultScanner scanner = table.getScanner(scan)){
-                for (Result result : scanner) {
-                    String link = Bytes.toString(result.getRow());
-                    String content = Bytes.toString(result.getValue(config.getContentColumnFamily(),
-                            config.getContentColumn()));
-                    Document document = Jsoup.parse(content);
-                    String pageContentWithoutTag = document.text().replace("\n", " ");
-                    Set<Anchor> anchors = parserService.getAnchors(document);
-                    List<Meta> metas = parserService.getMetas(document);
-                    String title = parserService.getTitle(document);
-                    Page page = new Page(link, title, "", pageContentWithoutTag, anchors, metas, 1.0);
-                    elasticDAO.save(page);
-                }
-            }
         } catch (IOException e) {
             throw new HBaseException(e);
         }
