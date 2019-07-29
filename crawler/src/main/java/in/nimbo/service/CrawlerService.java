@@ -109,6 +109,7 @@ public class CrawlerService {
             appLogger.error("Unable to establish HBase connection", e);
             links.clear();
             links.add(siteLink);
+            appLogger.info("Retry link {} again because of HBase exception", siteLink);
         } catch (Exception e) {
             appLogger.error(e.getMessage(), e);
         } finally {
