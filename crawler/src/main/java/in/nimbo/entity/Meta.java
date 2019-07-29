@@ -1,5 +1,7 @@
 package in.nimbo.entity;
 
+import java.util.Objects;
+
 public class Meta {
     private String key;
     private String content;
@@ -15,5 +17,19 @@ public class Meta {
 
     public String getContent() {
         return content;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Meta meta = (Meta) o;
+        return Objects.equals(key, meta.key) &&
+                Objects.equals(content, meta.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(key, content);
     }
 }
