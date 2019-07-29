@@ -1,9 +1,6 @@
 package in.nimbo.service;
 
-import com.codahale.metrics.Histogram;
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
-import com.codahale.metrics.Timer;
+import com.codahale.metrics.*;
 import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
@@ -27,8 +24,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class CrawlerService {
+    private final Counter crawledPages;
     private final Timer getPageTimer;
     private final Timer redisContainsTimer;
     private final Timer elasticSaveTimer;
@@ -36,6 +35,8 @@ public class CrawlerService {
     private final Timer redisAddTimer;
     private final Histogram crawledHistogram;
     private final Histogram skippedTimeHistogram;
+    private final Counter skippedCounter;
+    private final Counter crawledCounter;
 
     private Logger logger = LoggerFactory.getLogger(ConsumerService.class);
     private Cache<String, LocalDateTime> cache;
@@ -43,6 +44,9 @@ public class CrawlerService {
     private ElasticDAO elasticDAO;
     private ParserService parserService;
     private RedisDAO redisDAO;
+
+    private AtomicLong TotalCrawl = new AtomicLong(0);
+    private AtomicLong TotalSkip = new AtomicLong(0);
 
     public CrawlerService(Cache<String, LocalDateTime> cache,
                           HBaseDAO hBaseDAO, ElasticDAO elasticDAO,
@@ -54,6 +58,7 @@ public class CrawlerService {
         this.parserService = parserService;
         this.redisDAO = redisDAO;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
+        crawledPages = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledPages"));
         getPageTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "getPage"));
         redisContainsTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisContains"));
         elasticSaveTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "elasticSave"));
@@ -61,6 +66,8 @@ public class CrawlerService {
         redisAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisAdd"));
         crawledHistogram = metricRegistry.histogram(MetricRegistry.name(CrawlerService.class, "crawledTimes"));
         skippedTimeHistogram = metricRegistry.histogram(MetricRegistry.name(CrawlerService.class, "skippedTimes"));
+        skippedCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "skipCounter"));
+        crawledCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledCounter"));
     }
 
     public Set<String> crawl(String siteLink) {
@@ -70,28 +77,33 @@ public class CrawlerService {
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
+                isLinkSkipped = false;
 
                 Timer.Context redisContainsTimerContext = redisContainsTimer.time();
                 boolean contains = redisDAO.contains(siteLink);
                 redisContainsTimerContext.stop();
 
                 if (!contains) {
-                     isLinkSkipped = false;
                     Optional<Page> pageOptional = getPage(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
                         page.getAnchors().forEach(link -> links.add(link.getHref()));
 
-                        Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
-                        boolean isAddedToHBase = hBaseDAO.add(page);
-                        hBaseAddTimerContext.stop();
+                        boolean isAddedToHBase;
+                        if (page.getAnchors().isEmpty()) {
+                            isAddedToHBase = true;
+                        } else {
+                            Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
+                            isAddedToHBase = hBaseDAO.add(page);
+                            hBaseAddTimerContext.stop();
+                        }
                         if (isAddedToHBase) {
                             elasticSaveTimer.time(() -> elasticDAO.save(page));
                         } else {
                             logger.warn("Unable to add page with link {} to HBase", page.getLink());
                         }
-
+                        crawledPages.inc();
                     }
                     redisAddTimer.time(() -> redisDAO.add(siteLink));
                     cache.put(siteDomain, LocalDateTime.now());
@@ -112,9 +124,17 @@ public class CrawlerService {
             long duration = start.until(end, ChronoUnit.MILLIS);
             if (isLinkSkipped) {
                 skippedTimeHistogram.update(duration);
+                skippedCounter.inc(duration);
+                TotalSkip.addAndGet(duration);
             } else {
                 crawledHistogram.update(duration);
+                crawledCounter.inc(duration);
             }
+            TotalCrawl.addAndGet(duration);
+            System.out.println("skip: " + TotalSkip.get());
+            System.out.println("crawl: " + TotalCrawl.get());
+            System.out.println("divide: " + (TotalSkip.get() * 1.0) / TotalCrawl.get());
+            System.out.println("---------");
         }
         return links;
     }
@@ -134,14 +154,13 @@ public class CrawlerService {
             }
             Document document = documentOptional.get();
             String pageContentWithoutTag = document.text().replace("\n", " ");
-            String pageContentWithTag = document.html();
             if (pageContentWithoutTag.isEmpty()) {
                 logger.warn("There is no content for site: {}", link);
             } else if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
                 Set<Anchor> anchors = parserService.getAnchors(document);
                 List<Meta> metas = parserService.getMetas(document);
                 String title = parserService.getTitle(document);
-                Page page = new Page(link, title, pageContentWithTag, pageContentWithoutTag, anchors, metas, 1.0);
+                Page page = new Page(link, title, pageContentWithoutTag, anchors, metas, 1.0);
                 return Optional.of(page);
             }
         } catch (MalformedURLException e) {

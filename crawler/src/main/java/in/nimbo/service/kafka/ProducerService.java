@@ -43,7 +43,7 @@ public class ProducerService implements Runnable {
                 if (newLink != null) {
                     Set<String> crawl = crawlerService.crawl(newLink);
                     for (String link : crawl) {
-                        producer.send(new ProducerRecord<>(topic, link));
+                        producer.send(new ProducerRecord<>(topic, link, link));
                     }
                 }
             }

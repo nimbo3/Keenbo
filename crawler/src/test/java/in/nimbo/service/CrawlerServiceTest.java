@@ -49,7 +49,6 @@ public class CrawlerServiceTest {
     @Before
     public void beforeEachTest() throws MalformedURLException {
         link = "http://nimbo.in/";
-        String contentWithTag = "Be your best!";
         String contentWithoutTag = "<html>Be your best!</html>";
         String title = "nimbo";
         Set<Anchor> anchors = new HashSet<>();
@@ -60,7 +59,7 @@ public class CrawlerServiceTest {
         List<Meta> metas = new ArrayList<>();
         metas.add(new Meta("key1", "value1"));
         metas.add(new Meta("key2", "value2"));
-        Page page = new Page(link, title, contentWithTag, contentWithoutTag, anchors, metas, 1);
+        Page page = new Page(link, title, contentWithoutTag, anchors, metas, 1);
         hBaseDAO = mock(HBaseDAO.class);
         redisDAO = mock(RedisDAO.class);
         document = mock(Document.class);

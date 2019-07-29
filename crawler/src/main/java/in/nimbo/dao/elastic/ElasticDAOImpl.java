@@ -39,7 +39,8 @@ public class ElasticDAOImpl implements ElasticDAO {
             builder.startObject();
             builder.field("link", page.getLink());
             builder.field("title", page.getTitle());
-            builder.field("content", page.getContentWithoutTags());
+            builder.field("content", page.getContent());
+            builder.field("forward_count", page.getAnchors().size());
             List<Meta> metas = page.getMetas();
             builder.startArray("meta");
             for (Meta meta : metas) {

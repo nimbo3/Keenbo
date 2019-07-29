@@ -53,9 +53,6 @@ public class HBaseDAOImpl implements HBaseDAO {
         try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
             Put put = new Put(Bytes.toBytes(page.getReversedLink()));
 
-            put.addColumn(config.getContentColumnFamily(),
-                    config.getContentColumn(), Bytes.toBytes(page.getContentWithTags()));
-
             for (Anchor anchor : page.getAnchors()) {
                 put.addColumn(config.getAnchorColumnFamily(),
                         Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getContent()));
@@ -95,7 +92,7 @@ public class HBaseDAOImpl implements HBaseDAO {
                         String pageContentWithoutTag = document.text().replace("\n", " ");
                         List<Meta> metas = parserService.getMetas(document);
                         String title = parserService.getTitle(document);
-                        Page page = new Page(link, title, "", pageContentWithoutTag, new HashSet<>(), metas, 1.0);
+                        Page page = new Page(link, title, pageContentWithoutTag, new HashSet<>(), metas, 1.0);
                         elasticDAO.save(page);
                         count++;
                         if (count % 1000 == 0)
