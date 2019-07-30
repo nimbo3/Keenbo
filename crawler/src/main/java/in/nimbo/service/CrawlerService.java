@@ -27,6 +27,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Stream;
 
 public class CrawlerService {
     private final Timer getPageTimer;
@@ -76,12 +77,18 @@ public class CrawlerService {
                 redisContainsTimerContext.stop();
 
                 if (!contains) {
-                     isLinkSkipped = false;
+                    isLinkSkipped = false;
                     Optional<Page> pageOptional = getPage(siteLink);
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
-                        page.getAnchors().forEach(link -> links.add(link.getHref()));
-
+                        page.getAnchors().stream().parallel().map(Anchor::getHref).filter(link -> {
+                            try {
+                                return cache.getIfPresent(LinkUtility.getMainDomain(link)) == null;
+                            } catch (URISyntaxException e) {
+                                logger.warn("Illegal URL format: " + link, e);
+                                return false;
+                            }
+                        }).forEach(links::add);
                         Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
                         boolean isAddedToHBase = hBaseDAO.add(page);
                         hBaseAddTimerContext.stop();
