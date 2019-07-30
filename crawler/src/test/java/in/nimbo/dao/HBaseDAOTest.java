@@ -47,9 +47,8 @@ public class HBaseDAOTest {
         page.setReversedLink("http://com.google.www/");
         page.setLink("http://www.google.com/");
         page.setTitle("Google");
-        page.setContentWithoutTags("a");
+        page.setContent("a");
         page.setRank(100.0);
-        page.setContentWithTags("<html>a</html>");
         Set<Anchor> anchors = new HashSet<>();
         for (int i = 0; i < 5; i++) {
             Anchor anchor = new Anchor("https://google.com/" + i, "content" + i);
@@ -72,7 +71,7 @@ public class HBaseDAOTest {
         when(connection.getTable(any(TableName.class))).thenThrow(IOException.class);
         Page page = new Page();
         page.setReversedLink("http://com.google.www/");
-        page.setContentWithTags("<html>a</html>");
+        page.setContent("a");
         Set<Anchor> anchors = new HashSet<>();
         for (int i = 0; i < 5; i++) {
             Anchor anchor = new Anchor("https://google.com/" + i, "content" + i);
@@ -95,7 +94,7 @@ public class HBaseDAOTest {
         when(connection.getTable(any(TableName.class))).thenReturn(table);
         Page page = new Page();
         page.setReversedLink("http://com.google.www/");
-        page.setContentWithTags("<html>a</html>");
+        page.setContent("a");
         Set<Anchor> anchors = new HashSet<>();
         for (int i = 0; i < 5; i++) {
             Anchor anchor = new Anchor("https://google.com/" + i, "content" + i);
