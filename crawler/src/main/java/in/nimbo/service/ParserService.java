@@ -25,7 +25,7 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 public class ParserService {
-    private Logger logger = LoggerFactory.getLogger(LinkUtility.class);
+    private Logger logger = LoggerFactory.getLogger("parser");
     private AppConfig appConfig;
 
     public ParserService(AppConfig appConfig) {
@@ -38,7 +38,7 @@ public class ParserService {
      * @param link link of site
      * @return
      */
-    public Optional<Document> getDocument(String link) {
+    Optional<Document> getDocument(String link) {
         try {
             Connection.Response response = Jsoup.connect(link)
                     .userAgent(appConfig.getJsoupUserAgent())
@@ -72,7 +72,7 @@ public class ParserService {
      * @param document document contain a site contents
      * @return list of all anchors in a document
      */
-    public Set<Anchor> getAnchors(Document document) {
+    Set<Anchor> getAnchors(Document document) {
         Set<Anchor> anchors = new HashSet<>();
         Elements linkElements = document.getElementsByTag("a");
         for (Element linkElement : linkElements) {
@@ -93,7 +93,7 @@ public class ParserService {
      * @param document document contain a site contents
      * @return list of all metas in a document
      */
-    public List<Meta> getMetas(Document document) {
+    List<Meta> getMetas(Document document) {
         List<Meta> metas = new ArrayList<>();
         Elements metaElements = document.getElementsByTag("meta");
         for (Element metaElement : metaElements) {
@@ -111,7 +111,7 @@ public class ParserService {
      * @param document document contain a site contents
      * @return title of document and empty if there is no title
      */
-    public String getTitle(Document document) {
+    String getTitle(Document document) {
         Elements titleElements = document.getElementsByTag("title");
         if (!titleElements.isEmpty()) {
             return titleElements.get(0).text();
@@ -124,7 +124,7 @@ public class ParserService {
      * @param text text
      * @return true if text is in English
      */
-    public boolean isEnglishLanguage(String text) {
+    boolean isEnglishLanguage(String text) {
         try {
             Detector detector = DetectorFactory.create();
             detector.append(text);

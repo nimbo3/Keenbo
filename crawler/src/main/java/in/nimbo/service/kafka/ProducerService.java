@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProducerService implements Runnable {
-    private Logger logger = LoggerFactory.getLogger(ProducerService.class);
+    private Logger logger = LoggerFactory.getLogger("app");
     private BlockingQueue<String> messageQueue;
     private Producer<String, String> producer;
     private String topic;
@@ -43,7 +43,7 @@ public class ProducerService implements Runnable {
                 if (newLink != null) {
                     Set<String> crawl = crawlerService.crawl(newLink);
                     for (String link : crawl) {
-                        producer.send(new ProducerRecord<>(topic, link));
+                        producer.send(new ProducerRecord<>(topic, link, link));
                     }
                 }
             }

@@ -20,6 +20,7 @@ import java.util.Scanner;
 
 public class App {
     private static Logger logger = LoggerFactory.getLogger(App.class);
+
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
         ObjectMapper mapper = new ObjectMapper();
@@ -36,17 +37,22 @@ public class App {
         Spark.port(sparkConfig.getPort());
         Spark.path("/", () -> {
             Spark.before("/*", (request, response) -> logger.info("new request for uri: " + request.uri()));
-            Spark.get("/search",((request, response) -> {
+            Spark.get("/search", ((request, response) -> {
                 String query = request.queryParams("query");
                 return searchController.search(query != null ? query : "");
-            }) , transformer);
-            Spark.after("/*", (request, response) -> logger.info("response sent successfully: " + request.uri()));
+            }), transformer);
+            Spark.after("/*", (request, response) -> {
+                response.type("application/json");
+                response.header("Access-Control-Allow-Origin", "*");
+                logger.info("response sent successfully: " + request.uri());
+            });
         });
 
-        outer: while (scanner.hasNextLine()) {
+        outer:
+        while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
             String[] split = line.split(" ");
-            if (split.length > 0){
+            if (split.length > 0) {
                 switch (split[0]) {
                     case "exit":
                         try {

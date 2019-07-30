@@ -9,8 +9,7 @@ import java.util.Set;
 public class Page {
     private String link;
     private String title;
-    private String contentWithTags;
-    private String contentWithoutTags;
+    private String content;
     private Set<Anchor> anchors;
     private List<Meta> metas;
     private double rank;
@@ -19,11 +18,10 @@ public class Page {
     public Page() {
     }
 
-    public Page(String link, String title, String contentWithTags, String contentWithoutTags, Set<Anchor> anchors, List<Meta> metas,
+    public Page(String link, String title, String content, Set<Anchor> anchors, List<Meta> metas,
                 double rank) throws MalformedURLException {
         this.title = title;
-        this.contentWithTags = contentWithTags;
-        this.contentWithoutTags = contentWithoutTags;
+        this.content = content;
         this.anchors = anchors;
         this.metas = metas;
         this.link = link;
@@ -47,12 +45,8 @@ public class Page {
         return rank;
     }
 
-    public String getContentWithTags() {
-        return contentWithTags;
-    }
-
-    public String getContentWithoutTags() {
-        return contentWithoutTags;
+    public String getContent() {
+        return content;
     }
 
     public Set<Anchor> getAnchors() {
@@ -71,12 +65,8 @@ public class Page {
         this.title = title;
     }
 
-    public void setContentWithTags(String contentWithTags) {
-        this.contentWithTags = contentWithTags;
-    }
-
-    public void setContentWithoutTags(String contentWithoutTags) {
-        this.contentWithoutTags = contentWithoutTags;
+    public void setContent(String content) {
+        this.content = content;
     }
 
     public void setAnchors(Set<Anchor> anchors) {

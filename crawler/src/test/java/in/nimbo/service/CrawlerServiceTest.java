@@ -9,6 +9,7 @@ import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Anchor;
+import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.HBaseException;
 import in.nimbo.exception.LanguageDetectException;
@@ -24,10 +25,7 @@ import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -46,14 +44,14 @@ public class CrawlerServiceTest {
     private static String invalidLink;
     private static Set<String> crawledLinks;
     private static Set<Anchor> anchors;
-    private static Page page;
-    private static String input;
+    private static List<Meta> metas;
     private static final String FILE_ADDRESS = "src/test/resources/html/sampleEnglish.html";
+    private String contentWithoutTag;
 
     @BeforeClass
     public static void init() {
         elasticDAO = mock(ElasticDAO.class);
-        parserService = mock(ParserService.class);
+        parserService = spy(new ParserService(new AppConfig()));
         appConfig = AppConfig.load();
         SharedMetricRegistries.setDefault("Keenbo");
     }
@@ -62,22 +60,21 @@ public class CrawlerServiceTest {
     public void beforeEachTest() throws MalformedURLException {
         link = "http://nimbo.in/";
         invalidLink = "abc";
-        String contentWithoutTag = "Be your best!";
-        String contentWithTag = "<html>Be your best!</html>";
+        contentWithoutTag = "nimbo Hi Header support@nimbo.in paragraph! another link";
         String title = "nimbo";
         anchors = new HashSet<>();
-        anchors.add(new Anchor("https://www.google.com/", "google"));
-        anchors.add(new Anchor("https://stackoverflow.com/", "stackoverflow"));
-        anchors.add(new Anchor("https://www.sahab.ir/", "sahab"));
+        anchors.add(new Anchor("https://google.com", "another link"));
+        anchors.add(new Anchor("http://sahab.com", "Hi"));
+        metas = new ArrayList<>();
+        metas.add(new Meta("nimbo", "sahab"));
+        metas.add(new Meta("google", "search"));
         crawledLinks = anchors.stream().map(Anchor::getHref).collect(Collectors.toSet());
-        page = new Page(link, title, contentWithTag, contentWithoutTag, anchors, new ArrayList<>(), 1);
+        Page page = new Page(link, title, contentWithoutTag, anchors, new ArrayList<>(), 1);
         hBaseDAO = mock(HBaseDAO.class);
         redisDAO = mock(RedisDAO.class);
-        input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
+        String input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
         document = Jsoup.parse(input, "UTF-8");
         when(parserService.getDocument(link)).thenReturn(Optional.of(document));
-        when(parserService.getAnchors(document)).thenReturn(anchors);
-        when(parserService.getTitle(document)).thenReturn(title);
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
         doNothing().when(elasticDAO).save(any(Page.class));
         doReturn(true).when(hBaseDAO).add(any(Page.class));
@@ -88,7 +85,6 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlTest() {
-        doReturn(Optional.of(page)).when(crawlerService).getPage(anyString());
         when(redisDAO.contains(link)).thenReturn(false);
         Set<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(answer, crawledLinks);
@@ -128,7 +124,9 @@ public class CrawlerServiceTest {
     public void crawlWithHBaseException() {
         when(hBaseDAO.add(any(Page.class))).thenThrow(HBaseException.class);
         Set<String> answer = crawlerService.crawl(link);
-        Assert.assertEquals(answer, crawledLinks);
+        HashSet<String> expected = new HashSet<>();
+        expected.add(link);
+        Assert.assertEquals(expected, answer);
     }
 
     @Test
@@ -144,13 +142,11 @@ public class CrawlerServiceTest {
         Assert.assertTrue(optionalPage.isPresent());
         Page returnPage = optionalPage.get();
         Assert.assertEquals(link, returnPage.getLink());
-        Assert.assertEquals(input.replace(" ", ""), returnPage.getContentWithTags().replace(" ", ""));
-        String contentWithoutTag = "nimbo Hi Header support@nimbo.in paragraph! another link";
-        Assert.assertEquals(contentWithoutTag, returnPage.getContentWithoutTags());
+        Assert.assertEquals(contentWithoutTag, returnPage.getContent());
         String title = "nimbo";
         Assert.assertEquals(title, returnPage.getTitle());
-        Assert.assertEquals(0, returnPage.getMetas().size());
         Assert.assertEquals(anchors, returnPage.getAnchors());
+        Assert.assertEquals(metas, returnPage.getMetas());
     }
 
     @Test

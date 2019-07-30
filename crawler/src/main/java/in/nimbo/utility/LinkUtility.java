@@ -1,8 +1,5 @@
 package in.nimbo.utility;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -11,7 +8,6 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class LinkUtility {
-    private static Logger logger = LoggerFactory.getLogger(LinkUtility.class);
 
     private LinkUtility() {
     }

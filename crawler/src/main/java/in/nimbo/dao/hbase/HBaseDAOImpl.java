@@ -1,26 +1,22 @@
 package in.nimbo.dao.hbase;
 
 import in.nimbo.config.HBaseConfig;
-import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.HBaseException;
-import in.nimbo.service.ParserService;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.filter.BinaryComparator;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.FamilyFilter;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.List;
-import java.util.Set;
 
 public class HBaseDAOImpl implements HBaseDAO {
+    private Logger logger = LoggerFactory.getLogger("app");
     private HBaseConfig config;
     private Connection connection;
 
@@ -37,9 +33,6 @@ public class HBaseDAOImpl implements HBaseDAO {
     public boolean add(Page page) {
         try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
             Put put = new Put(Bytes.toBytes(page.getReversedLink()));
-
-            put.addColumn(config.getContentColumnFamily(),
-                    config.getContentColumn(), Bytes.toBytes(page.getContentWithTags()));
 
             for (Anchor anchor : page.getAnchors()) {
                 put.addColumn(config.getAnchorColumnFamily(),

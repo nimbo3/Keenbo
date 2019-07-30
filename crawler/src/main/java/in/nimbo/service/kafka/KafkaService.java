@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class KafkaService {
-    private Logger logger = LoggerFactory.getLogger(KafkaService.class);
+    private Logger logger = LoggerFactory.getLogger("app");
     private KafkaConfig kafkaConfig;
     private CrawlerService crawlerService;
     private BlockingQueue<String> messageQueue;
@@ -71,7 +71,7 @@ public class KafkaService {
             logger.info("Start sending {} messages to kafka", messageQueue.size());
             try (KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties())) {
                 for (String message : messageQueue) {
-                    producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), message));
+                    producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), message, message));
                 }
                 producer.flush();
             }
@@ -88,7 +88,7 @@ public class KafkaService {
      */
     public void sendMessage(String message) {
         try (KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties())) {
-            producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), message));
+            producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), message, message));
             producer.flush();
             System.out.println("Site " + message + " added");
         }

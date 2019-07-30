@@ -1,8 +1,6 @@
 package in.nimbo.dao.hbase;
 
-import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.Page;
-import in.nimbo.service.ParserService;
 
 import java.io.IOException;
 
