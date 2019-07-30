@@ -64,7 +64,7 @@ public class CrawlerServiceTest {
         String title = "nimbo";
         anchors = new HashSet<>();
         anchors.add(new Anchor("https://google.com", "another link"));
-        anchors.add(new Anchor("http://nimbo.in", "Hi"));
+        anchors.add(new Anchor("http://sahab.com", "Hi"));
         metas = new ArrayList<>();
         metas.add(new Meta("nimbo", "sahab"));
         metas.add(new Meta("google", "search"));
