@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -52,6 +53,7 @@ public class ElasticDAOTest {
                 .withSetting(PopularProperties.CLUSTER_NAME, "KeenboTest")
                 .withEsJavaOpts("-Xms128m -Xmx512m")
                 .withPlugin("analysis-stempel")
+                .withStartTimeout(50, TimeUnit.SECONDS)
                 .withIndex(elasticConfig.getIndexName(), IndexSettings.builder()
                         .withType(elasticConfig.getType(), resourceAsStream)
                         .build())
