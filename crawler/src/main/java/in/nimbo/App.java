@@ -81,7 +81,7 @@ public class App {
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
         ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
         BulkProcessor bulkProcessor = initializeElasticSearchBulk(elasticConfig, restHighLevelClient, elasticBulkListener);
-        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages);
+        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, restHighLevelClient);
         elasticBulkListener.setElasticDAO(elasticDAO);
 
         Connection hBaseConnection = null;

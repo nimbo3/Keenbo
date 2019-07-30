@@ -10,6 +10,7 @@ import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -30,6 +31,7 @@ public class ElasticDAOTest {
     private static ElasticDAO elasticDAO;
     private static List<Page> backupPages;
     private static List<Page> bulkPages;
+    private static RestHighLevelClient client;
 
     @BeforeClass
     public static void init() {
@@ -37,6 +39,7 @@ public class ElasticDAOTest {
         elasticConfig.setHost("localhost");
         elasticConfig.setBulkActions(2);
         elasticConfig.setIndexName("test-index");
+        client = mock(RestHighLevelClient.class);
 
         BulkProcessor bulkProcessor = mock(BulkProcessor.class);
         TimeValue timeValue = mock(TimeValue.class);
@@ -58,7 +61,7 @@ public class ElasticDAOTest {
             return null;
         }).when(bulkProcessor).add(any(IndexRequest.class));
 
-        elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages);
+        elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, client);
     }
 
     @Before
