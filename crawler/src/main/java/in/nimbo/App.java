@@ -21,6 +21,7 @@ import in.nimbo.entity.Page;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
+import in.nimbo.service.monitoring.ElasticMonitoring;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.http.HttpHost;
@@ -62,21 +63,21 @@ public class App {
     }
 
     public static void main(String[] args) {
-        loadLanguageDetector();
+        /*loadLanguageDetector();
 
-        HBaseConfig hBaseConfig = HBaseConfig.load();
+        HBaseConfig hBaseConfig = HBaseConfig.load();*/
         AppConfig appConfig = AppConfig.load();
-        KafkaConfig kafkaConfig = KafkaConfig.load();
+        /*KafkaConfig kafkaConfig = KafkaConfig.load();*/
         ElasticConfig elasticConfig = ElasticConfig.load();
-        RedisConfig redisConfig = RedisConfig.load();
-        logger.info("Configuration loaded");
+        /*RedisConfig redisConfig = RedisConfig.load();
+        logger.info("Configuration loaded");*/
 
         initReporter(appConfig);
-        logger.info("Reporter started");
+//        logger.info("Reporter started");
 
-        JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
+/*        JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
         logger.info("Redis started");
-
+*/
         List<Page> backupPages = new ArrayList<>();
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
         ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
@@ -84,7 +85,10 @@ public class App {
         ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, restHighLevelClient);
         elasticBulkListener.setElasticDAO(elasticDAO);
 
-        Connection hBaseConnection = null;
+        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO);
+        elasticMonitoring.schedule();
+
+  /*      Connection hBaseConnection = null;
         try {
             hBaseConnection = ConnectionFactory.createConnection();
             logger.info("HBase started");
@@ -107,8 +111,8 @@ public class App {
         logger.info("Application started");
         App app = new App(restHighLevelClient, kafkaService, hBaseDAO, cluster);
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
-
-        app.startApp();
+*/
+//        app.startApp();
     }
 
     private static void loadLanguageDetector() {
