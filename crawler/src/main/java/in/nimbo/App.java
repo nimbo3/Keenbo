@@ -131,7 +131,7 @@ public class App {
     }
 
     public static BulkProcessor initializeElasticSearchBulk(ElasticConfig elasticConfig, RestHighLevelClient restHighLevelClient,
-                                                             ElasticBulkListener elasticBulkListener) {
+                                                            ElasticBulkListener elasticBulkListener) {
         BulkProcessor.Builder builder = BulkProcessor.builder(
                 (request, bulkListener) -> restHighLevelClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
                 elasticBulkListener);
@@ -176,19 +176,20 @@ public class App {
     }
 
     private static void initReporter(AppConfig appConfig) {
+        String hostName = appConfig.getReportName();
         try {
-            MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(appConfig.getReportName());
-            Graphite graphite = new Graphite(new InetSocketAddress(appConfig.getReportHost(), appConfig.getReportPort()));
-            GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
-                    .convertRatesTo(TimeUnit.MILLISECONDS)
-                    .convertDurationsTo(TimeUnit.MILLISECONDS)
-                    .prefixedWith(InetAddress.getLocalHost().getHostName())
-                    .filter(MetricFilter.ALL)
-                    .build(graphite);
-            reporter.start(appConfig.getReportPeriod(), TimeUnit.SECONDS);
+            hostName = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
-            System.out.println("Unable to detect host of system");
-            System.exit(1);
+            logger.info("Unable to detect host name. Use default value");
         }
+        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(appConfig.getReportName());
+        Graphite graphite = new Graphite(new InetSocketAddress(appConfig.getReportHost(), appConfig.getReportPort()));
+        GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
+                .convertRatesTo(TimeUnit.MILLISECONDS)
+                .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .prefixedWith(hostName)
+                .filter(MetricFilter.ALL)
+                .build(graphite);
+        reporter.start(appConfig.getReportPeriod(), TimeUnit.SECONDS);
     }
 }
