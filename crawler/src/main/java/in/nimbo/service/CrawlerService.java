@@ -1,6 +1,9 @@
 package in.nimbo.service;
 
-import com.codahale.metrics.*;
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import com.codahale.metrics.Timer;
 import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
@@ -80,7 +83,14 @@ public class CrawlerService {
                     cache.put(siteDomain, LocalDateTime.now());
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
-                        page.getAnchors().forEach(link -> links.add(link.getHref()));
+                        page.getAnchors().stream().parallel().map(Anchor::getHref).filter(link -> {
+                            try {
+                                return cache.getIfPresent(LinkUtility.getMainDomain(link)) == null;
+                            } catch (URISyntaxException e) {
+                                parserLogger.warn("Illegal URL format: " + link, e);
+                                return false;
+                            }
+                        }).forEach(links::add);
 
                         boolean isAddedToHBase;
                         if (page.getAnchors().isEmpty()) {
