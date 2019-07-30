@@ -16,6 +16,7 @@
         <jsoup.version>1.12.1</jsoup.version>
         <caffeine.version>2.7.0</caffeine.version>
         <elasticsearch.version>6.6.2</elasticsearch.version>
+        <embeded.elasticsearch.version>2.7.0</embeded.elasticsearch.version>
         <hbase.version>1.4.10</hbase.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
         <langdetect.version>1.1-20120112</langdetect.version>
@@ -41,6 +42,14 @@
             <groupId>org.elasticsearch.client</groupId>
             <artifactId>elasticsearch-rest-high-level-client</artifactId>
             <version>${elasticsearch.version}</version>
+        </dependency>
+
+        <!--embedded elasticsearch for test-->
+        <dependency>
+            <groupId>pl.allegro.tech</groupId>
+            <artifactId>embedded-elasticsearch</artifactId>
+            <version>${embeded.elasticsearch.version}</version>
+            <scope>test</scope>
         </dependency>
 
         <!--Producer/Consumer API of Apache Kafka-->

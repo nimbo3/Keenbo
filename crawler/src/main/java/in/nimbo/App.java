@@ -121,7 +121,7 @@ public class App {
         }
     }
 
-    private static RestHighLevelClient initializeElasticSearchClient(ElasticConfig elasticConfig) {
+    public static RestHighLevelClient initializeElasticSearchClient(ElasticConfig elasticConfig) {
         RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
                 .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
                         .setConnectTimeout(elasticConfig.getConnectTimeout())
@@ -130,7 +130,7 @@ public class App {
         return new RestHighLevelClient(restClientBuilder);
     }
 
-    private static BulkProcessor initializeElasticSearchBulk(ElasticConfig elasticConfig, RestHighLevelClient restHighLevelClient,
+    public static BulkProcessor initializeElasticSearchBulk(ElasticConfig elasticConfig, RestHighLevelClient restHighLevelClient,
                                                              ElasticBulkListener elasticBulkListener) {
         BulkProcessor.Builder builder = BulkProcessor.builder(
                 (request, bulkListener) -> restHighLevelClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
