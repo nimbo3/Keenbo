@@ -53,8 +53,8 @@ public class ElasticDAOImpl implements ElasticDAO {
             builder.field("rank", page.getRank());
             builder.endObject();
             request.source(builder);
-            bulkProcessor.add(request);
             backupPages.add(page);
+            bulkProcessor.add(request);
         } catch (IOException e) {
             throw new ElasticException("Save a page in ElasticSearch failed", e);
         }

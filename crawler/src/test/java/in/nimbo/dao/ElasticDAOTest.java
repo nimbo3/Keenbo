@@ -1,69 +1,69 @@
 package in.nimbo.dao;
 
-import in.nimbo.App;
 import in.nimbo.config.ElasticConfig;
 import in.nimbo.dao.elastic.ElasticBulkListener;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
+import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.index.query.MatchAllQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.common.unit.TimeValue;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
-import pl.allegro.tech.embeddedelasticsearch.IndexSettings;
-import pl.allegro.tech.embeddedelasticsearch.PopularProperties;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 public class ElasticDAOTest {
     private static ElasticConfig elasticConfig;
-    private static RestHighLevelClient restHighLevelClient;
     private static BulkProcessor bulkProcessor;
     private static ElasticDAO elasticDAO;
-    private static List<Page> backupList;
+    private static List<Page> backupPages;
+    private static List<Page> bulkPages;
 
     @BeforeClass
-    public static void init() throws IOException, InterruptedException {
+    public static void init() {
         InputStream resourceAsStream = ElasticDAOTest.class.getClassLoader().getResourceAsStream("elastic/elastic-mapping.json");
         Assert.assertNotNull(resourceAsStream);
         elasticConfig = ElasticConfig.load();
+        elasticConfig.setHost("localhost");
         elasticConfig.setBulkActions(2);
-        EmbeddedElastic embeddedElastic = EmbeddedElastic.builder()
-                .withElasticVersion("6.6.2")
-                .withSetting(PopularProperties.TRANSPORT_TCP_PORT, 9350)
-                .withSetting(PopularProperties.CLUSTER_NAME, "KeenboTest")
-                .withEsJavaOpts("-Xms128m -Xmx512m")
-                .withPlugin("analysis-stempel")
-                .withStartTimeout(50, TimeUnit.SECONDS)
-                .withIndex(elasticConfig.getIndexName(), IndexSettings.builder()
-                        .withType(elasticConfig.getType(), resourceAsStream)
-                        .build())
-                .build()
-                .start();
-        List<Page> backupList = new ArrayList<>();
-        restHighLevelClient = App.initializeElasticSearchClient(elasticConfig);
-        bulkProcessor = App.initializeElasticSearchBulk(elasticConfig, restHighLevelClient,
-                new ElasticBulkListener(backupList));
-        elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupList);
+        elasticConfig.setIndexName("test-index");
+
+        bulkProcessor = mock(BulkProcessor.class);
+        TimeValue timeValue = mock(TimeValue.class);
+        BulkRequest bulkRequest = mock(BulkRequest.class);
+        BulkResponse bulkResponse = mock(BulkResponse.class);
+        when(bulkResponse.hasFailures()).thenReturn(false);
+        when(bulkResponse.getTook()).thenReturn(timeValue);
+        when(timeValue.getMillis()).thenReturn(0L);
+
+        backupPages = new ArrayList<>();
+        bulkPages = new ArrayList<>();
+        ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
+        doAnswer(invocationOnMock -> {
+            bulkPages.add(invocationOnMock.getArgument(0));
+            if (bulkPages.size() >= elasticConfig.getBulkActions()) {
+                elasticBulkListener.beforeBulk(1, bulkRequest);
+                elasticBulkListener.afterBulk(1, bulkRequest, bulkResponse);
+            }
+            return null;
+        }).when(bulkProcessor).add(any(IndexRequest.class));
+
+        elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages);
     }
 
     @Before
@@ -71,48 +71,20 @@ public class ElasticDAOTest {
 
     }
 
-    private List<Page> getPages() throws IOException {
-        SearchRequest request = new SearchRequest(elasticConfig.getIndexName());
-        SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-        MatchAllQueryBuilder matchAllQueryBuilder = QueryBuilders.matchAllQuery();
-        searchSourceBuilder.query(matchAllQueryBuilder);
-        request.source(searchSourceBuilder);
-        SearchResponse response = restHighLevelClient.search(request, RequestOptions.DEFAULT);
-        SearchHit[] hits = response.getHits().getHits();
-        List<Page> pages = new ArrayList<>();
-        for (SearchHit hit : hits) {
-            Page page = new Page();
-            Map<String, Object> fields = hit.getSourceAsMap();
-            if (fields.containsKey("link")) {
-                page.setLink((String) fields.get("link"));
-            }
-            if (fields.containsKey("title")) {
-                page.setTitle((String) fields.get("title"));
-            }
-            pages.add(page);
-        }
-        return pages;
-    }
-
     @Test
     public void addTest() throws IOException {
-        Page page1 = new Page("http://stackoverflow.com", "StackOverflow", "content 1", new HashSet<>(), new ArrayList<>(), 2);
-        Page page2 = new Page("http://google.com", "Google", "content 1", new HashSet<>(), new ArrayList<>(), 1);
+        List<Meta> metas = new ArrayList<>();
+        metas.add(new Meta("description", "What"));
+        Page page1 = new Page("http://aminborjian.com", "AminBorjian", "content 1", new HashSet<>(), new ArrayList<>(), 2);
+        Page page2 = new Page("http://alireza.com", "Alireza", "content 1", new HashSet<>(), new ArrayList<>(), 1);
 
-        List<Page> pages = getPages();
-        assertTrue(pages.isEmpty());
+        assertTrue(bulkPages.isEmpty());
 
         elasticDAO.save(page1);
-        assertEquals(page1.getLink(), backupList.get(0).getLink());
-        pages = getPages();
-        assertEquals(1, pages.size());
-        assertEquals(page1.getLink(), pages.get(0).getLink());
+        assertEquals(page1.getLink(), backupPages.get(0).getLink());
+        assertEquals(1, bulkPages.size());
 
         elasticDAO.save(page2);
-        assertEquals(page1.getLink(), backupList.get(0).getLink());
-        assertEquals(page2.getLink(), backupList.get(1).getLink());
-        assertEquals(2, pages.size());
-        assertTrue(pages.contains(page1));
-        assertTrue(pages.contains(page2));
+        assertTrue(backupPages.isEmpty());
     }
 }
