@@ -45,10 +45,8 @@ public class CrawlerServiceTest {
     private static Set<String> crawledLinks;
     private static Set<Anchor> anchors;
     private static List<Meta> metas;
-    private static Page page;
-    private static String input;
     private static final String FILE_ADDRESS = "src/test/resources/html/sampleEnglish.html";
-    String contentWithoutTag;
+    private String contentWithoutTag;
 
     @BeforeClass
     public static void init() {
@@ -66,15 +64,15 @@ public class CrawlerServiceTest {
         String title = "nimbo";
         anchors = new HashSet<>();
         anchors.add(new Anchor("https://google.com", "another link"));
-        anchors.add(new Anchor("http://nimbo.in", "Hi"));
+        anchors.add(new Anchor("http://sahab.com", "Hi"));
         metas = new ArrayList<>();
         metas.add(new Meta("nimbo", "sahab"));
         metas.add(new Meta("google", "search"));
         crawledLinks = anchors.stream().map(Anchor::getHref).collect(Collectors.toSet());
-        page = new Page(link, title, input, contentWithoutTag, anchors, new ArrayList<>(), 1);
+        Page page = new Page(link, title, contentWithoutTag, anchors, new ArrayList<>(), 1);
         hBaseDAO = mock(HBaseDAO.class);
         redisDAO = mock(RedisDAO.class);
-        input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
+        String input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
         document = Jsoup.parse(input, "UTF-8");
         when(parserService.getDocument(link)).thenReturn(Optional.of(document));
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
@@ -126,7 +124,9 @@ public class CrawlerServiceTest {
     public void crawlWithHBaseException() {
         when(hBaseDAO.add(any(Page.class))).thenThrow(HBaseException.class);
         Set<String> answer = crawlerService.crawl(link);
-        Assert.assertEquals(answer, crawledLinks);
+        HashSet<String> expected = new HashSet<>();
+        expected.add(link);
+        Assert.assertEquals(expected, answer);
     }
 
     @Test
@@ -142,8 +142,7 @@ public class CrawlerServiceTest {
         Assert.assertTrue(optionalPage.isPresent());
         Page returnPage = optionalPage.get();
         Assert.assertEquals(link, returnPage.getLink());
-        Assert.assertEquals(input.replace(" ", ""), returnPage.getContentWithTags().replace(" ", ""));
-        Assert.assertEquals(contentWithoutTag, returnPage.getContentWithoutTags());
+        Assert.assertEquals(contentWithoutTag, returnPage.getContent());
         String title = "nimbo";
         Assert.assertEquals(title, returnPage.getTitle());
         Assert.assertEquals(anchors, returnPage.getAnchors());

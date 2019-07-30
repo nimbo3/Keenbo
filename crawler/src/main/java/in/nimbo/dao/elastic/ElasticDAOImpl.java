@@ -15,10 +15,12 @@ import java.util.List;
 public class ElasticDAOImpl implements ElasticDAO {
     private final ElasticConfig config;
     private BulkProcessor bulkProcessor;
+    private List<Page> backupPages;
 
-    public ElasticDAOImpl(BulkProcessor bulkProcessor, ElasticConfig config) {
+    public ElasticDAOImpl(ElasticConfig config, BulkProcessor bulkProcessor, List<Page> backupPages) {
         this.config = config;
         this.bulkProcessor = bulkProcessor;
+        this.backupPages = backupPages;
     }
 
     /**
@@ -37,7 +39,8 @@ public class ElasticDAOImpl implements ElasticDAO {
             builder.startObject();
             builder.field("link", page.getLink());
             builder.field("title", page.getTitle());
-            builder.field("content", page.getContentWithoutTags());
+            builder.field("content", page.getContent());
+            builder.field("forward_count", page.getAnchors().size());
             List<Meta> metas = page.getMetas();
             builder.startArray("meta");
             for (Meta meta : metas) {
@@ -50,6 +53,7 @@ public class ElasticDAOImpl implements ElasticDAO {
             builder.field("rank", page.getRank());
             builder.endObject();
             request.source(builder);
+            backupPages.add(page);
             bulkProcessor.add(request);
         } catch (IOException e) {
             throw new ElasticException("Save a page in ElasticSearch failed", e);

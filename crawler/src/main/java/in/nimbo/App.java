@@ -17,6 +17,7 @@ import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.dao.redis.RedisDAOImpl;
+import in.nimbo.entity.Page;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
@@ -37,31 +38,31 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.UnknownHostException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class App {
-    private static Logger logger = LoggerFactory.getLogger(App.class);
+    private static Logger logger = LoggerFactory.getLogger("app");
     private RestHighLevelClient restHighLevelClient;
     private KafkaService kafkaService;
     private HBaseDAO hBaseDAO;
+    private JedisCluster cluster;
 
-    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService, HBaseDAO hBaseDAO) {
+    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService, HBaseDAO hBaseDAO, JedisCluster cluster) {
         this.restHighLevelClient = restHighLevelClient;
         this.kafkaService = kafkaService;
         this.hBaseDAO = hBaseDAO;
+        this.cluster = cluster;
     }
 
     public static void main(String[] args) {
-        try {
-            logger.info("Load application profiles for language detector");
-            DetectorFactory.loadProfile("profiles");
-        } catch (LangDetectException e) {
-            System.out.println("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.");
-            System.exit(1);
-        }
+        loadLanguageDetector();
 
         HBaseConfig hBaseConfig = HBaseConfig.load();
         AppConfig appConfig = AppConfig.load();
@@ -70,24 +71,18 @@ public class App {
         RedisConfig redisConfig = RedisConfig.load();
         logger.info("Configuration loaded");
 
+        initReporter(appConfig);
+        logger.info("Reporter started");
+
         JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
         logger.info("Redis started");
 
-        RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
-                .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
-                        .setConnectTimeout(elasticConfig.getConnectTimeout())
-                        .setSocketTimeout(elasticConfig.getSocketTimeout()))
-                .setMaxRetryTimeoutMillis(elasticConfig.getMaxRetryTimeoutMillis());
-        RestHighLevelClient restHighLevelClient = new RestHighLevelClient(restClientBuilder);
-        BulkProcessor.Builder builder = BulkProcessor.builder(
-                (request, bulkListener) -> restHighLevelClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener), new ElasticBulkListener());
-        builder.setBulkActions(elasticConfig.getBulkActions());
-        builder.setBulkSize(new ByteSizeValue(elasticConfig.getBulkSize(), ByteSizeUnit.valueOf(elasticConfig.getBulkSizeUnit())));
-        builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
-        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
-                elasticConfig.getBackoffMaxRetry()));
-        BulkProcessor bulkProcessor = builder.build();
-        logger.info("ElasticSearch started");
+        List<Page> backupPages = new ArrayList<>();
+        RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
+        ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
+        BulkProcessor bulkProcessor = initializeElasticSearchBulk(elasticConfig, restHighLevelClient, elasticBulkListener);
+        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages);
+        elasticBulkListener.setElasticDAO(elasticDAO);
 
         Connection hBaseConnection = null;
         try {
@@ -98,29 +93,61 @@ public class App {
             System.exit(1);
         }
 
-        ElasticDAO elasticDAO = new ElasticDAOImpl(bulkProcessor, elasticConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBaseConfig);
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
         logger.info("DAO interface created");
 
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
-        startReporter();
 
         ParserService parserService = new ParserService(appConfig);
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
         KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
-        logger.info("Start schedule service");
-
-        kafkaService.schedule();
 
         logger.info("Application started");
-        App app = new App(restHighLevelClient, kafkaService, hBaseDAO);
+        App app = new App(restHighLevelClient, kafkaService, hBaseDAO, cluster);
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
+
         app.startApp();
     }
 
+    private static void loadLanguageDetector() {
+        try {
+            logger.info("Load application profiles for language detector");
+            DetectorFactory.loadProfile("profiles");
+        } catch (LangDetectException e) {
+            System.out.println("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.");
+            System.exit(1);
+        }
+    }
+
+    public static RestHighLevelClient initializeElasticSearchClient(ElasticConfig elasticConfig) {
+        RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
+                .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
+                        .setConnectTimeout(elasticConfig.getConnectTimeout())
+                        .setSocketTimeout(elasticConfig.getSocketTimeout()))
+                .setMaxRetryTimeoutMillis(elasticConfig.getMaxRetryTimeoutMillis());
+        return new RestHighLevelClient(restClientBuilder);
+    }
+
+    public static BulkProcessor initializeElasticSearchBulk(ElasticConfig elasticConfig, RestHighLevelClient restHighLevelClient,
+                                                            ElasticBulkListener elasticBulkListener) {
+        BulkProcessor.Builder builder = BulkProcessor.builder(
+                (request, bulkListener) -> restHighLevelClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
+                elasticBulkListener);
+        builder.setBulkActions(elasticConfig.getBulkActions());
+        builder.setBulkSize(new ByteSizeValue(elasticConfig.getBulkSize(), ByteSizeUnit.valueOf(elasticConfig.getBulkSizeUnit())));
+        builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
+        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
+                elasticConfig.getBackoffMaxRetry()));
+        BulkProcessor bulkProcessor = builder.build();
+        logger.info("ElasticSearch started");
+        return bulkProcessor;
+    }
+
     private void startApp() {
+        kafkaService.schedule();
+        logger.info("Schedule service started");
         System.out.println("Welcome to Search Engine");
         System.out.print("engine> ");
         Scanner in = new Scanner(System.in);
@@ -142,19 +169,27 @@ public class App {
         try {
             restHighLevelClient.close();
             hBaseDAO.close();
+            cluster.close();
         } catch (IOException e) {
             logger.warn("Unable to close resources", e);
         }
     }
 
-    private static void startReporter() {
-        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault("Keenbo");
-        Graphite graphite = new Graphite(new InetSocketAddress("localhost", 2003));
+    private static void initReporter(AppConfig appConfig) {
+        String hostName = appConfig.getReportName();
+        try {
+            hostName = InetAddress.getLocalHost().getHostName();
+        } catch (UnknownHostException e) {
+            logger.info("Unable to detect host name. Use default value");
+        }
+        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(appConfig.getReportName());
+        Graphite graphite = new Graphite(new InetSocketAddress(appConfig.getReportHost(), appConfig.getReportPort()));
         GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
                 .convertRatesTo(TimeUnit.MILLISECONDS)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
+                .prefixedWith(hostName)
                 .filter(MetricFilter.ALL)
                 .build(graphite);
-        reporter.start(5, TimeUnit.SECONDS);
+        reporter.start(appConfig.getReportPeriod(), TimeUnit.SECONDS);
     }
 }
