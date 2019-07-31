@@ -31,7 +31,7 @@ public class RedisMonitoring {
         this.appConfig = appConfig;
     }
 
-    public void monitore() {
+    public void monitor() {
         ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
         executorService.scheduleAtFixedRate(() -> {
             List<RedisNodeStatus> statuses = redisDAO.memoryUsage();

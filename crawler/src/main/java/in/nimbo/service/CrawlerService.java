@@ -7,7 +7,6 @@ import com.codahale.metrics.Timer;
 import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
@@ -30,10 +29,9 @@ import java.util.Set;
 public class CrawlerService {
     private final Counter crawledPages;
     private final Timer getPageTimer;
-    private final Timer redisContainsTimer;
+    private final Timer hBaseContainTimer;
     private final Timer elasticSaveTimer;
     private final Timer hBaseAddTimer;
-    private final Timer redisAddTimer;
     private final Counter skippedCounter;
     private final Counter crawledCounter;
 
@@ -43,24 +41,20 @@ public class CrawlerService {
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
     private ParserService parserService;
-    private RedisDAO redisDAO;
 
     public CrawlerService(Cache<String, LocalDateTime> cache,
                           HBaseDAO hBaseDAO, ElasticDAO elasticDAO,
-                          ParserService parserService,
-                          RedisDAO redisDAO) {
+                          ParserService parserService) {
         this.cache = cache;
         this.hBaseDAO = hBaseDAO;
         this.elasticDAO = elasticDAO;
         this.parserService = parserService;
-        this.redisDAO = redisDAO;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
         crawledPages = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledPages"));
         getPageTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "getPage"));
-        redisContainsTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisContains"));
+        hBaseContainTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "hBaseContains"));
         elasticSaveTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "elasticSave"));
         hBaseAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "hBaseAdd"));
-        redisAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisAdd"));
         skippedCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "skipCounter"));
         crawledCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledCounter"));
     }
@@ -73,9 +67,9 @@ public class CrawlerService {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
 
-                Timer.Context redisContainsTimerContext = redisContainsTimer.time();
-                boolean contains = redisDAO.contains(siteLink);
-                redisContainsTimerContext.stop();
+                Timer.Context hBaseContainContext = hBaseContainTimer.time();
+                boolean contains = hBaseDAO.contains(siteLink);
+                hBaseContainContext.stop();
 
                 if (!contains) {
                     isLinkSkipped = false;
@@ -99,7 +93,6 @@ public class CrawlerService {
                         }
                         crawledPages.inc();
                     }
-                    redisAddTimer.time(() -> redisDAO.add(siteLink));
                     cache.put(siteDomain, LocalDateTime.now());
                 }
             } else {

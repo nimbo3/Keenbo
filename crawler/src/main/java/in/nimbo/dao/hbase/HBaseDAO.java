@@ -15,4 +15,6 @@ public interface HBaseDAO extends AutoCloseable {
      * @throws in.nimbo.exception.HBaseException if any error happen during adding page
      */
     boolean add(Page page);
+
+    boolean contains(String link);
 }

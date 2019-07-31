@@ -2,6 +2,7 @@ package in.nimbo.utility;
 
 import in.nimbo.exception.HashException;
 
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -97,13 +98,20 @@ public class LinkUtility {
 
     /**
      * has a string with md5 hash
+     *
      * @param url url
      * @return hash of url
      */
     public static String hashLink(String url) {
         try {
             MessageDigest md5 = MessageDigest.getInstance("MD5");
-            return new String(md5.digest(url.getBytes()));
+            byte[] digest = md5.digest(url.getBytes());
+            BigInteger number = new BigInteger(1, digest);
+            StringBuilder hashText = new StringBuilder(number.toString(16));
+            while (hashText.length() < 32) {
+                hashText.insert(0, "0");
+            }
+            return hashText.toString();
         } catch (NoSuchAlgorithmException e) {
             throw new HashException(e);
         }

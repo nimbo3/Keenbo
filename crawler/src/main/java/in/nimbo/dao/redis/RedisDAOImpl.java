@@ -2,7 +2,6 @@ package in.nimbo.dao.redis;
 
 import in.nimbo.config.RedisConfig;
 import in.nimbo.entity.RedisNodeStatus;
-import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPool;
 
@@ -40,14 +39,15 @@ public class RedisDAOImpl implements RedisDAO {
         for (String key : clusterNodes.keySet()) {
             JedisPool jedisPool = clusterNodes.get(key);
             String memStatus = jedisPool.getResource().info("Memory");
-            String[] memStatusSplit = memStatus.split("\n");
+            String[] memStatusSplit = memStatus.trim().split("\n");
             for (String memStatusPart : memStatusSplit) {
-                String[] memStatusPartSplit = memStatusPart.split(":");
+                String[] memStatusPartSplit = memStatusPart.trim().split(":");
                 if (memStatusPartSplit.length == 2) {
-                    String memStatusPartKey = memStatusPartSplit[0];
-                    String memStatusPartValue = memStatusPartSplit[1];
+                    String memStatusPartKey = memStatusPartSplit[0].trim();
+                    String memStatusPartValue = memStatusPartSplit[1].trim();
                     if (memStatusPartKey.equals("used_memory")) {
-                        statuses.add(new RedisNodeStatus(key, Long.valueOf(memStatusPartValue)));
+                        long value = Long.valueOf(memStatusPartValue);
+                        statuses.add(new RedisNodeStatus(key, value));
                         break;
                     }
                 }

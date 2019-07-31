@@ -22,7 +22,7 @@ public class ElasticMonitoring {
         histogram = metricRegistry.histogram(MetricRegistry.name(ElasticMonitoring.class,"Page count"));
     }
 
-    public void monitore() {
+    public void monitor() {
         ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
         executorService.scheduleAtFixedRate(() -> {
             long count = elasticDAO.count();
