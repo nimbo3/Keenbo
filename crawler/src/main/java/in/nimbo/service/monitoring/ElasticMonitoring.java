@@ -23,7 +23,6 @@ public class ElasticMonitoring {
         ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
         executorService.scheduleAtFixedRate(() -> {
             long count = elasticDAO.count();
-            System.out.println(count);
             histogram.update(count);
         }, 0, 10, TimeUnit.SECONDS);
         executorService.shutdown();
