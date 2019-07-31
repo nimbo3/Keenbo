@@ -21,6 +21,7 @@ import in.nimbo.entity.Page;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
+import in.nimbo.service.monitoring.ElasticMonitoring;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.http.HttpHost;
@@ -81,8 +82,11 @@ public class App {
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
         ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
         BulkProcessor bulkProcessor = initializeElasticSearchBulk(elasticConfig, restHighLevelClient, elasticBulkListener);
-        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages);
+        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, restHighLevelClient);
         elasticBulkListener.setElasticDAO(elasticDAO);
+
+        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO);
+        elasticMonitoring.schedule();
 
         Connection hBaseConnection = null;
         try {
