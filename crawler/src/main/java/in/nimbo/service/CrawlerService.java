@@ -72,26 +72,18 @@ public class CrawlerService {
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
-                isLinkSkipped = false;
 
                 Timer.Context redisContainsTimerContext = redisContainsTimer.time();
                 boolean contains = redisDAO.contains(siteLink);
                 redisContainsTimerContext.stop();
 
                 if (!contains) {
+                    isLinkSkipped = false;
                     Optional<Page> pageOptional = getPage(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
-                        page.getAnchors().stream().parallel().map(Anchor::getHref).filter(link -> {
-                            try {
-                                return cache.getIfPresent(LinkUtility.getMainDomain(link)) == null;
-                            } catch (URISyntaxException e) {
-                                parserLogger.warn("Illegal URL format: " + link, e);
-                                return false;
-                            }
-                        }).forEach(links::add);
-
+                        page.getAnchors().forEach(anchor -> links.add(anchor.getHref()));
                         boolean isAddedToHBase;
                         if (page.getAnchors().isEmpty()) {
                             isAddedToHBase = true;

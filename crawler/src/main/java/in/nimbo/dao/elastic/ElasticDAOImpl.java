@@ -4,6 +4,7 @@ import in.nimbo.config.ElasticConfig;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import in.nimbo.exception.ElasticException;
+import in.nimbo.utility.LinkUtility;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -12,7 +13,6 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
-import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
@@ -41,7 +41,8 @@ public class ElasticDAOImpl implements ElasticDAO {
     public void save(Page page) {
         try {
             IndexRequest request = new IndexRequest(config.getIndexName())
-                    .type(config.getType());
+                    .type(config.getType())
+                    .id(LinkUtility.hashLink(page.getLink()));
 
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();

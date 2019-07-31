@@ -106,16 +106,20 @@ public class App {
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
         KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
 
-        RedisMonitoring redisMonitoring = new RedisMonitoring(redisDAO, appConfig);
-        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO, appConfig);
-        redisMonitoring.monitore();
-        elasticMonitoring.monitore();
+        runMonitoring(appConfig, redisDAO, elasticDAO);
 
         logger.info("Application started");
         App app = new App(restHighLevelClient, kafkaService, hBaseDAO, cluster);
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
 
         app.startApp();
+    }
+
+    private static void runMonitoring(AppConfig appConfig, RedisDAO redisDAO, ElasticDAO elasticDAO) {
+        RedisMonitoring redisMonitoring = new RedisMonitoring(redisDAO, appConfig);
+        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO, appConfig);
+        redisMonitoring.monitore();
+        elasticMonitoring.monitore();
     }
 
     private static void loadLanguageDetector() {

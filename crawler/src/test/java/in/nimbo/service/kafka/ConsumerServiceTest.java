@@ -21,7 +21,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class ConsumerServiceTest {
     private static KafkaConfig kafkaConfig;
     private MockConsumer<String, String> kafkaConsumer;
-    private MockProducer<String, String> kafkaProducer;
     private BlockingQueue<String> messageQueue;
     private ConsumerService consumerService;
     private CountDownLatch countDownLatch;
