@@ -106,10 +106,10 @@ public class App {
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
         KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
 
-        RedisMonitoring redisMonitoring = new RedisMonitoring(redisDAO);
-        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO);
-        redisMonitoring.schedule();
-        elasticMonitoring.schedule();
+        RedisMonitoring redisMonitoring = new RedisMonitoring(redisDAO, appConfig);
+        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO, appConfig);
+        redisMonitoring.monitore();
+        elasticMonitoring.monitore();
 
         logger.info("Application started");
         App app = new App(restHighLevelClient, kafkaService, hBaseDAO, cluster);
