@@ -22,6 +22,7 @@ import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
 import in.nimbo.service.monitoring.ElasticMonitoring;
+import in.nimbo.service.monitoring.RedisMonitoring;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.http.HttpHost;
@@ -85,9 +86,6 @@ public class App {
         ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, restHighLevelClient);
         elasticBulkListener.setElasticDAO(elasticDAO);
 
-        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO);
-        elasticMonitoring.schedule();
-
         Connection hBaseConnection = null;
         try {
             hBaseConnection = ConnectionFactory.createConnection();
@@ -107,6 +105,11 @@ public class App {
         ParserService parserService = new ParserService(appConfig);
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
         KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
+
+        RedisMonitoring redisMonitoring = new RedisMonitoring(redisDAO, appConfig);
+        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO, appConfig);
+        redisMonitoring.monitore();
+        elasticMonitoring.monitore();
 
         logger.info("Application started");
         App app = new App(restHighLevelClient, kafkaService, hBaseDAO, cluster);
