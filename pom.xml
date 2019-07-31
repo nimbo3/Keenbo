@@ -13,6 +13,7 @@
     <modules>
         <module>crawler</module>
         <module>search</module>
+        <module>forward-extractor</module>
     </modules>
 
     <properties>
