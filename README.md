@@ -1,1 +1,1 @@
-# Keenbo [![Build Status](https://travis-ci.com/nimbo3/Keenbo.svg?branch=master)](https://travis-ci.com/nimbo3/Keenbo)
+# Keenbo [![Build Status](https://travis-ci.com/nimbo3/Keenbo.svg?branch=master)](https://travis-ci.com/nimbo3/Keenbo) [![codecov.io](https://codecov.io/github/nimbo3/Keenbo/coverage.svg?branch=master)](https://codecov.io/github/nimbo3/Keenbo?branch=master)
