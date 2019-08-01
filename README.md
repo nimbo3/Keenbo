@@ -14,7 +14,7 @@ For run this project on your own local machine or server you should install [Zoo
 
 ### Prerequisites
 
-For installing dependencies for this project, read wikis and configure it properly depend on your servers.
+For installing dependencies for this project, read [wikis](https://github.com/nimbo3/Keenbo/wiki) and configure it properly depend on your servers.
 
 ### Running
 
