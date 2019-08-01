@@ -117,7 +117,7 @@ public class App {
     private static void loadLanguageDetector() {
         try {
             logger.info("Load application profiles for language detector");
-            DetectorFactory.loadProfile("profiles");
+            DetectorFactory.loadProfile("../conf/profiles");
         } catch (LangDetectException e) {
             System.out.println("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.");
             System.exit(1);

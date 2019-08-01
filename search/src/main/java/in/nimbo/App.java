@@ -57,11 +57,11 @@ public class App {
         Spark.path("/", () -> {
             Spark.before("/*", (request, response) -> backendLogger.info("New request for uri: {}", request.uri()));
             Spark.get("/search", ((request, response) -> {
+                response.type("application/json");
                 String query = request.queryParams("query");
                 return searchController.search(query != null ? query : "");
             }), transformer);
             Spark.after("/*", (request, response) -> {
-                response.type("application/json");
                 response.header("Access-Control-Allow-Origin", "*");
                 backendLogger.info("Response sent successfully: {}", request.uri());
             });
