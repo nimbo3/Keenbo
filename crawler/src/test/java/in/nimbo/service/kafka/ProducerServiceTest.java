@@ -14,11 +14,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class ProducerServiceTest {
     private MockProducer<String, String> kafkaProducer;
@@ -29,7 +27,7 @@ public class ProducerServiceTest {
 
     @Before
     public void beforeEachTest() {
-        messageQueue = new LinkedBlockingQueue<>();
+        messageQueue = spy(new LinkedBlockingQueue<>());
         countDownLatch = new CountDownLatch(1);
         crawlerService = mock(CrawlerService.class);
 
@@ -38,7 +36,7 @@ public class ProducerServiceTest {
     }
 
     @Test
-    public void consumerRunTest() {
+    public void producerTest() {
         Set<String> crawledLinks = new HashSet<>();
         crawledLinks.add("https://stackoverflow.com");
         crawledLinks.add("https://google.com");

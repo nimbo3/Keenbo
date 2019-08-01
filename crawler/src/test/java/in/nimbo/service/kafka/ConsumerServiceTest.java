@@ -6,7 +6,6 @@ import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -18,29 +17,25 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
 public class ConsumerServiceTest {
     private static KafkaConfig kafkaConfig;
-    private MockConsumer<String, String> kafkaConsumer;
-    private BlockingQueue<String> messageQueue;
-    private ConsumerService consumerService;
-    private CountDownLatch countDownLatch;
 
     @BeforeClass
     public static void init() {
         kafkaConfig = KafkaConfig.load();
     }
 
-    @Before
-    public void beforeEachTest() {
-        messageQueue = new LinkedBlockingQueue<>();
-        countDownLatch = new CountDownLatch(1);
-        kafkaConsumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
-        kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
-        consumerService = new ConsumerService(kafkaConsumer, messageQueue, countDownLatch);
-    }
-
     @Test
     public void consumerRunTest() throws InterruptedException {
+        BlockingQueue<String> queue = new LinkedBlockingQueue<>();
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        MockConsumer<String, String> kafkaConsumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
+        kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
+        ConsumerService consumerService = new ConsumerService(kafkaConsumer, queue, countDownLatch);
+        
         kafkaConsumer.rebalance(
                 Collections.singleton(new TopicPartition(kafkaConfig.getKafkaTopic(), 0)));
         kafkaConsumer.seek(new TopicPartition(kafkaConfig.getKafkaTopic(), 0), 0);
@@ -51,20 +46,23 @@ public class ConsumerServiceTest {
             kafkaConsumer.addRecord(new ConsumerRecord<>(
                     kafkaConfig.getKafkaTopic(), 0, i, "producer", crawledLinks.get(i)));
         }
+
         new Thread(() -> {
             try {
-                TimeUnit.SECONDS.sleep(2);
+                TimeUnit.SECONDS.sleep(5);
                 consumerService.close();
             } catch (InterruptedException e) {
                 // ignored
             }
         }).start();
         consumerService.run();
+        assertEquals(2, queue.size());
         for (String crawl : crawledLinks) {
-            String link = messageQueue.take();
+            String link = queue.poll(1, TimeUnit.MILLISECONDS);
+            assertNotNull(link);
             Assert.assertEquals(link, crawl);
         }
-        Assert.assertEquals(0, messageQueue.size());
+        Assert.assertEquals(0, queue.size());
         Assert.assertEquals(0, countDownLatch.getCount());
     }
 }

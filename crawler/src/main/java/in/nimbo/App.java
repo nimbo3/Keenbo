@@ -22,7 +22,6 @@ import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
 import in.nimbo.service.monitoring.ElasticMonitoring;
-import in.nimbo.service.monitoring.RedisMonitoring;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.http.HttpHost;
@@ -120,10 +119,6 @@ public class App {
         JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
         RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
         logger.info("Redis started");
-
-        RedisMonitoring redisMonitoring = new RedisMonitoring(redisDAO, appConfig);
-        redisMonitoring.monitor();
-        logger.info("Redis monitor started");
     }
 
     private static void loadLanguageDetector() {

@@ -1,7 +1,5 @@
 package in.nimbo.utility;
 
-import in.nimbo.exception.HashException;
-
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -113,7 +111,7 @@ public class LinkUtility {
             }
             return hashText.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new HashException(e);
+            throw new RuntimeException(e);
         }
     }
 }

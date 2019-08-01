@@ -4,8 +4,9 @@ import in.nimbo.utility.LinkUtility;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
+import java.net.URISyntaxException;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 public class LinkUtilityTest {
     @Test
@@ -41,6 +42,24 @@ public class LinkUtilityTest {
         LinkUtility.reverseLink("www.google.com");
     }
 
+    @Test(expected = URISyntaxException.class)
+    public void testGetMainDomainInvalidUrl() throws URISyntaxException {
+        LinkUtility.getMainDomain("invalid");
+    }
+
+    @Test(expected = URISyntaxException.class)
+    public void testGetMainDomainNullUrl() throws URISyntaxException {
+        LinkUtility.getMainDomain("https://salam");
+    }
+
+    @Test
+    public void testIsValidUrl() throws URISyntaxException {
+        assertFalse(LinkUtility.isValidUrl(null));
+        assertFalse(LinkUtility.isValidUrl("invalid"));
+        assertFalse(LinkUtility.isValidUrl("https://salam"));
+        assertTrue(LinkUtility.isValidUrl("https://nimbo.in"));
+    }
+
     @Test
     public void testNormalize() throws MalformedURLException {
         String site = "https://stackoverflow.blog?blb=1";
@@ -50,9 +69,16 @@ public class LinkUtilityTest {
 
     @Test
     public void testNormalizeWithPort() throws MalformedURLException {
-        String site = "https://stackexchange.com/sites#culturerecreation";
+        String site = "https://stackexchange.com:9200/sites#culturerecreation";
         String normalize = LinkUtility.normalize(site);
-        assertEquals("https://stackexchange.com/sites", normalize);
+        assertEquals("https://stackexchange.com:9200/sites", normalize);
+    }
+
+    @Test
+    public void testNormalizeEndPart() throws MalformedURLException {
+        String site = "https://stackexchange.com:9200/sites/";
+        String normalize = LinkUtility.normalize(site);
+        assertEquals("https://stackexchange.com:9200/sites", normalize);
     }
 
     @Test
@@ -75,4 +101,6 @@ public class LinkUtilityTest {
         String normalize = LinkUtility.normalize(site);
         assertEquals("https://launchpad.net/+login", normalize);
     }
+
+
 }
