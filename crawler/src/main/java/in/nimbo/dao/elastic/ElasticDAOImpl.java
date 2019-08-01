@@ -1,9 +1,9 @@
 package in.nimbo.dao.elastic;
 
-import in.nimbo.config.ElasticConfig;
+import in.nimbo.common.config.ElasticConfig;
+import in.nimbo.common.exception.ElasticException;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.exception.ElasticException;
 import in.nimbo.utility.LinkUtility;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;

@@ -1,6 +1,6 @@
 package in.nimbo.service.kafka;
 
-import in.nimbo.config.KafkaConfig;
+import in.nimbo.common.config.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;

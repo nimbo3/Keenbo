@@ -1,6 +1,6 @@
-package in.nimbo.config;
+package in.nimbo.common.config;
 
-import in.nimbo.exception.LoadConfigurationException;
+import in.nimbo.common.exception.LoadConfigurationException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 

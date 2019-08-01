@@ -1,12 +1,12 @@
 package in.nimbo.dao;
 
-import in.nimbo.config.HBaseConfig;
+import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.exception.HBaseException;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.junit.BeforeClass;

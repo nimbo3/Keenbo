@@ -1,6 +1,6 @@
 package in.nimbo.dao.redis;
 
-import in.nimbo.config.RedisConfig;
+import in.nimbo.common.config.RedisConfig;
 import redis.clients.jedis.JedisCluster;
 
 import java.util.Date;

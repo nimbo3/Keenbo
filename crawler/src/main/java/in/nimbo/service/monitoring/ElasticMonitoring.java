@@ -3,7 +3,7 @@ package in.nimbo.service.monitoring;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import in.nimbo.config.AppConfig;
+import in.nimbo.common.config.AppConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 
 import java.util.concurrent.Executors;

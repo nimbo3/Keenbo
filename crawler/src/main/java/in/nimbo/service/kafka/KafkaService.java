@@ -1,7 +1,7 @@
 package in.nimbo.service.kafka;
 
-import in.nimbo.config.KafkaConfig;
-import in.nimbo.exception.KafkaServiceException;
+import in.nimbo.common.config.KafkaConfig;
+import in.nimbo.common.exception.KafkaServiceException;
 import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;

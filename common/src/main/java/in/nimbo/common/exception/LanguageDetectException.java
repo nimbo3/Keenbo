@@ -1,4 +1,4 @@
-package in.nimbo.exception;
+package in.nimbo.common.exception;
 
 public class LanguageDetectException extends RuntimeException {
     public LanguageDetectException(Throwable e) {

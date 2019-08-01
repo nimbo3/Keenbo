@@ -1,8 +1,8 @@
 package in.nimbo.dao.elastic;
 
-import in.nimbo.config.ElasticConfig;
+import in.nimbo.common.config.ElasticConfig;
+import in.nimbo.common.exception.ElasticException;
 import in.nimbo.entity.Page;
-import in.nimbo.exception.ElasticException;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;

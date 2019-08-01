@@ -1,6 +1,6 @@
 package in.nimbo.dao;
 
-import in.nimbo.config.RedisConfig;
+import in.nimbo.common.config.RedisConfig;
 import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.dao.redis.RedisDAOImpl;
 import org.junit.Before;

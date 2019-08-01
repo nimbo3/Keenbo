@@ -9,14 +9,14 @@ public class Page {
     @JsonProperty("title")
     private String title;
     @JsonIgnore
-    private String contentWithoutTags;
+    private String content;
 
     public Page() {
     }
 
-    public Page(String link, String title, String contentWithoutTags) {
+    public Page(String link, String title, String content) {
         this.title = title;
-        this.contentWithoutTags = contentWithoutTags;
+        this.content = content;
         this.link = link;
     }
 
@@ -24,13 +24,12 @@ public class Page {
         return title;
     }
 
-
     public String getLink() {
         return link;
     }
 
-    public String getContentWithoutTags() {
-        return contentWithoutTags;
+    public String getContent() {
+        return content;
     }
 
     public void setLink(String link) {
@@ -41,7 +40,7 @@ public class Page {
         this.title = title;
     }
 
-    public void setContentWithoutTags(String contentWithoutTags) {
-        this.contentWithoutTags = contentWithoutTags;
+    public void setContent(String content) {
+        this.content = content;
     }
 }

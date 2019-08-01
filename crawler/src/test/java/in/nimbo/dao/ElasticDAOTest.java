@@ -1,6 +1,6 @@
 package in.nimbo.dao;
 
-import in.nimbo.config.ElasticConfig;
+import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.dao.elastic.ElasticBulkListener;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;

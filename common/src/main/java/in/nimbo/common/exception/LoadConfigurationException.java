@@ -1,4 +1,4 @@
-package in.nimbo.exception;
+package in.nimbo.common.exception;
 
 public class LoadConfigurationException extends RuntimeException {
     public LoadConfigurationException(String configurationFile, Throwable cause) {

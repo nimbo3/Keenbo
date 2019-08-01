@@ -9,14 +9,15 @@ import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import in.nimbo.config.*;
+import in.nimbo.common.config.AppConfig;
+import in.nimbo.common.config.ElasticConfig;
+import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.dao.elastic.ElasticBulkListener;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
-import in.nimbo.dao.redis.RedisDAO;
-import in.nimbo.dao.redis.RedisDAOImpl;
 import in.nimbo.entity.Page;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
@@ -36,7 +37,6 @@ import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -112,13 +112,6 @@ public class App {
     private static void runElasticMonitoring(AppConfig appConfig, ElasticDAO elasticDAO) {
         ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO, appConfig);
         elasticMonitoring.monitor();
-    }
-
-    private static void initRedis(AppConfig appConfig) {
-        RedisConfig redisConfig = RedisConfig.load();
-        JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
-        RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
-        logger.info("Redis started");
     }
 
     private static void loadLanguageDetector() {
