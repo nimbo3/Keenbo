@@ -32,13 +32,13 @@ mvn test
 * Spark - Used to run mapreduces
 * Kafka - Used to handling links queue 
 * ElasticSearch - Used to run search queries
-* Redis - Used to 
+* Redis - Used to check duplicated pages
 * HBase - Used to store data 
-* DropWizard - Used for monitoring
+* DropWizard - Used to monitoring
 * JSoup - Used to parse the pages
 * Caffeine - Used to store requested urls to send request politely
-* Jackson - Used for serializing objects
-* Maven - Dependency Management
+* Jackson - Used to serializing objects
+* Maven - Used to Dependency Management
 
 ## Authors
 
