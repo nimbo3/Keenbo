@@ -18,6 +18,7 @@
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
         <langdetect.version>1.1-20120112</langdetect.version>
         <dropwizard-metrics.version>4.0.0</dropwizard-metrics.version>
+        <jedis.version>3.0.1</jedis.version>
     </properties>
 
     <dependencies>
