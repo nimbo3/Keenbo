@@ -7,6 +7,7 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilders;
@@ -21,10 +22,12 @@ import java.util.Map;
 public class ElasticDAOImpl implements ElasticDAO {
     private final ElasticConfig config;
     private RestHighLevelClient client;
+    private List<String> violenceWords;
 
-    public ElasticDAOImpl(RestHighLevelClient client, ElasticConfig config) {
+    public ElasticDAOImpl(RestHighLevelClient client, ElasticConfig config, List<String> violenceWords) {
         this.config = config;
         this.client = client;
+        this.violenceWords = violenceWords;
     }
 
     private List<Page> convertHitArrayToPageList(SearchHit[] hits) {
@@ -47,6 +50,11 @@ public class ElasticDAOImpl implements ElasticDAO {
         try {
             SearchRequest request = new SearchRequest(config.getIndexName());
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+            for (String word : violenceWords) {
+                MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(word);
+                boolQueryBuilder.mustNot(multiMatchQueryBuilder);
+            }
             MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(query, "title", "link", "content", "meta", "anchors");
             multiMatchQueryBuilder.field("title", 5);
             multiMatchQueryBuilder.field("content", 1);
@@ -54,7 +62,8 @@ public class ElasticDAOImpl implements ElasticDAO {
             multiMatchQueryBuilder.field("anchors", 3);
             multiMatchQueryBuilder.field("link", 4);
             multiMatchQueryBuilder.operator(Operator.AND);
-            searchSourceBuilder.query(multiMatchQueryBuilder);
+            boolQueryBuilder.must(multiMatchQueryBuilder);
+            searchSourceBuilder.query(boolQueryBuilder);
             String[] includes = new String[]{"title", "link"};
             searchSourceBuilder.fetchSource(includes, null);
             request.source(searchSourceBuilder);
