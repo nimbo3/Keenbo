@@ -4,7 +4,6 @@ import in.nimbo.config.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
-import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.Assert;
 import org.junit.Before;
@@ -17,6 +16,7 @@ import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class ConsumerServiceTest {
     private static KafkaConfig kafkaConfig;
@@ -44,25 +44,25 @@ public class ConsumerServiceTest {
         kafkaConsumer.rebalance(
                 Collections.singleton(new TopicPartition(kafkaConfig.getKafkaTopic(), 0)));
         kafkaConsumer.seek(new TopicPartition(kafkaConfig.getKafkaTopic(), 0), 0);
-        List<String> crawl = new ArrayList<>();
-        crawl.add("https://stackoverflow.com");
-        crawl.add("https://google.com");
-        for (int i = 0; i < crawl.size(); i++) {
+        List<String> crawledLinks = new ArrayList<>();
+        crawledLinks.add("https://stackoverflow.com");
+        crawledLinks.add("https://google.com");
+        for (int i = 0; i < crawledLinks.size(); i++) {
             kafkaConsumer.addRecord(new ConsumerRecord<>(
-                    kafkaConfig.getKafkaTopic(), 0, i, "producer", crawl.get(i)));
+                    kafkaConfig.getKafkaTopic(), 0, i, "producer", crawledLinks.get(i)));
         }
         new Thread(() -> {
             try {
-                Thread.sleep(2000);
+                TimeUnit.SECONDS.sleep(2);
                 consumerService.close();
             } catch (InterruptedException e) {
                 // ignored
             }
         }).start();
         consumerService.run();
-        for (int i = 0; i < crawl.size(); i++) {
+        for (String crawl : crawledLinks) {
             String link = messageQueue.take();
-            Assert.assertEquals(link, crawl.get(i));
+            Assert.assertEquals(link, crawl);
         }
         Assert.assertEquals(0, messageQueue.size());
         Assert.assertEquals(0, countDownLatch.getCount());
