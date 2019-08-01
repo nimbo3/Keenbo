@@ -30,6 +30,7 @@
         <hbase.version>1.4.10</hbase.version>
         <jedis.version>3.0.1</jedis.version>
         <elasticsearch.version>6.6.2</elasticsearch.version>
+        <http.httpcomponents.version>4.5.9</http.httpcomponents.version>
     </properties>
 
     <dependencies>
@@ -92,13 +93,6 @@
             <version>${hbase.version}</version>
         </dependency>
 
-        <!-- redis clients: jedis -->
-        <dependency>
-            <groupId>redis.clients</groupId>
-            <artifactId>jedis</artifactId>
-            <version>${jedis.version}</version>
-        </dependency>
-
         <!-- elasticsearch high level rest api client -->
         <dependency>
             <groupId>org.elasticsearch.client</groupId>
@@ -109,7 +103,7 @@
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
             <artifactId>httpclient</artifactId>
-            <version>4.5.9</version>
+            <version>${http.httpcomponents.version}</version>
         </dependency>
     </dependencies>
 

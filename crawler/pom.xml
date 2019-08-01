@@ -61,6 +61,13 @@
             <version>${langdetect.version}</version>
         </dependency>
 
+        <!-- redis clients: jedis -->
+        <dependency>
+            <groupId>redis.clients</groupId>
+            <artifactId>jedis</artifactId>
+            <version>${jedis.version}</version>
+        </dependency>
+
         <dependency>
             <groupId>in.nimbo</groupId>
             <artifactId>common</artifactId>
