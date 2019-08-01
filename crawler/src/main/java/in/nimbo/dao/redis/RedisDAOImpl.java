@@ -1,15 +1,9 @@
 package in.nimbo.dao.redis;
 
-import in.nimbo.config.RedisConfig;
-import in.nimbo.entity.RedisNodeStatus;
-import redis.clients.jedis.Jedis;
+import in.nimbo.common.config.RedisConfig;
 import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.JedisPool;
 
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
-import java.util.Map;
 
 public class RedisDAOImpl implements RedisDAO {
     private JedisCluster cluster;
@@ -31,28 +25,5 @@ public class RedisDAOImpl implements RedisDAO {
     @Override
     public boolean contains(String link) {
         return cluster.get(link) != null;
-    }
-
-    @Override
-    public List<RedisNodeStatus> memoryUsage() {
-        List<RedisNodeStatus> statuses = new ArrayList<>();
-        Map<String, JedisPool> clusterNodes = cluster.getClusterNodes();
-        for (String key : clusterNodes.keySet()) {
-            JedisPool jedisPool = clusterNodes.get(key);
-            String memStatus = jedisPool.getResource().info("Memory");
-            String[] memStatusSplit = memStatus.split("\n");
-            for (String memStatusPart : memStatusSplit) {
-                String[] memStatusPartSplit = memStatusPart.split(":");
-                if (memStatusPartSplit.length == 2) {
-                    String memStatusPartKey = memStatusPartSplit[0];
-                    String memStatusPartValue = memStatusPartSplit[1];
-                    if (memStatusPartKey.equals("used_memory")) {
-                        statuses.add(new RedisNodeStatus(key, Long.valueOf(memStatusPartValue)));
-                        break;
-                    }
-                }
-            }
-        }
-        return statuses;
     }
 }

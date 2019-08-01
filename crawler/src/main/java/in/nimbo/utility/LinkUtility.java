@@ -1,9 +1,12 @@
 package in.nimbo.utility;
 
+import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -89,5 +92,26 @@ public class LinkUtility {
             }
         }
         return newLink;
+    }
+
+    /**
+     * has a string with md5 hash
+     *
+     * @param url url
+     * @return hash of url
+     */
+    public static String hashLink(String url) {
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] digest = md5.digest(url.getBytes());
+            BigInteger number = new BigInteger(1, digest);
+            StringBuilder hashText = new StringBuilder(number.toString(16));
+            while (hashText.length() < 32) {
+                hashText.insert(0, "0");
+            }
+            return hashText.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

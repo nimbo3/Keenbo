@@ -5,14 +5,13 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.github.benmanes.caffeine.cache.Cache;
+import in.nimbo.common.exception.HBaseException;
+import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.exception.HBaseException;
-import in.nimbo.exception.LanguageDetectException;
 import in.nimbo.utility.LinkUtility;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
@@ -30,10 +29,9 @@ import java.util.Set;
 public class CrawlerService {
     private final Counter crawledPages;
     private final Timer getPageTimer;
-    private final Timer redisContainsTimer;
+    private final Timer hBaseContainTimer;
     private final Timer elasticSaveTimer;
     private final Timer hBaseAddTimer;
-    private final Timer redisAddTimer;
     private final Counter skippedCounter;
     private final Counter crawledCounter;
 
@@ -43,24 +41,20 @@ public class CrawlerService {
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
     private ParserService parserService;
-    private RedisDAO redisDAO;
 
     public CrawlerService(Cache<String, LocalDateTime> cache,
                           HBaseDAO hBaseDAO, ElasticDAO elasticDAO,
-                          ParserService parserService,
-                          RedisDAO redisDAO) {
+                          ParserService parserService) {
         this.cache = cache;
         this.hBaseDAO = hBaseDAO;
         this.elasticDAO = elasticDAO;
         this.parserService = parserService;
-        this.redisDAO = redisDAO;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
         crawledPages = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledPages"));
         getPageTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "getPage"));
-        redisContainsTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisContains"));
+        hBaseContainTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "hBaseContains"));
         elasticSaveTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "elasticSave"));
         hBaseAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "hBaseAdd"));
-        redisAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisAdd"));
         skippedCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "skipCounter"));
         crawledCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledCounter"));
     }
@@ -72,26 +66,18 @@ public class CrawlerService {
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
-                isLinkSkipped = false;
 
-                Timer.Context redisContainsTimerContext = redisContainsTimer.time();
-                boolean contains = redisDAO.contains(siteLink);
-                redisContainsTimerContext.stop();
+                Timer.Context hBaseContainContext = hBaseContainTimer.time();
+                boolean contains = hBaseDAO.contains(siteLink);
+                hBaseContainContext.stop();
 
                 if (!contains) {
+                    isLinkSkipped = false;
                     Optional<Page> pageOptional = getPage(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
-                        page.getAnchors().stream().parallel().map(Anchor::getHref).filter(link -> {
-                            try {
-                                return cache.getIfPresent(LinkUtility.getMainDomain(link)) == null;
-                            } catch (URISyntaxException e) {
-                                parserLogger.warn("Illegal URL format: " + link, e);
-                                return false;
-                            }
-                        }).forEach(links::add);
-
+                        page.getAnchors().forEach(anchor -> links.add(anchor.getHref()));
                         boolean isAddedToHBase;
                         if (page.getAnchors().isEmpty()) {
                             isAddedToHBase = true;
@@ -107,7 +93,6 @@ public class CrawlerService {
                         }
                         crawledPages.inc();
                     }
-                    redisAddTimer.time(() -> redisDAO.add(siteLink));
                     cache.put(siteDomain, LocalDateTime.now());
                 }
             } else {

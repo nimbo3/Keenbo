@@ -1,17 +1,14 @@
 package in.nimbo.dao;
 
-import in.nimbo.config.HBaseConfig;
+import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.exception.HBaseException;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Table;
-import org.junit.Before;
+import org.apache.hadoop.hbase.client.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -21,9 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
@@ -63,6 +58,25 @@ public class HBaseDAOTest {
         page.setMetas(metas);
         doNothing().when(table).put(any(Put.class));
         assertTrue(hBaseDAO.add(page));
+    }
+
+    @Test
+    public void testContains() throws IOException {
+        Table table = mock(Table.class);
+        Result result = mock(Result.class);
+        when(connection.getTable(any(TableName.class))).thenReturn(table);
+        doReturn(result).when(table).get(any(Get.class));
+        doReturn(true, false).when(result).isEmpty();
+        assertFalse(hBaseDAO.contains("link"));
+        assertTrue(hBaseDAO.contains("link"));
+
+        doThrow(IOException.class).when(table).get(any(Get.class));
+        try {
+            hBaseDAO.contains("link");
+            fail();
+        } catch (Exception e) {
+            assertTrue(e instanceof HBaseException);
+        }
     }
 
     @Test(expected = HBaseException.class)
@@ -113,11 +127,7 @@ public class HBaseDAOTest {
 
     @Test
     public void testClose() throws IOException {
-        try {
-            doNothing().when(connection).close();
-            hBaseDAO.close();
-        } catch (IOException e) {
-            fail();
-        }
+        doNothing().when(connection).close();
+        hBaseDAO.close();
     }
 }

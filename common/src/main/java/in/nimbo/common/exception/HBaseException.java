@@ -1,4 +1,4 @@
-package in.nimbo.exception;
+package in.nimbo.common.exception;
 
 public class HBaseException extends RuntimeException {
     public HBaseException() {

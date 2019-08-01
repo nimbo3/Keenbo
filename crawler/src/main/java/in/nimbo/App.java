@@ -9,20 +9,20 @@ import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import in.nimbo.config.*;
+import in.nimbo.common.config.AppConfig;
+import in.nimbo.common.config.ElasticConfig;
+import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.dao.elastic.ElasticBulkListener;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
-import in.nimbo.dao.redis.RedisDAO;
-import in.nimbo.dao.redis.RedisDAOImpl;
 import in.nimbo.entity.Page;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
 import in.nimbo.service.monitoring.ElasticMonitoring;
-import in.nimbo.service.monitoring.RedisMonitoring;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.http.HttpHost;
@@ -37,7 +37,6 @@ import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -54,13 +53,11 @@ public class App {
     private RestHighLevelClient restHighLevelClient;
     private KafkaService kafkaService;
     private HBaseDAO hBaseDAO;
-    private JedisCluster cluster;
 
-    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService, HBaseDAO hBaseDAO, JedisCluster cluster) {
+    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService, HBaseDAO hBaseDAO) {
         this.restHighLevelClient = restHighLevelClient;
         this.kafkaService = kafkaService;
         this.hBaseDAO = hBaseDAO;
-        this.cluster = cluster;
     }
 
     public static void main(String[] args) {
@@ -70,14 +67,10 @@ public class App {
         AppConfig appConfig = AppConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
         ElasticConfig elasticConfig = ElasticConfig.load();
-        RedisConfig redisConfig = RedisConfig.load();
         logger.info("Configuration loaded");
 
         initReporter(appConfig);
         logger.info("Reporter started");
-
-        JedisCluster cluster = new JedisCluster(redisConfig.getHostAndPorts());
-        logger.info("Redis started");
 
         List<Page> backupPages = new ArrayList<>();
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
@@ -96,26 +89,29 @@ public class App {
         }
 
         HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBaseConfig);
-        RedisDAO redisDAO = new RedisDAOImpl(cluster, redisConfig);
         logger.info("DAO interface created");
 
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
 
         ParserService parserService = new ParserService(appConfig);
-        CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO);
+        CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService);
         KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
+        logger.info("Services started");
 
-        RedisMonitoring redisMonitoring = new RedisMonitoring(redisDAO, appConfig);
-        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO, appConfig);
-        redisMonitoring.monitore();
-        elasticMonitoring.monitore();
+        runElasticMonitoring(appConfig, elasticDAO);
+        logger.info("Monitoring started");
 
         logger.info("Application started");
-        App app = new App(restHighLevelClient, kafkaService, hBaseDAO, cluster);
+        App app = new App(restHighLevelClient, kafkaService, hBaseDAO);
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
 
         app.startApp();
+    }
+
+    private static void runElasticMonitoring(AppConfig appConfig, ElasticDAO elasticDAO) {
+        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO, appConfig);
+        elasticMonitoring.monitor();
     }
 
     private static void loadLanguageDetector() {
@@ -176,7 +172,6 @@ public class App {
         try {
             restHighLevelClient.close();
             hBaseDAO.close();
-            cluster.close();
         } catch (IOException e) {
             logger.warn("Unable to close resources", e);
         }
