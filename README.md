@@ -1,1 +1,51 @@
 # Keenbo [![Build Status](https://travis-ci.com/nimbo3/Keenbo.svg?branch=master)](https://travis-ci.com/nimbo3/Keenbo) [![codecov.io](https://codecov.io/github/nimbo3/Keenbo/coverage.svg?branch=master)](https://codecov.io/github/nimbo3/Keenbo?branch=master)
+
+A **simple to use** search engine for search data.
+
+
+Project consist of different modules:
+* crawler: crawls the pages and save in database
+* search-engine: search API on stored data
+* forward-extractor: run a mapreduce for calculate incomming link for a website to have better results
+
+## Getting Started
+
+For run this project on your own local machine or server you should install [Zookeeper](https://github.com/nimbo3/Keenbo/wiki/Setup-Zookeeper-on-cluster) and [hbase](https://github.com/nimbo3/Keenbo/wiki/Setup-HBase-1.2.4-in-multi-node-cluster) and [hadoop](https://github.com/nimbo3/Keenbo/wiki/Setup-Hadoop-2.7.7-in-multi-node-cluster) and [elasticsearch](https://github.com/nimbo3/Keenbo/wiki/Setup-ElasticSearch) and [kafka](https://github.com/nimbo3/Keenbo/wiki/Setup-Kafka-on-cluster ).
+
+### Prerequisites
+
+For installing dependencies for this project, read wikis and configure it properly depend on your servers.
+
+### Running
+
+For running application, you can use `.sh` files inside `bin` folder.
+
+## Running the tests
+
+Test all projects with below command: 
+```
+mvn test
+```
+
+## Built With
+
+* Spark - Used to run mapreduces
+* Kafka - Used to handling links queue 
+* ElasticSearch - Used to run search queries
+* Redis - Used to 
+* HBase - Used to store data 
+* DropWizard - Used for monitoring
+* JSoup - Used to parse the pages
+* Caffeine - Used to store requested urls to send request politely
+* Jackson - Used for serializing objects
+* Maven - Dependency Management
+
+## Authors
+
+* **Ehsan Karimi** - [github](https://github.com/karimiehsan90)
+* **Amin Borjian** - [github](https://github.com/Borjianamin98)
+* **Danial Erfanian** - [github](https://github.com/DanialErfanian)
+* **Amin Borjian** - [github](https://github.com/mrp-78)
+
+
+See also the list of [contributors](https://github.com/karimiehsan90/nimbo_rss/graphs/contributors) who participated in this project.
