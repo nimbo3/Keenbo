@@ -45,7 +45,7 @@ mvn test
 * **Ehsan Karimi** - [github](https://github.com/karimiehsan90)
 * **Amin Borjian** - [github](https://github.com/Borjianamin98)
 * **Danial Erfanian** - [github](https://github.com/DanialErfanian)
-* **Amin Borjian** - [github](https://github.com/mrp-78)
+* **MohammadReza Pakzadian** - [github](https://github.com/mrp-78)
 
 
 See also the list of [contributors](https://github.com/karimiehsan90/nimbo_rss/graphs/contributors) who participated in this project.
