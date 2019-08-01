@@ -41,7 +41,6 @@ mvn test
 * Maven - Used to Dependency Management
 
 ## Authors
-
 * **Ehsan Karimi** - [github](https://github.com/karimiehsan90)
 * **Amin Borjian** - [github](https://github.com/Borjianamin98)
 * **Danial Erfanian** - [github](https://github.com/DanialErfanian)
