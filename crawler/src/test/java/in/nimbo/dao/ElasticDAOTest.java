@@ -12,7 +12,6 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -62,11 +61,6 @@ public class ElasticDAOTest {
         }).when(bulkProcessor).add(any(IndexRequest.class));
 
         elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, client);
-    }
-
-    @Before
-    public void beforeEachTest() {
-
     }
 
     @Test

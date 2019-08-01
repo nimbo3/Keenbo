@@ -7,8 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 import redis.clients.jedis.JedisCluster;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
@@ -20,14 +19,14 @@ public class RedisDAOTest {
     @Before
     public void init() {
         cluster = mock(JedisCluster.class);
-        redisConfig = new RedisConfig();
-        redisConfig.setExpireTime(-1);
-        redisConfig.setHostAndPorts(null);
+        redisConfig = RedisConfig.load();
         redisDAO = new RedisDAOImpl(cluster, redisConfig);
     }
 
     @Test
     public void testContains() {
+        redisConfig.setExpireTime(-1);
+        assertEquals(3, redisConfig.getHostAndPorts().size());
         when(cluster.get("key")).thenReturn("key");
         boolean contains = redisDAO.contains("key");
         assertTrue(contains);
