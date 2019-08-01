@@ -1,6 +1,6 @@
-package in.nimbo.config;
+package in.nimbo.common.config;
 
-import in.nimbo.exception.LoadConfigurationException;
+import in.nimbo.common.exception.LoadConfigurationException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
@@ -15,6 +15,7 @@ public class AppConfig {
     private String reportHost;
     private int reportPort;
     private int reportPeriod;
+    private int monitoringPeriod;
 
     public static AppConfig load() {
         AppConfig appConfig = new AppConfig();
@@ -29,10 +30,19 @@ public class AppConfig {
             appConfig.setReportHost(config.getString("report.host"));
             appConfig.setReportPort(config.getInt("report.port"));
             appConfig.setReportPeriod(config.getInt("report.period"));
+            appConfig.setMonitoringPeriod(config.getInt("monitoring.period.seconds"));
             return appConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public int getMonitoringPeriod() {
+        return monitoringPeriod;
+    }
+
+    public void setMonitoringPeriod(int monitoringPeriod) {
+        this.monitoringPeriod = monitoringPeriod;
     }
 
     public String getReportName() {

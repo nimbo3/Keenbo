@@ -4,15 +4,15 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.TestUtility;
-import in.nimbo.config.AppConfig;
+import in.nimbo.common.config.AppConfig;
+import in.nimbo.common.exception.HBaseException;
+import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.exception.HBaseException;
-import in.nimbo.exception.LanguageDetectException;
 import in.nimbo.utility.LinkUtility;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -80,19 +80,19 @@ public class CrawlerServiceTest {
         doReturn(true).when(hBaseDAO).add(any(Page.class));
         cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
-        crawlerService = spy(new CrawlerService(cache, hBaseDAO, elasticDAO, parserService, redisDAO));
+        crawlerService = spy(new CrawlerService(cache, hBaseDAO, elasticDAO, parserService));
     }
 
     @Test
     public void crawlTest() {
-        when(redisDAO.contains(link)).thenReturn(false);
+        when(hBaseDAO.contains(link)).thenReturn(false);
         Set<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(answer, crawledLinks);
     }
 
     @Test
     public void crawlCachedLinkTest() {
-        when(redisDAO.contains(link)).thenReturn(false);
+        when(hBaseDAO.contains(link)).thenReturn(false);
         try {
             cache.put(LinkUtility.getMainDomain(link), LocalDateTime.now());
         } catch (URISyntaxException e) {
@@ -106,7 +106,7 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlRepeatedLinkTest() {
-        when(redisDAO.contains(link)).thenReturn(true);
+        when(hBaseDAO.contains(link)).thenReturn(true);
         Set<String> actualResult = new HashSet<>();
         Set<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(answer, actualResult);
@@ -114,7 +114,7 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlInvalidLink() {
-        when(redisDAO.contains(link)).thenReturn(true);
+        when(hBaseDAO.contains(link)).thenReturn(true);
         Set<String> answer = crawlerService.crawl("http://");
         Set<String> actualResult = new HashSet<>();
         Assert.assertEquals(answer, actualResult);

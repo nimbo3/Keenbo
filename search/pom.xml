@@ -12,16 +12,10 @@
     <artifactId>search</artifactId>
 
     <name>search</name>
-    <!-- FIXME change it to the project's website -->
-    <url>http://www.example.com</url>
 
     <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
         <sparkjava.version>2.8.0</sparkjava.version>
         <jackson.version>2.10.0.pr1</jackson.version>
-        <elasticsearch.version>6.6.2</elasticsearch.version>
     </properties>
 
     <dependencies>
@@ -50,16 +44,10 @@
             <version>${jackson.version}</version>
         </dependency>
 
-        <!-- elasticsearch high level rest api client -->
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
-            <version>${elasticsearch.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>${elasticsearch.version}</version>
+            <groupId>in.nimbo</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
         </dependency>
 
     </dependencies>

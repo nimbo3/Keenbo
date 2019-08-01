@@ -1,14 +1,12 @@
 package in.nimbo.dao.hbase;
 
-import in.nimbo.config.HBaseConfig;
+import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.exception.HBaseException;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.exception.HBaseException;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +47,17 @@ public class HBaseDAOImpl implements HBaseDAO {
         } catch (IllegalArgumentException e) {
             // It will be thrown if size of page will be more than hbase.client.keyvalue.maxsize = 10485760
             return false;
+        } catch (IOException e) {
+            throw new HBaseException(e);
+        }
+    }
+
+    @Override
+    public boolean contains(String link) {
+        try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
+            Get get = new Get(Bytes.toBytes(link));
+            Result result = table.get(get);
+            return !result.isEmpty();
         } catch (IOException e) {
             throw new HBaseException(e);
         }
