@@ -13,7 +13,7 @@ import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.utility.LinkUtility;
+import in.nimbo.common.utility.LinkUtility;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Assert;
@@ -106,10 +106,10 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlRepeatedLinkTest() {
-        when(hBaseDAO.contains(link)).thenReturn(true);
+        when(hBaseDAO.contains(anyString())).thenReturn(true);
         Set<String> actualResult = new HashSet<>();
         Set<String> answer = crawlerService.crawl(link);
-        Assert.assertEquals(answer, actualResult);
+        Assert.assertEquals(actualResult, answer);
     }
 
     @Test

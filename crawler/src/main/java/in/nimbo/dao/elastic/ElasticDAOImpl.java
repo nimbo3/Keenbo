@@ -4,7 +4,7 @@ import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.exception.ElasticException;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.utility.LinkUtility;
+import in.nimbo.common.utility.LinkUtility;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.search.SearchRequest;
@@ -47,6 +47,7 @@ public class ElasticDAOImpl implements ElasticDAO {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
             builder.field("link", page.getLink());
+            builder.field("link_length", page.getLink().length());
             builder.field("title", page.getTitle());
             builder.field("content", page.getContent());
             builder.field("forward_count", page.getAnchors().size());

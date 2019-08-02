@@ -12,7 +12,7 @@ import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.utility.LinkUtility;
+import in.nimbo.common.utility.LinkUtility;
 import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,7 +68,7 @@ public class CrawlerService {
             if (cache.getIfPresent(siteDomain) == null) {
 
                 Timer.Context hBaseContainContext = hBaseContainTimer.time();
-                boolean contains = hBaseDAO.contains(siteLink);
+                boolean contains = hBaseDAO.contains(LinkUtility.reverseLink(siteLink));
                 hBaseContainContext.stop();
 
                 if (!contains) {

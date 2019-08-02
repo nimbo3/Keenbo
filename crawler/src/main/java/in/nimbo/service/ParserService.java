@@ -8,7 +8,7 @@ import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.utility.LinkUtility;
+import in.nimbo.common.utility.LinkUtility;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
