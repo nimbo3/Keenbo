@@ -7,6 +7,7 @@ import in.nimbo.common.config.AppConfig;
 import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
+import in.nimbo.entity.Page;
 import in.nimbo.common.utility.LinkUtility;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
@@ -26,6 +27,7 @@ import java.util.*;
 
 public class ParserService {
     private Logger logger = LoggerFactory.getLogger("parser");
+    private Logger appLogger = LoggerFactory.getLogger("app");
     private AppConfig appConfig;
 
     public ParserService(AppConfig appConfig) {
@@ -134,5 +136,38 @@ public class ParserService {
         } catch (LangDetectException e) {
             throw new LanguageDetectException(e);
         }
+    }
+
+    /**
+     * crawl a site and return it's content as a page
+     *
+     * @param link link of site
+     * @return page if able to crawl page
+     */
+    public Optional<Page> getPage(String link) {
+        try {
+            Optional<Document> documentOptional = getDocument(link);
+            if (!documentOptional.isPresent()) {
+                return Optional.empty();
+            }
+            Document document = documentOptional.get();
+            String pageContentWithoutTag = document.text().replace("\n", " ");
+            if (pageContentWithoutTag.isEmpty()) {
+                logger.warn("There is no content for site: {}", link);
+            } else if (isEnglishLanguage(pageContentWithoutTag)) {
+                Set<Anchor> anchors = getAnchors(document);
+                List<Meta> metas = getMetas(document);
+                String title = getTitle(document);
+                Page page = new Page(link, title, pageContentWithoutTag, anchors, metas, 1.0);
+                return Optional.of(page);
+            }
+        } catch (MalformedURLException e) {
+            appLogger.warn("Unable to reverse link: {}", link);
+        } catch (LanguageDetectException e) {
+            logger.warn("Cannot detect language of site: {}", link);
+        } catch (Exception e) {
+            appLogger.error(e.getMessage(), e);
+        }
+        return Optional.empty();
     }
 }

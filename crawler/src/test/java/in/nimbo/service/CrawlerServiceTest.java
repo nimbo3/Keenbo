@@ -138,7 +138,7 @@ public class CrawlerServiceTest {
 
     @Test
     public void getPageTest() {
-        Optional<Page> optionalPage = crawlerService.getPage(link);
+        Optional<Page> optionalPage = parserService.getPage(link);
         Assert.assertTrue(optionalPage.isPresent());
         Page returnPage = optionalPage.get();
         Assert.assertEquals(link, returnPage.getLink());
@@ -152,21 +152,21 @@ public class CrawlerServiceTest {
     @Test
     public void getPageWithEmptyDocumentTest() {
         when(parserService.getDocument(link)).thenReturn(Optional.empty());
-        Optional<Page> optionalPage = crawlerService.getPage(link);
+        Optional<Page> optionalPage = parserService.getPage(link);
         Assert.assertFalse(optionalPage.isPresent());
     }
 
     @Test
     public void getPageMalformedURLExceptionTest() {
         when(parserService.getDocument(invalidLink)).thenReturn(Optional.of(document));
-        Optional<Page> optionalPage = crawlerService.getPage(invalidLink);
+        Optional<Page> optionalPage = parserService.getPage(invalidLink);
         Assert.assertFalse(optionalPage.isPresent());
     }
 
     @Test
     public void getPageLanguageDetectExceptionTest() {
         doThrow(new LanguageDetectException(new Exception())).when(parserService).isEnglishLanguage(anyString());
-        Optional<Page> optionalPage = crawlerService.getPage(invalidLink);
+        Optional<Page> optionalPage = parserService.getPage(invalidLink);
         Assert.assertFalse(optionalPage.isPresent());
     }
 }
