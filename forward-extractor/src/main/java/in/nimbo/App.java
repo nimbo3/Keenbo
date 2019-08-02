@@ -29,23 +29,25 @@ public class App {
         SparkConf sparkConf = new SparkConf()
                 .setAppName(appConfig.getAppName())
                 .setMaster(appConfig.getResourceManager())
-                .set("es.write.operation", "upsert")
                 .set("es.nodes", appConfig.getNodesIP())
+                .set("es.write.operation", "upsert")
                 .set("es.mapping.id", "id")
                 .set("es.index.auto.create", appConfig.getEsCreateIndex());
 
         JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
 
+        String columnFamily = appConfig.getHbaseColumnFamily();
+
         Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
         hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, appConfig.getHbaseTable());
-        hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, appConfig.getHbaseColumnFamily());
+        hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, columnFamily);
+
 
         JavaRDD<Result> hBaseRDD = javaSparkContext
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                         , ImmutableBytesWritable.class, Result.class).values();
-        String columnFamily = "anchor";
 
         JavaPairRDD<String, ArrayList<String>> map = hBaseRDD.flatMapToPair((PairFlatMapFunction<Result, String, ArrayList<String>>) row -> {
             ArrayList<Tuple2<String, ArrayList<String>>> result = new ArrayList<>();
