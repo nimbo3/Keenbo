@@ -1,6 +1,6 @@
 package in.nimbo.entity;
 
-import in.nimbo.utility.LinkUtility;
+import in.nimbo.common.utility.LinkUtility;
 
 import java.net.MalformedURLException;
 import java.util.List;

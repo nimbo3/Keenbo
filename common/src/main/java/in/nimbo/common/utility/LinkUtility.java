@@ -1,4 +1,4 @@
-package in.nimbo.utility;
+package in.nimbo.common.utility;
 
 import java.math.BigInteger;
 import java.net.MalformedURLException;
