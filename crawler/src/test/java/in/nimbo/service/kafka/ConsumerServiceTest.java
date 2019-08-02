@@ -49,7 +49,7 @@ public class ConsumerServiceTest {
 
         new Thread(() -> {
             try {
-                TimeUnit.SECONDS.sleep(5);
+                TimeUnit.SECONDS.sleep(2);
                 consumerService.close();
             } catch (InterruptedException e) {
                 // ignored
