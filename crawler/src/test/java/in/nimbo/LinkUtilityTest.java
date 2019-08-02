@@ -1,6 +1,6 @@
 package in.nimbo;
 
-import in.nimbo.utility.LinkUtility;
+import in.nimbo.common.utility.LinkUtility;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
