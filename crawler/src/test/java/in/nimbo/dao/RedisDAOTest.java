@@ -37,9 +37,13 @@ public class RedisDAOTest {
 
     @Test
     public void testAdd() {
-        doReturn("key").when(cluster).set(anyString(), anyString());
-        doReturn(1L).when(cluster).expire(anyString(), anyInt());
-        redisConfig.setExpireTime(1);
-        redisDAO.add("key");
+        try {
+            doReturn("key").when(cluster).set(anyString(), anyString());
+            doReturn(1L).when(cluster).expire(anyString(), anyInt());
+            redisConfig.setExpireTime(1);
+            redisDAO.add("key");
+        } catch (Exception e) {
+            fail();
+        }
     }
 }

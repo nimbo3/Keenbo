@@ -126,8 +126,12 @@ public class HBaseDAOTest {
     }
 
     @Test
-    public void testClose() throws IOException {
-        doNothing().when(connection).close();
-        hBaseDAO.close();
+    public void testClose() {
+        try {
+            doNothing().when(connection).close();
+            hBaseDAO.close();
+        } catch (Exception e) {
+            fail();
+        }
     }
 }

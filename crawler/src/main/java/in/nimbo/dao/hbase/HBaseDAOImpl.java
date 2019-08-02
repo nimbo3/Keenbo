@@ -8,13 +8,10 @@ import in.nimbo.entity.Page;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 public class HBaseDAOImpl implements HBaseDAO {
-    private Logger logger = LoggerFactory.getLogger("app");
     private HBaseConfig config;
     private Connection connection;
 
