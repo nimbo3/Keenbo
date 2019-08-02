@@ -1,6 +1,7 @@
 package in.nimbo;
 
 import in.nimbo.config.AppConfig;
+import in.nimbo.entity.Page;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
@@ -12,9 +13,9 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.PairFlatMapFunction;
+import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import scala.Tuple2;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.NavigableMap;
@@ -24,24 +25,28 @@ public class App {
     public static void main(String[] args) {
         AppConfig appConfig = AppConfig.load();
 
-        SparkConf sparkConf = new SparkConf();
-        sparkConf.setAppName(appConfig.getAppName());
-        sparkConf.setMaster(appConfig.getResourceManager());
+        SparkConf sparkConf = new SparkConf()
+                .setAppName(appConfig.getAppName())
+                .setMaster(appConfig.getResourceManager())
+                .set("spark.network.timeout", "10s")
+                .set("es.nodes", appConfig.getMasterIP())
+                .set("es.mapping.id", "id")
+                .set("es.index.auto.create", "auto");
 
         JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
 
         System.out.println("Configuring hBaseConfiguration"); // TODO use logger
         Configuration hBaseConfiguration;
         hBaseConfiguration = HBaseConfiguration.create();
-        hBaseConfiguration.addResource("$HADOOP_HOME/etc/hadoop/core-site.xml");
-        hBaseConfiguration.addResource("$HBASE_HOME/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, appConfig.getTableName());
-        hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, appConfig.getColumnFamily());
+        hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
+        hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
+        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, "dummy_page");
+        hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, "anchor");
 
         JavaRDD<Result> hBaseRDD = javaSparkContext
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                         , ImmutableBytesWritable.class, Result.class).values();
-        String columnFamily = appConfig.getColumnFamily();
+        String columnFamily = "anchor";
 
         JavaPairRDD<String, ArrayList<String>> map = hBaseRDD.flatMapToPair((PairFlatMapFunction<Result, String, ArrayList<String>>) row -> {
             ArrayList<Tuple2<String, ArrayList<String>>> result = new ArrayList<>();
@@ -64,7 +69,9 @@ public class App {
             }
         });
 
-        String time = LocalDateTime.now().toString();
-        reduced.saveAsTextFile("output/" + time);
+        JavaRDD<Page> pages = reduced.map(tuple2 -> new Page(tuple2._1, tuple2._2));
+
+        JavaEsSpark.saveToEs(pages, "spark/docs");
+
     }
 }
