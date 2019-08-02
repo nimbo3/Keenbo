@@ -1,15 +1,14 @@
 package in.nimbo.config;
 
-import in.nimbo.exception.LoadConfigurationException;
+import in.nimbo.common.exception.LoadConfigurationException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
 public class AppConfig {
     private static final String CONFIG_NAME = "app-config.properties";
     private String resourceManager;
-    private String tableName;
     private String appName;
-    private String columnFamily;
+    private String nodesIP;
 
     public static AppConfig load() {
         AppConfig appConfig = new AppConfig();
@@ -17,8 +16,7 @@ public class AppConfig {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
             appConfig.setResourceManager(config.getString("resource.manager"));
             appConfig.setAppName(config.getString("app.name"));
-            appConfig.setTableName(config.getString("table.name"));
-            appConfig.setColumnFamily(config.getString("table.column.family"));
+            appConfig.setMasterIP(config.getString("nodes.ip"));
             return appConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
@@ -33,14 +31,6 @@ public class AppConfig {
         this.resourceManager = resourceManager;
     }
 
-    public String getTableName() {
-        return tableName;
-    }
-
-    public void setTableName(String tableName) {
-        this.tableName = tableName;
-    }
-
     public String getAppName() {
         return appName;
     }
@@ -49,11 +39,11 @@ public class AppConfig {
         this.appName = appName;
     }
 
-    public String getColumnFamily() {
-        return columnFamily;
+    public String getMasterIP() {
+        return nodesIP;
     }
 
-    public void setColumnFamily(String columnFamily) {
-        this.columnFamily = columnFamily;
+    public void setMasterIP(String masterIP) {
+        this.nodesIP = masterIP;
     }
 }
