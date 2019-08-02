@@ -11,16 +11,14 @@ import static org.junit.Assert.*;
 public class LinkUtilityTest {
     @Test
     public void testReverseLink() throws MalformedURLException {
-        String site = "http://www.blog.stackoverflow.com/uri?query=1&string=2";
-        String reverseLink = LinkUtility.reverseLink(site);
-        assertEquals("http://com.stackoverflow.blog.www/uri?query=1&string=2", reverseLink);
+        assertEquals("http://com.stackoverflow.blog.www/uri?query=1&string=2",
+                LinkUtility.reverseLink("http://www.blog.stackoverflow.com/uri?query=1&string=2"));
     }
 
     @Test
     public void testReverseLinkWithoutQuery() throws MalformedURLException {
-        String site = "http://www.blog.stackoverflow.com/uri";
-        String reverseLink = LinkUtility.reverseLink(site);
-        assertEquals("http://com.stackoverflow.blog.www/uri", reverseLink);
+        assertEquals("http://com.stackoverflow.blog.www/uri",
+                LinkUtility.reverseLink("http://www.blog.stackoverflow.com/uri"));
     }
 
     @Test
@@ -102,5 +100,23 @@ public class LinkUtilityTest {
         assertEquals("https://launchpad.net/+login", normalize);
     }
 
+    @Test
+    public void testDepthForNormalLink() throws MalformedURLException {
+        assertEquals(3, LinkUtility.depth("https://stackoverflow.com/pages/1/2"));
+    }
 
+    @Test
+    public void testDepthForNoPath1() throws MalformedURLException {
+        assertEquals(0, LinkUtility.depth("https://stackoverflow.com/"));
+    }
+
+    @Test
+    public void testDepthForNoPath2() throws MalformedURLException {
+        assertEquals(0, LinkUtility.depth("https://stackoverflow.com"));
+    }
+
+    @Test
+    public void testDepthSpecialCase() throws MalformedURLException {
+        assertEquals(2, LinkUtility.depth("https://stackoverflow.com:9090/+salam/kill?a=2&z=2"));
+    }
 }

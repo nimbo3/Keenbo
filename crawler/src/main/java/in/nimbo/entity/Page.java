@@ -14,6 +14,7 @@ public class Page {
     private List<Meta> metas;
     private double rank;
     private String reversedLink;
+    private long linkDepth;
 
     public Page() {
     }
@@ -27,6 +28,7 @@ public class Page {
         this.link = link;
         this.rank = rank;
         this.reversedLink = LinkUtility.reverseLink(link);
+        this.linkDepth = LinkUtility.depth(link);
     }
 
     public String getTitle() {
@@ -83,5 +85,9 @@ public class Page {
 
     public void setReversedLink(String reversedLink) {
         this.reversedLink = reversedLink;
+    }
+
+    public long getLinkDepth() {
+        return linkDepth;
     }
 }
