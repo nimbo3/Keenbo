@@ -7,6 +7,7 @@ import in.nimbo.config.SparkConfig;
 import in.nimbo.controller.SearchController;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
+import in.nimbo.entity.Page;
 import in.nimbo.transformer.JsonTransformer;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
@@ -67,9 +68,10 @@ public class App {
         Spark.path("/", () -> {
             Spark.before("/*", (request, response) -> backendLogger.info("New request for uri: {}", request.uri()));
             Spark.get("/search", ((request, response) -> {
-                response.type("application/json");
                 String query = request.queryParams("query");
-                return searchController.search(query != null ? query : "");
+                List<Page> result = searchController.search(query != null ? query : "");
+                response.type("application/json");
+                return result;
             }), transformer);
             Spark.after("/*", (request, response) -> {
                 response.header("Access-Control-Allow-Origin", "*");
