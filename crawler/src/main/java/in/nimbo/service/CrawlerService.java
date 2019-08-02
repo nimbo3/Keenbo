@@ -73,7 +73,9 @@ public class CrawlerService {
 
                 if (!contains) {
                     isLinkSkipped = false;
-                    Optional<Page> pageOptional = getPage(siteLink);
+                    Timer.Context context = getPageTimer.time();
+                    Optional<Page> pageOptional = parserService.getPage(siteLink);
+                    context.stop();
                     cache.put(siteDomain, LocalDateTime.now());
                     if (pageOptional.isPresent()) {
                         Page page = pageOptional.get();
@@ -117,41 +119,5 @@ public class CrawlerService {
             }
         }
         return links;
-    }
-
-    /**
-     * crawl a site and return it's content as a page
-     *
-     * @param link link of site
-     * @return page if able to crawl page
-     */
-    public Optional<Page> getPage(String link) {
-        Timer.Context context = getPageTimer.time();
-        try {
-            Optional<Document> documentOptional = parserService.getDocument(link);
-            if (!documentOptional.isPresent()) {
-                return Optional.empty();
-            }
-            Document document = documentOptional.get();
-            String pageContentWithoutTag = document.text().replace("\n", " ");
-            if (pageContentWithoutTag.isEmpty()) {
-                parserLogger.warn("There is no content for site: {}", link);
-            } else if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
-                Set<Anchor> anchors = parserService.getAnchors(document);
-                List<Meta> metas = parserService.getMetas(document);
-                String title = parserService.getTitle(document);
-                Page page = new Page(link, title, pageContentWithoutTag, anchors, metas, 1.0);
-                return Optional.of(page);
-            }
-        } catch (MalformedURLException e) {
-            appLogger.warn("Unable to reverse link: {}", link);
-        } catch (LanguageDetectException e) {
-            parserLogger.warn("Cannot detect language of site: {}", link);
-        } catch (Exception e) {
-            appLogger.error(e.getMessage(), e);
-        } finally {
-            context.stop();
-        }
-        return Optional.empty();
     }
 }
