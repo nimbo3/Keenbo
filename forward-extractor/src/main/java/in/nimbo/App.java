@@ -1,5 +1,6 @@
 package in.nimbo;
 
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.AppConfig;
 import in.nimbo.entity.Page;
 import org.apache.hadoop.conf.Configuration;
@@ -28,6 +29,7 @@ public class App {
         SparkConf sparkConf = new SparkConf()
                 .setAppName(appConfig.getAppName())
                 .setMaster(appConfig.getResourceManager())
+                .set("es.write.operation", "upsert")
                 .set("es.nodes", appConfig.getNodesIP())
                 .set("es.mapping.id", "id")
                 .set("es.index.auto.create", appConfig.getEsCreateIndex());
@@ -66,7 +68,7 @@ public class App {
             }
         });
 
-        JavaRDD<Page> pages = reduced.map(tuple2 -> new Page(tuple2._1, tuple2._2));
+        JavaRDD<Page> pages = reduced.map(tuple2 -> new Page(LinkUtility.hashLink(tuple2._1), tuple2._2));
 
         JavaEsSpark.saveToEs(pages, appConfig.getEsIndexName() + "/" + appConfig.getEsTableName());
     }
