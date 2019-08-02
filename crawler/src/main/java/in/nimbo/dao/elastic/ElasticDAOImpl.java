@@ -47,6 +47,7 @@ public class ElasticDAOImpl implements ElasticDAO {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
             builder.field("link", page.getLink());
+            builder.field("link_length", page.getLink().length());
             builder.field("title", page.getTitle());
             builder.field("content", page.getContent());
             builder.field("forward_count", page.getAnchors().size());

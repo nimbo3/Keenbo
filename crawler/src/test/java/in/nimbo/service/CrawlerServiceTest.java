@@ -106,10 +106,10 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlRepeatedLinkTest() {
-        when(hBaseDAO.contains(link)).thenReturn(true);
+        when(hBaseDAO.contains(anyString())).thenReturn(true);
         Set<String> actualResult = new HashSet<>();
         Set<String> answer = crawlerService.crawl(link);
-        Assert.assertEquals(answer, actualResult);
+        Assert.assertEquals(actualResult, answer);
     }
 
     @Test
