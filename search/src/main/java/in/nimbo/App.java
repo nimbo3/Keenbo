@@ -42,7 +42,7 @@ public class App {
     public static void main(String[] args) {
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer = mapper.writer();
-        JsonTransformer transformer = new JsonTransformer(mapper, writer);
+        JsonTransformer transformer = new JsonTransformer(writer);
         InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("violence-words.txt");
         Scanner scanner = new Scanner(inputStream);
         List<String> violenceWords = new ArrayList<>();

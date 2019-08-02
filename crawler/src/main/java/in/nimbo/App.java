@@ -49,7 +49,8 @@ import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class App {
-    private static Logger logger = LoggerFactory.getLogger("app");
+    private static Logger appLogger = LoggerFactory.getLogger("app");
+    private static Logger cliLogger = LoggerFactory.getLogger("cli");
     private RestHighLevelClient restHighLevelClient;
     private KafkaService kafkaService;
     private HBaseDAO hBaseDAO;
@@ -67,10 +68,10 @@ public class App {
         AppConfig appConfig = AppConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
         ElasticConfig elasticConfig = ElasticConfig.load();
-        logger.info("Configuration loaded");
+        appLogger.info("Configuration loaded");
 
         initReporter(appConfig);
-        logger.info("Reporter started");
+        appLogger.info("Reporter started");
 
         List<Page> backupPages = new ArrayList<>();
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
@@ -82,14 +83,14 @@ public class App {
         Connection hBaseConnection = null;
         try {
             hBaseConnection = ConnectionFactory.createConnection();
-            logger.info("HBase started");
+            appLogger.info("HBase started");
         } catch (IOException e) {
-            logger.error("Unable to establish HBase connection", e);
+            appLogger.error("Unable to establish HBase connection", e);
             System.exit(1);
         }
 
         HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBaseConfig);
-        logger.info("DAO interface created");
+        appLogger.info("DAO interface created");
 
         Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
                 .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
@@ -97,12 +98,12 @@ public class App {
         ParserService parserService = new ParserService(appConfig);
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService);
         KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
-        logger.info("Services started");
+        appLogger.info("Services started");
 
         runElasticMonitoring(appConfig, elasticDAO);
-        logger.info("Monitoring started");
+        appLogger.info("Monitoring started");
 
-        logger.info("Application started");
+        appLogger.info("Application started");
         App app = new App(restHighLevelClient, kafkaService, hBaseDAO);
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
 
@@ -116,10 +117,10 @@ public class App {
 
     private static void loadLanguageDetector() {
         try {
-            logger.info("Load application profiles for language detector");
+            appLogger.info("Load application profiles for language detector");
             DetectorFactory.loadProfile("../conf/profiles");
         } catch (LangDetectException e) {
-            System.out.println("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.");
+            cliLogger.info("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.\n");
             System.exit(1);
         }
     }
@@ -144,26 +145,27 @@ public class App {
         builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
                 elasticConfig.getBackoffMaxRetry()));
         BulkProcessor bulkProcessor = builder.build();
-        logger.info("ElasticSearch started");
+        appLogger.info("ElasticSearch started");
         return bulkProcessor;
     }
 
     private void startApp() {
         kafkaService.schedule();
-        logger.info("Schedule service started");
-        System.out.println("Welcome to Search Engine");
-        System.out.print("engine> ");
+        appLogger.info("Schedule service started");
+        cliLogger.info("Welcome to Search Engine\n");
+        cliLogger.info("engine> ");
         Scanner in = new Scanner(System.in);
         while (in.hasNext()) {
             String cmd = in.next();
             if (cmd.equals("add")) {
                 String link = in.next();
                 kafkaService.sendMessage(link);
+                cliLogger.info("Site {} added\n", link);
             } else if (cmd.equals("exit")) {
                 stopApp();
                 break;
             }
-            System.out.print("engine> ");
+            cliLogger.info("engine> ");
         }
     }
 
@@ -173,7 +175,7 @@ public class App {
             restHighLevelClient.close();
             hBaseDAO.close();
         } catch (IOException e) {
-            logger.warn("Unable to close resources", e);
+            appLogger.warn("Unable to close resources", e);
         }
     }
 
@@ -182,7 +184,7 @@ public class App {
         try {
             hostName = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
-            logger.info("Unable to detect host name. Use default value");
+            appLogger.info("Unable to detect host name. Use default value");
         }
         MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(appConfig.getReportName());
         Graphite graphite = new Graphite(new InetSocketAddress(appConfig.getReportHost(), appConfig.getReportPort()));

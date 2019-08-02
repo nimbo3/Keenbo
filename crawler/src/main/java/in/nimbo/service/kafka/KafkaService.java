@@ -90,7 +90,6 @@ public class KafkaService {
         try (KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties())) {
             producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), message, message));
             producer.flush();
-            System.out.println("Site " + message + " added");
         }
     }
 }
