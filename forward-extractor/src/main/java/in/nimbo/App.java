@@ -28,20 +28,17 @@ public class App {
         SparkConf sparkConf = new SparkConf()
                 .setAppName(appConfig.getAppName())
                 .setMaster(appConfig.getResourceManager())
-                .set("spark.network.timeout", "10s")
-                .set("es.nodes", appConfig.getMasterIP())
+                .set("es.nodes", appConfig.getNodesIP())
                 .set("es.mapping.id", "id")
-                .set("es.index.auto.create", "auto");
+                .set("es.index.auto.create", appConfig.getEsCreateIndex());
 
         JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
 
-        System.out.println("Configuring hBaseConfiguration"); // TODO use logger
-        Configuration hBaseConfiguration;
-        hBaseConfiguration = HBaseConfiguration.create();
+        Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, "dummy_page");
-        hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, "anchor");
+        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, appConfig.getHbaseTable());
+        hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, appConfig.getHbaseColumnFamily());
 
         JavaRDD<Result> hBaseRDD = javaSparkContext
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
@@ -71,7 +68,6 @@ public class App {
 
         JavaRDD<Page> pages = reduced.map(tuple2 -> new Page(tuple2._1, tuple2._2));
 
-        JavaEsSpark.saveToEs(pages, "spark/docs");
-
+        JavaEsSpark.saveToEs(pages, appConfig.getEsIndexName() + "/" + appConfig.getEsTableName());
     }
 }
