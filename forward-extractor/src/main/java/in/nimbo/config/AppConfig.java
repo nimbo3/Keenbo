@@ -23,10 +23,10 @@ public class AppConfig {
             appConfig.setAppName(config.getString("app.name"));
             appConfig.setNodesIP(config.getString("nodes.ip"));
             appConfig.setEsCreateIndex(config.getString("es.index.auto.create"));
-            appConfig.setEsIndexName(config.getString("es.index.name"));
-            appConfig.setEsTableName(config.getString("es.tale.name"));
-            appConfig.setHbaseTable(config.getString("hbase.table"));
-            appConfig.setHbaseColumnFamily(config.getString("hbase.column.family"));
+            appConfig.setEsIndexName(config.getString("es.index"));
+            appConfig.setEsTableName(config.getString("es.type"));
+            appConfig.setHbaseTable(config.getString("hBase.table"));
+            appConfig.setHbaseColumnFamily(config.getString("hBase.column.family"));
             return appConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
