@@ -158,6 +158,9 @@ public class ParserService {
                 Set<Anchor> anchors = getAnchors(document);
                 List<Meta> metas = getMetas(document);
                 String title = getTitle(document);
+                if (title.isEmpty()) {
+                    title = link;
+                }
                 Page page = new Page(link, title, pageContentWithoutTag, anchors, metas, 1.0);
                 return Optional.of(page);
             }

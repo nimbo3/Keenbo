@@ -22,6 +22,7 @@ import in.nimbo.entity.Page;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
+import in.nimbo.service.kafka.KafkaServiceImpl;
 import in.nimbo.service.monitoring.ElasticMonitoring;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -97,7 +98,7 @@ public class App {
 
         ParserService parserService = new ParserService(appConfig);
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService);
-        KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
+        KafkaService kafkaService = new KafkaServiceImpl(crawlerService, kafkaConfig);
         appLogger.info("Services started");
 
         runElasticMonitoring(appConfig, elasticDAO);

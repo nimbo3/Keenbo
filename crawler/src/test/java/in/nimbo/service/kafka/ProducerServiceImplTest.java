@@ -18,7 +18,7 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
-public class ProducerServiceTest {
+public class ProducerServiceImplTest {
     private MockProducer<String, String> kafkaProducer;
     private BlockingQueue<String> messageQueue;
     private ProducerService producerService;
@@ -32,7 +32,7 @@ public class ProducerServiceTest {
         crawlerService = mock(CrawlerService.class);
 
         kafkaProducer = new MockProducer<>(true, new StringSerializer(), new StringSerializer());
-        producerService = new ProducerService(kafkaProducer, "topic", messageQueue, crawlerService, countDownLatch);
+        producerService = new ProducerServiceImpl(kafkaProducer, "topic", messageQueue, crawlerService, countDownLatch);
     }
 
     @Test
