@@ -22,6 +22,7 @@ import in.nimbo.entity.Page;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
+import in.nimbo.service.kafka.KafkaServiceImpl;
 import in.nimbo.service.monitoring.ElasticMonitoring;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -55,10 +56,13 @@ public class App {
     private KafkaService kafkaService;
     private HBaseDAO hBaseDAO;
 
-    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService, HBaseDAO hBaseDAO) {
+    private ElasticMonitoring elasticMonitoring;
+
+    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService, HBaseDAO hBaseDAO, ElasticMonitoring elasticMonitoring) {
         this.restHighLevelClient = restHighLevelClient;
         this.kafkaService = kafkaService;
         this.hBaseDAO = hBaseDAO;
+        this.elasticMonitoring = elasticMonitoring;
     }
 
     public static void main(String[] args) {
@@ -97,22 +101,23 @@ public class App {
 
         ParserService parserService = new ParserService(appConfig);
         CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService);
-        KafkaService kafkaService = new KafkaService(crawlerService, kafkaConfig);
+        KafkaService kafkaService = new KafkaServiceImpl(crawlerService, kafkaConfig);
         appLogger.info("Services started");
 
-        runElasticMonitoring(appConfig, elasticDAO);
+        ElasticMonitoring elasticMonitoring = runElasticMonitoring(appConfig, elasticDAO);
         appLogger.info("Monitoring started");
 
         appLogger.info("Application started");
-        App app = new App(restHighLevelClient, kafkaService, hBaseDAO);
+        App app = new App(restHighLevelClient, kafkaService, hBaseDAO, elasticMonitoring);
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
 
         app.startApp();
     }
 
-    private static void runElasticMonitoring(AppConfig appConfig, ElasticDAO elasticDAO) {
+    private static ElasticMonitoring runElasticMonitoring(AppConfig appConfig, ElasticDAO elasticDAO) {
         ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO, appConfig);
         elasticMonitoring.monitor();
+        return elasticMonitoring;
     }
 
     private static void loadLanguageDetector() {
@@ -174,6 +179,7 @@ public class App {
         try {
             restHighLevelClient.close();
             hBaseDAO.close();
+            elasticMonitoring.stopMonitor();
         } catch (IOException e) {
             appLogger.warn("Unable to close resources", e);
         }
