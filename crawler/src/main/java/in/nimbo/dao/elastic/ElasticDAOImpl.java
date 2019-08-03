@@ -7,13 +7,14 @@ import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.core.CountRequest;
+import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
@@ -78,12 +79,12 @@ public class ElasticDAOImpl implements ElasticDAO {
     @Override
     public long count() {
         try {
-            SearchRequest request = new SearchRequest(config.getIndexName());
+            CountRequest countRequest = new CountRequest(config.getIndexName());
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.size(0);
-            request.source(searchSourceBuilder);
-            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
-            return response.getHits().getTotalHits();
+            searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+            countRequest.source(searchSourceBuilder);
+            CountResponse countResponse = client.count(countRequest, RequestOptions.DEFAULT);
+            return countResponse.getCount();
         } catch (IOException e) {
             throw new ElasticException("Unable to get count of search hits", e);
         }

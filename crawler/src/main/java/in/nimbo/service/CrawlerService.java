@@ -61,11 +61,9 @@ public class CrawlerService {
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
-
                 Timer.Context hBaseContainContext = hBaseContainTimer.time();
                 boolean contains = hBaseDAO.contains(LinkUtility.reverseLink(siteLink));
                 hBaseContainContext.stop();
-
                 if (!contains) {
                     isLinkSkipped = false;
                     Timer.Context context = getPageTimer.time();
