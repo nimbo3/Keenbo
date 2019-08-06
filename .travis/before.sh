@@ -12,4 +12,6 @@ echo "Config ..."
 sudo mv .travis/hbase-site.xml hbase-1.2.4/conf
 echo "Running HBase"
 sudo hbase-1.2.4/bin/start-hbase.sh
-echo "HBase Runned"
+echo "Preparing HBase"
+echo 'create "links", "meta", "anchor"' | hbase-1.2.4/bin/hbase shell -n >/dev/null 2>&1
+echo "HBase is ready"
