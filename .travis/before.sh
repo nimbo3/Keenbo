@@ -13,5 +13,5 @@ sudo mv .travis/hbase-site.xml hbase-1.2.4/conf
 echo "Running HBase"
 sudo hbase-1.2.4/bin/start-hbase.sh
 echo "Preparing HBase"
-echo 'create "links", "meta", "anchor"' | hbase-1.2.4/bin/hbase shell -n
+echo 'create "page", "meta", "anchor"' | hbase-1.2.4/bin/hbase shell -n
 echo "HBase is ready"
