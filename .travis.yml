@@ -6,6 +6,9 @@ script:
 jdk:
   - openjdk8
 
+services:
+  - jruby
+
 before_install:
   - sudo chmod 777 .travis/before.sh
 
