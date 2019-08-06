@@ -11,6 +11,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 public class ElasticMonitoring {
+    private ScheduledExecutorService executorService;
     private ElasticDAO elasticDAO;
     private AppConfig appConfig;
     private Histogram histogram;
@@ -19,15 +20,18 @@ public class ElasticMonitoring {
         this.elasticDAO = elasticDAO;
         this.appConfig = appConfig;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
-        histogram = metricRegistry.histogram(MetricRegistry.name(ElasticMonitoring.class,"Page count"));
+        histogram = metricRegistry.histogram(MetricRegistry.name(ElasticMonitoring.class, "PageCount"));
     }
 
     public void monitor() {
-        ScheduledExecutorService executorService = Executors.newScheduledThreadPool(1);
+        executorService = Executors.newScheduledThreadPool(1);
         executorService.scheduleAtFixedRate(() -> {
             long count = elasticDAO.count();
             histogram.update(count);
         }, 0, appConfig.getMonitoringPeriod(), TimeUnit.SECONDS);
+    }
+
+    public void stopMonitor() {
         executorService.shutdown();
     }
 }

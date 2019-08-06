@@ -113,6 +113,7 @@
             <artifactId>httpclient</artifactId>
             <version>${http.httpcomponents.version}</version>
         </dependency>
+
     </dependencies>
 
     <build>

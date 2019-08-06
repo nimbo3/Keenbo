@@ -1,5 +1,7 @@
 package in.nimbo.common.utility;
 
+import in.nimbo.common.exception.HashException;
+
 import java.math.BigInteger;
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -111,7 +113,19 @@ public class LinkUtility {
             }
             return hashText.toString();
         } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
+            throw new HashException(e);
         }
+    }
+
+    /**
+     *
+     * @param link link which must be normalized
+     * @return depth of a uri in url
+     * @throws MalformedURLException if link is illegal
+     */
+    public static long depth(String link) throws MalformedURLException {
+        URL url = new URL(link);
+        String uri = url.getPath();
+        return uri.isEmpty() || uri.equals("/") ? 0 : uri.split("/").length - 1;
     }
 }

@@ -41,10 +41,10 @@ mvn test
 * Maven - Used to Dependency Management
 
 ## Authors
-* **Ehsan Karimi** - [github](https://github.com/karimiehsan90)
 * **Amin Borjian** - [github](https://github.com/Borjianamin98)
 * **Danial Erfanian** - [github](https://github.com/DanialErfanian)
+* **Ehsan Karimi** - [github](https://github.com/karimiehsan90)
 * **MohammadReza Pakzadian** - [github](https://github.com/mrp-78)
 
 
-See also the list of [contributors](https://github.com/karimiehsan90/nimbo_rss/graphs/contributors) who participated in this project.
+See also the list of [contributors](https://github.com/nimbo3/Keenbo/graphs/contributors) who participated in this project.

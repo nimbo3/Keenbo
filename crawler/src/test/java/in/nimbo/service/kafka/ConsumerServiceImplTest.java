@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class ConsumerServiceTest {
+public class ConsumerServiceImplTest {
     private static KafkaConfig kafkaConfig;
 
     @BeforeClass
@@ -34,7 +34,7 @@ public class ConsumerServiceTest {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         MockConsumer<String, String> kafkaConsumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
         kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
-        ConsumerService consumerService = new ConsumerService(kafkaConsumer, queue, countDownLatch);
+        ConsumerService consumerService = new ConsumerServiceImpl(kafkaConsumer, queue, countDownLatch);
         
         kafkaConsumer.rebalance(
                 Collections.singleton(new TopicPartition(kafkaConfig.getKafkaTopic(), 0)));

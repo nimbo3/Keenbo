@@ -2,17 +2,19 @@ package in.nimbo.dao.elastic;
 
 import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.exception.ElasticException;
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.common.utility.LinkUtility;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.search.SearchRequest;
-import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.client.core.CountRequest;
+import org.elasticsearch.client.core.CountResponse;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
+import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 
 import java.io.IOException;
@@ -40,14 +42,11 @@ public class ElasticDAOImpl implements ElasticDAO {
     @Override
     public void save(Page page) {
         try {
-            IndexRequest request = new IndexRequest(config.getIndexName())
-                    .type(config.getType())
-                    .id(LinkUtility.hashLink(page.getLink()));
-
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
             builder.field("link", page.getLink());
             builder.field("link_length", page.getLink().length());
+            builder.field("link_depth", page.getLinkDepth());
             builder.field("title", page.getTitle());
             builder.field("content", page.getContent());
             builder.field("forward_count", page.getAnchors().size());
@@ -62,9 +61,16 @@ public class ElasticDAOImpl implements ElasticDAO {
             builder.endArray();
             builder.field("rank", page.getRank());
             builder.endObject();
-            request.source(builder);
+
+            String hashedLink = LinkUtility.hashLink(page.getLink());
+            IndexRequest indexRequest = new IndexRequest(config.getIndexName(), config.getType(), hashedLink)
+                    .source(builder);
+            UpdateRequest updateRequest = new UpdateRequest(config.getIndexName(), config.getType(), hashedLink)
+                    .doc(builder)
+                    .upsert(indexRequest);
+
             backupPages.add(page);
-            bulkProcessor.add(request);
+            bulkProcessor.add(updateRequest);
         } catch (IOException e) {
             throw new ElasticException("Save a page in ElasticSearch failed", e);
         }
@@ -73,12 +79,12 @@ public class ElasticDAOImpl implements ElasticDAO {
     @Override
     public long count() {
         try {
-            SearchRequest request = new SearchRequest(config.getIndexName());
+            CountRequest countRequest = new CountRequest(config.getIndexName());
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
-            searchSourceBuilder.size(0);
-            request.source(searchSourceBuilder);
-            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
-            return response.getHits().getTotalHits();
+            searchSourceBuilder.query(QueryBuilders.matchAllQuery());
+            countRequest.source(searchSourceBuilder);
+            CountResponse countResponse = client.count(countRequest, RequestOptions.DEFAULT);
+            return countResponse.getCount();
         } catch (IOException e) {
             throw new ElasticException("Unable to get count of search hits", e);
         }

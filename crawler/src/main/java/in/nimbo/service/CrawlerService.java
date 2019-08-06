@@ -6,23 +6,18 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.common.exception.HBaseException;
-import in.nimbo.common.exception.LanguageDetectException;
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.entity.Anchor;
-import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import in.nimbo.common.utility.LinkUtility;
-import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -66,11 +61,9 @@ public class CrawlerService {
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
-
                 Timer.Context hBaseContainContext = hBaseContainTimer.time();
                 boolean contains = hBaseDAO.contains(LinkUtility.reverseLink(siteLink));
                 hBaseContainContext.stop();
-
                 if (!contains) {
                     isLinkSkipped = false;
                     Timer.Context context = getPageTimer.time();
@@ -78,35 +71,14 @@ public class CrawlerService {
                     context.stop();
                     cache.put(siteDomain, LocalDateTime.now());
                     if (pageOptional.isPresent()) {
-                        Page page = pageOptional.get();
-                        page.getAnchors().forEach(anchor -> links.add(anchor.getHref()));
-                        boolean isAddedToHBase;
-                        if (page.getAnchors().isEmpty()) {
-                            isAddedToHBase = true;
-                        } else {
-                            Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
-                            isAddedToHBase = hBaseDAO.add(page);
-                            hBaseAddTimerContext.stop();
-                        }
-                        if (isAddedToHBase) {
-                            elasticSaveTimer.time(() -> elasticDAO.save(page));
-                        } else {
-                            appLogger.warn("Unable to add page with link {} to HBase", page.getLink());
-                        }
-                        crawledPages.inc();
+                        links = processPage(pageOptional.get());
                     }
-                    cache.put(siteDomain, LocalDateTime.now());
                 }
             } else {
                 links.add(siteLink);
             }
         } catch (URISyntaxException e) {
             parserLogger.warn("Illegal URL format: " + siteLink, e);
-        } catch (HBaseException e) {
-            appLogger.error("Unable to establish HBase connection", e);
-            links.clear();
-            links.add(siteLink);
-            appLogger.info("Retry link {} again because of HBase exception", siteLink);
         } catch (Exception e) {
             appLogger.error(e.getMessage(), e);
         } finally {
@@ -119,5 +91,31 @@ public class CrawlerService {
             }
         }
         return links;
+    }
+
+    private Set<String> processPage(Page page) {
+        try {
+            Set<String> links = new HashSet<>();
+            page.getAnchors().forEach(anchor -> links.add(anchor.getHref()));
+            boolean isAddedToHBase;
+            if (page.getAnchors().isEmpty()) {
+                isAddedToHBase = true;
+            } else {
+                Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
+                isAddedToHBase = hBaseDAO.add(page);
+                hBaseAddTimerContext.stop();
+            }
+            if (isAddedToHBase) {
+                elasticSaveTimer.time(() -> elasticDAO.save(page));
+                crawledPages.inc();
+            } else {
+                appLogger.warn("Unable to add page with link {} to HBase", page.getLink());
+            }
+            return links;
+        } catch (HBaseException e) {
+            appLogger.error("Unable to establish HBase connection", e);
+            appLogger.info("Retry link {} again because of HBase exception", page.getLink());
+            return Collections.singleton(page.getLink());
+        }
     }
 }

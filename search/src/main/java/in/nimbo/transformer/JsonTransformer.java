@@ -1,15 +1,12 @@
 package in.nimbo.transformer;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import spark.ResponseTransformer;
 
 public class JsonTransformer implements ResponseTransformer {
-    private ObjectMapper mapper;
     private ObjectWriter writer;
 
-    public JsonTransformer(ObjectMapper mapper, ObjectWriter writer) {
-        this.mapper = mapper;
+    public JsonTransformer(ObjectWriter writer) {
         this.writer = writer;
     }
 

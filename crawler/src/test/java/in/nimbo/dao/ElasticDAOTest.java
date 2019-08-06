@@ -6,10 +6,10 @@ import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
+import org.elasticsearch.action.DocWriteRequest;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkResponse;
-import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.unit.TimeValue;
 import org.junit.BeforeClass;
@@ -58,7 +58,7 @@ public class ElasticDAOTest {
                 elasticBulkListener.afterBulk(1, bulkRequest, bulkResponse);
             }
             return null;
-        }).when(bulkProcessor).add(any(IndexRequest.class));
+        }).when(bulkProcessor).add(any(DocWriteRequest.class));
 
         elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, client);
     }
