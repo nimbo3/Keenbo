@@ -6,9 +6,17 @@ script:
 jdk:
   - openjdk8
 
+before_install:
+  - sudo chmod 777 .travis/before.sh
+
+before_script:
+  - .travis/before.sh
+  - sleep 10
+
 cache:
   directories:
-    - '$HOME/.m2/repositories'
+    - '$HOME/.m2/repository'
+    - '$HOME/downloads'
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)

@@ -1,14 +1,13 @@
 package in.nimbo.dao;
 
 import in.nimbo.common.config.HBaseConfig;
-import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -18,9 +17,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static org.junit.Assert.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class HBaseDAOTest {
     private static HBaseDAO hBaseDAO;
@@ -30,14 +28,16 @@ public class HBaseDAOTest {
     @BeforeClass
     public static void init() {
         hBaseConfig = HBaseConfig.load();
-        connection = mock(Connection.class);
+        try {
+            connection = ConnectionFactory.createConnection();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         hBaseDAO = new HBaseDAOImpl(connection, hBaseConfig);
     }
 
     @Test
     public void testAdd() throws IOException {
-        Table table = mock(Table.class);
-        when(connection.getTable(any(TableName.class))).thenReturn(table);
         Page page = new Page();
         page.setReversedLink("http://com.google.www/");
         page.setLink("http://www.google.com/");
@@ -56,33 +56,16 @@ public class HBaseDAOTest {
             metas.add(meta);
         }
         page.setMetas(metas);
-        doNothing().when(table).put(any(Put.class));
         assertTrue(hBaseDAO.add(page));
     }
 
     @Test
     public void testContains() throws IOException {
-        Table table = mock(Table.class);
-        Result result = mock(Result.class);
-        when(connection.getTable(any(TableName.class))).thenReturn(table);
-        doReturn(result).when(table).get(any(Get.class));
-        doReturn(true, false).when(result).isEmpty();
         assertFalse(hBaseDAO.contains("link"));
-        assertTrue(hBaseDAO.contains("link"));
-
-        doThrow(IOException.class).when(table).get(any(Get.class));
-        try {
-            hBaseDAO.contains("link");
-            fail();
-        } catch (Exception e) {
-            assertTrue(e instanceof HBaseException);
-        }
     }
 
-    @Test(expected = HBaseException.class)
+    @Test
     public void testAddWithException() throws IOException {
-        Table table = mock(Table.class);
-        when(connection.getTable(any(TableName.class))).thenThrow(IOException.class);
         Page page = new Page();
         page.setReversedLink("http://com.google.www/");
         page.setContent("a");
@@ -98,14 +81,11 @@ public class HBaseDAOTest {
             metas.add(meta);
         }
         page.setMetas(metas);
-        doNothing().when(table).put(any(Put.class));
         hBaseDAO.add(page);
     }
 
     @Test
     public void testAddWithIllegalArgumentException() throws IOException {
-        Table table = mock(Table.class);
-        when(connection.getTable(any(TableName.class))).thenReturn(table);
         Page page = new Page();
         page.setReversedLink("http://com.google.www/");
         page.setContent("a");
@@ -121,13 +101,11 @@ public class HBaseDAOTest {
             metas.add(meta);
         }
         page.setMetas(metas);
-        doThrow(IllegalArgumentException.class).when(table).put(any(Put.class));
-        assertFalse(hBaseDAO.add(page));
+        assertTrue(hBaseDAO.add(page));
     }
 
     @Test
     public void testClose() throws IOException {
-        doNothing().when(connection).close();
         hBaseDAO.close();
     }
 }
