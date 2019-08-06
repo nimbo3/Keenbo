@@ -7,7 +7,7 @@ fi
 echo "moving"
 sudo mv $HOME/downloads/hbase-1.2.4-bin.tar.gz hbase-1.2.4.tar.gz
 echo "Extracting"
-sudo tar -xvzf hbase-1.2.4-bin.tar.gz
+sudo tar -xvzf hbase-1.2.4.tar.gz
 echo "Config ..."
 sudo mv .travis/hbase-site.xml hbase-1.2.4/conf
 echo "Running HBase"
