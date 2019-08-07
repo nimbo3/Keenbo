@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+mkdir /home/travis/hbase /home/travis/zookeeper
 if [[ ! -f $HOME/Downloads/hbase-1.2.4-bin.tar.gz ]];
 then
     echo "Downloading"

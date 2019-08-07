@@ -1,11 +1,11 @@
 <configuration>
     <property>
         <name>hbase.rootdir</name>
-        <value>file:///home/testuser/hbase</value>
+        <value>file:///home/travis/hbase</value>
     </property>
     <property>
         <name>hbase.zookeeper.property.dataDir</name>
-        <value>/home/testuser/zookeeper</value>
+        <value>/home/travis/zookeeper</value>
     </property>
     <property>
         <name>hbase.unsafe.stream.capability.enforce</name>
