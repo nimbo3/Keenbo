@@ -13,7 +13,7 @@ echo "Config ..."
 sudo mv .travis/hbase-site.xml hbase-1.2.4/conf
 echo "Running HBase"
 sudo echo "export HBASE_HOME=/home/travis/build/nimbo3/Keenbo/hbase-1.2.4" >> /home/travis/.bashrc
-sudo source /home/travis/.bashrc
+source /home/travis/.bashrc
 sudo hbase-1.2.4/bin/start-hbase.sh
 echo "Preparing HBase"
 echo 'list' | sudo hbase-1.2.4/bin/hbase shell -n
