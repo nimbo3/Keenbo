@@ -12,8 +12,9 @@ sudo tar -xvzf hbase-1.2.4.tar.gz
 echo "Config ..."
 sudo mv .travis/hbase-site.xml hbase-1.2.4/conf
 echo "Running HBase"
-sudo export HBASE_HOME=$(pwd)/hbase-1.2.4
-sudo echo $HBASE_HOME
+pwd
+#sudo export HBASE_HOME=$(pwd)/hbase-1.2.4
+#sudo echo $HBASE_HOME
 sudo hbase-1.2.4/bin/start-hbase.sh
 echo "Preparing HBase"
 echo 'list' | sudo hbase-1.2.4/bin/hbase shell -n
