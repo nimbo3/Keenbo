@@ -15,7 +15,7 @@ echo "Running HBase"
 pwd
 export HBASE_HOME=$(pwd)/hbase-1.2.4
 echo $HBASE_HOME
-sudo hbase-1.2.4/bin/start-hbase.sh
+hbase-1.2.4/bin/start-hbase.sh
 echo "Preparing HBase"
 echo 'list' | hbase-1.2.4/bin/hbase shell -n
 echo 'create "page", "meta", "anchor"' | hbase-1.2.4/bin/hbase shell -n
