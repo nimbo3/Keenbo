@@ -6,8 +6,12 @@ import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -29,6 +33,11 @@ public class HBaseDAOTest {
         hBaseConfig = HBaseConfig.load();
         try {
             connection = ConnectionFactory.createConnection();
+            TableName tableName = TableName.valueOf(hBaseConfig.getLinksTable());
+            HTableDescriptor descriptor = new HTableDescriptor(tableName);
+            descriptor.addFamily(new HColumnDescriptor(Bytes.toBytes("anchor")));
+            descriptor.addFamily(new HColumnDescriptor(Bytes.toBytes("meta")));
+            connection.getAdmin().createTable(descriptor);
         } catch (IOException e) {
             e.printStackTrace();
         }

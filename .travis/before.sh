@@ -12,12 +12,12 @@ tar -xvzf hbase-1.2.4.tar.gz
 echo "Config ..."
 mv .travis/hbase-site.xml hbase-1.2.4/conf
 echo "Running HBase"
-echo "export HBASE_HOME=/home/travis/build/nimbo3/Keenbo/hbase-1.2.4" >> /home/travis/.bashrc
-source /home/travis/.bashrc
-sudo chmod -R 777 hbase-1.2.4
-hbase-1.2.4/bin/start-hbase.sh
+#echo "export HBASE_HOME=/home/travis/build/nimbo3/Keenbo/hbase-1.2.4" >> /home/travis/.bashrc
+#source /home/travis/.bashrc
+#sudo chmod -R 777 hbase-1.2.4
+sudo hbase-1.2.4/bin/start-hbase.sh
 echo "Preparing HBase"
-echo 'list' | hbase-1.2.4/bin/hbase shell -n
-echo 'create "page", "meta", "anchor"' | hbase-1.2.4/bin/hbase shell -n
-echo 'list' | hbase-1.2.4/bin/hbase shell -n
+#echo 'list' | hbase-1.2.4/bin/hbase shell -n
+#echo 'create "page", "meta", "anchor"' | hbase-1.2.4/bin/hbase shell -n
+#echo 'list' | hbase-1.2.4/bin/hbase shell -n
 echo "HBase is ready"
