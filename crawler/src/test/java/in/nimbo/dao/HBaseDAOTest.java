@@ -11,8 +11,6 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -21,8 +19,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-
-import static org.junit.Assert.assertTrue;
 
 public class HBaseDAOTest {
     private static HBaseDAO hBaseDAO;
@@ -58,11 +54,11 @@ public class HBaseDAOTest {
             metas.add(meta);
         }
         Page page = new Page("http://www.google.com/", "Google", "a", anchors, metas, 100.0);
-        try {
+        /*try {
             hBaseDAO.add(page);
         } catch (Exception e) {
             e.printStackTrace();
-        }
+        }*/
 //        assertTrue(hBaseDAO.contains("http://com.google.www/"));
     }
 }
