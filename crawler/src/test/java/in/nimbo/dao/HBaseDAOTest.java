@@ -11,6 +11,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -46,74 +47,18 @@ public class HBaseDAOTest {
 
     @Test
     public void testAdd() throws IOException {
-        Page page = new Page();
-        page.setReversedLink("http://com.google.www/");
-        page.setLink("http://www.google.com/");
-        page.setTitle("Google");
-        page.setContent("a");
-        page.setRank(100.0);
         Set<Anchor> anchors = new HashSet<>();
         for (int i = 0; i < 5; i++) {
             Anchor anchor = new Anchor("https://google.com/" + i, "content" + i);
             anchors.add(anchor);
         }
-        page.setAnchors(anchors);
         List<Meta> metas = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
             Meta meta = new Meta("key" + i, "content" + i);
             metas.add(meta);
         }
-        page.setMetas(metas);
+        Page page = new Page("http://www.google.com/", "Google", "a", anchors, metas, 100.0);
         hBaseDAO.add(page);
+        assertTrue(hBaseDAO.contains("http://com.google.www/"));
     }
-
-    /*@Test
-    public void testContains() throws IOException {
-        assertFalse(hBaseDAO.contains("link"));
-    }
-
-    @Test
-    public void testAddWithException() throws IOException {
-        Page page = new Page();
-        page.setReversedLink("http://com.google.www/");
-        page.setContent("a");
-        Set<Anchor> anchors = new HashSet<>();
-        for (int i = 0; i < 5; i++) {
-            Anchor anchor = new Anchor("https://google.com/" + i, "content" + i);
-            anchors.add(anchor);
-        }
-        page.setAnchors(anchors);
-        List<Meta> metas = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            Meta meta = new Meta("key" + i, "content" + i);
-            metas.add(meta);
-        }
-        page.setMetas(metas);
-        hBaseDAO.add(page);
-    }
-
-    @Test
-    public void testAddWithIllegalArgumentException() throws IOException {
-        Page page = new Page();
-        page.setReversedLink("http://com.google.www/");
-        page.setContent("a");
-        Set<Anchor> anchors = new HashSet<>();
-        for (int i = 0; i < 5; i++) {
-            Anchor anchor = new Anchor("https://google.com/" + i, "content" + i);
-            anchors.add(anchor);
-        }
-        page.setAnchors(anchors);
-        List<Meta> metas = new ArrayList<>();
-        for (int i = 0; i < 5; i++) {
-            Meta meta = new Meta("key" + i, "content" + i);
-            metas.add(meta);
-        }
-        page.setMetas(metas);
-        assertTrue(hBaseDAO.add(page));
-    }
-
-    @Test
-    public void testClose() throws IOException {
-        hBaseDAO.close();
-    }*/
 }
