@@ -1,6 +1,7 @@
 package in.nimbo.dao;
 
 import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.entity.Anchor;
@@ -54,11 +55,11 @@ public class HBaseDAOTest {
             metas.add(meta);
         }
         Page page = new Page("http://www.google.com/", "Google", "a", anchors, metas, 100.0);
-        /*try {
+        try {
             hBaseDAO.add(page);
-        } catch (Exception e) {
+        } catch (HBaseException e) {
             e.printStackTrace();
-        }*/
+        }
 //        assertTrue(hBaseDAO.contains("http://com.google.www/"));
     }
 }
