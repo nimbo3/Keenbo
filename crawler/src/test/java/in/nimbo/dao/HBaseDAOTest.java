@@ -35,8 +35,8 @@ public class HBaseDAOTest {
             connection = ConnectionFactory.createConnection();
             TableName tableName = TableName.valueOf(hBaseConfig.getLinksTable());
             HTableDescriptor descriptor = new HTableDescriptor(tableName);
-            descriptor.addFamily(new HColumnDescriptor(Bytes.toBytes("anchor")));
-            descriptor.addFamily(new HColumnDescriptor(Bytes.toBytes("meta")));
+            descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getAnchorColumnFamily()));
+            descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getMetaColumnFamily()));
             connection.getAdmin().createTable(descriptor);
         } catch (IOException e) {
             e.printStackTrace();
@@ -64,7 +64,7 @@ public class HBaseDAOTest {
             metas.add(meta);
         }
         page.setMetas(metas);
-        assertTrue(hBaseDAO.add(page));
+        hBaseDAO.add(page);
     }
 
     /*@Test
