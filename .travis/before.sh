@@ -6,17 +6,18 @@ then
     sudo wget -O $HOME/Downloads/hbase-1.2.4-bin.tar.gz https://archive.apache.org/dist/hbase/1.2.4/hbase-1.2.4-bin.tar.gz
 fi
 echo "moving"
-sudo mv $HOME/Downloads/hbase-1.2.4-bin.tar.gz hbase-1.2.4.tar.gz
+mv $HOME/Downloads/hbase-1.2.4-bin.tar.gz hbase-1.2.4.tar.gz
 echo "Extracting"
-sudo tar -xvzf hbase-1.2.4.tar.gz
+tar -xvzf hbase-1.2.4.tar.gz
 echo "Config ..."
-sudo mv .travis/hbase-site.xml hbase-1.2.4/conf
+mv .travis/hbase-site.xml hbase-1.2.4/conf
 echo "Running HBase"
-sudo echo "export HBASE_HOME=/home/travis/build/nimbo3/Keenbo/hbase-1.2.4" >> /home/travis/.bashrc
+echo "export HBASE_HOME=/home/travis/build/nimbo3/Keenbo/hbase-1.2.4" >> /home/travis/.bashrc
 source /home/travis/.bashrc
-sudo hbase-1.2.4/bin/start-hbase.sh
+sudo chmod -R 777 hbase-1.2.4
+hbase-1.2.4/bin/start-hbase.sh
 echo "Preparing HBase"
-echo 'list' | sudo hbase-1.2.4/bin/hbase shell -n
-echo 'create "page", "meta", "anchor"' | sudo hbase-1.2.4/bin/hbase shell -n
-echo 'list' | sudo hbase-1.2.4/bin/hbase shell -n
+echo 'list' | hbase-1.2.4/bin/hbase shell -n
+echo 'create "page", "meta", "anchor"' | hbase-1.2.4/bin/hbase shell -n
+echo 'list' | hbase-1.2.4/bin/hbase shell -n
 echo "HBase is ready"
