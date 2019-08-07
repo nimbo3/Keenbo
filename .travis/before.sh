@@ -13,6 +13,7 @@ echo "Config ..."
 sudo mv .travis/hbase-site.xml hbase-1.2.4/conf
 echo "Running HBase"
 sudo hbase-1.2.4/bin/start-hbase.sh
+sudo export HBASE_HOME=$(pwd)/hbase-1.2.4
 echo "Preparing HBase"
 echo 'list' | sudo hbase-1.2.4/bin/hbase shell -n
 echo 'create "page", "meta", "anchor"' | sudo hbase-1.2.4/bin/hbase shell -n
