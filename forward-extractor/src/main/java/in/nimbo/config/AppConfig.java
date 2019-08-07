@@ -5,7 +5,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
 public class AppConfig {
-    private static final String CONFIG_NAME = "app-config.properties";
+    private static final String CONFIG_NAME = "forward-extractor.properties";
     private String resourceManager;
     private String appName;
     private String nodesIP;
@@ -14,6 +14,7 @@ public class AppConfig {
     private String hbaseColumnFamily;
     private String esIndexName;
     private String esTableName;
+    private String scanBatchSize;
 
     public static AppConfig load() {
         AppConfig appConfig = new AppConfig();
@@ -27,6 +28,7 @@ public class AppConfig {
             appConfig.setEsTableName(config.getString("es.type"));
             appConfig.setHbaseTable(config.getString("hBase.table"));
             appConfig.setHbaseColumnFamily(config.getString("hBase.column.family"));
+            appConfig.setScanBatchSize(config.getString("hbase.scan.batch.size"));
             return appConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
@@ -95,5 +97,13 @@ public class AppConfig {
 
     public void setEsTableName(String esTableName) {
         this.esTableName = esTableName;
+    }
+
+    public String getScanBatchSize() {
+        return this.scanBatchSize;
+    }
+
+    public void setScanBatchSize(String scanBatchSize) {
+        this.scanBatchSize = scanBatchSize;
     }
 }
