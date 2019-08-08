@@ -4,7 +4,7 @@ import in.nimbo.common.exception.LoadConfigurationException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
-public class AppConfig {
+public class PageRankConfig {
     private static final String CONFIG_NAME = "app-config.properties";
     private String resourceManager;
     private String appName;
@@ -15,19 +15,19 @@ public class AppConfig {
     private String esIndexName;
     private String esTableName;
 
-    public static AppConfig load() {
-        AppConfig appConfig = new AppConfig();
+    public static PageRankConfig load() {
+        PageRankConfig pageRankConfig = new PageRankConfig();
         try {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
-            appConfig.setResourceManager(config.getString("resource.manager"));
-            appConfig.setAppName(config.getString("app.name"));
-            appConfig.setNodesIP(config.getString("nodes.ip"));
-            appConfig.setEsCreateIndex(config.getString("es.index.auto.create"));
-            appConfig.setEsIndexName(config.getString("es.index"));
-            appConfig.setEsTableName(config.getString("es.type"));
-            appConfig.setHbaseTable(config.getString("hBase.table"));
-            appConfig.setHbaseColumnFamily(config.getString("hBase.column.family"));
-            return appConfig;
+            pageRankConfig.setResourceManager(config.getString("resource.manager"));
+            pageRankConfig.setAppName(config.getString("app.name"));
+            pageRankConfig.setNodesIP(config.getString("nodes.ip"));
+            pageRankConfig.setEsCreateIndex(config.getString("es.index.auto.create"));
+            pageRankConfig.setEsIndexName(config.getString("es.index"));
+            pageRankConfig.setEsTableName(config.getString("es.type"));
+            pageRankConfig.setHbaseTable(config.getString("hBase.table"));
+            pageRankConfig.setHbaseColumnFamily(config.getString("hBase.column.family"));
+            return pageRankConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }

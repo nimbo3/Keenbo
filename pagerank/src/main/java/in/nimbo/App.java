@@ -1,7 +1,6 @@
 package in.nimbo;
 
-import in.nimbo.common.utility.LinkUtility;
-import in.nimbo.config.AppConfig;
+import in.nimbo.config.PageRankConfig;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
@@ -12,27 +11,23 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.PairFlatMapFunction;
 import scala.Tuple2;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.NavigableMap;
 import java.util.Set;
-import java.util.stream.Stream;
 
 public class App {
     public static void main(String[] args) {
-        AppConfig appConfig = AppConfig.load();
+        PageRankConfig pageRankConfig = PageRankConfig.load();
         SparkConf sparkConf = new SparkConf()
-                .setAppName(appConfig.getAppName());
+                .setAppName(pageRankConfig.getAppName());
 
-        String columnFamily = appConfig.getHbaseColumnFamily();
+        String columnFamily = pageRankConfig.getHbaseColumnFamily();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, appConfig.getHbaseTable());
+        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, pageRankConfig.getHbaseTable());
         hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, columnFamily);
 
         try (JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf)) {
