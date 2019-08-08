@@ -12,10 +12,14 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.util.Bytes;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -43,7 +47,7 @@ public class HBaseDAOTest {
     }
 
     @Test
-    public void testAdd() throws IOException {
+    public void testAdd() {
         Set<Anchor> anchors = new HashSet<>();
         for (int i = 0; i < 5; i++) {
             Anchor anchor = new Anchor("https://google.com/" + i, "content" + i);
@@ -54,11 +58,35 @@ public class HBaseDAOTest {
             Meta meta = new Meta("key" + i, "content" + i);
             metas.add(meta);
         }
-        Page page = new Page("http://www.google.com/", "Google", "a", anchors, metas, 100.0);
+        Page page = null;
         try {
-            hBaseDAO.add(page);
-        } catch (HBaseException e) {
+            page = new Page("http://www.google.com/", "Google", "a", anchors, metas, 100.0);
+        } catch (MalformedURLException e) {
             e.printStackTrace();
+        }
+
+        try (Table table = connection.getTable(TableName.valueOf(hBaseConfig.getLinksTable()))) {
+            Put put = new Put(Bytes.toBytes(page.getReversedLink()));
+
+            for (Anchor anchor : page.getAnchors()) {
+                put.addColumn(hBaseConfig.getAnchorColumnFamily(),
+                        Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getContent()));
+            }
+
+            for (Meta meta : page.getMetas()) {
+                put.addColumn(hBaseConfig.getMetaColumnFamily(),
+                        Bytes.toBytes(meta.getKey()), Bytes.toBytes(meta.getContent()));
+            }
+
+            table.put(put);
+        } catch (IllegalArgumentException e) {
+            // It will be thrown if size of page will be more than hbase.client.keyvalue.maxsize = 10485760
+            System.out.println("here");
+            e.printStackTrace();
+        } catch (IOException e) {
+            System.out.println("there");
+            e.printStackTrace();
+            throw new HBaseException(e);
         }
 //        assertTrue(hBaseDAO.contains("http://com.google.www/"));
     }
