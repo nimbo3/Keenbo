@@ -1,10 +1,8 @@
 package in.nimbo;
 
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
+import com.codahale.metrics.jmx.JmxReporter;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
@@ -41,7 +39,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -193,13 +190,8 @@ public class App {
             appLogger.info("Unable to detect host name. Use default value");
         }
         MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(appConfig.getReportName());
-        Graphite graphite = new Graphite(new InetSocketAddress(appConfig.getReportHost(), appConfig.getReportPort()));
-        GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
-                .convertRatesTo(TimeUnit.MILLISECONDS)
-                .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .prefixedWith(hostName)
-                .filter(MetricFilter.ALL)
-                .build(graphite);
-        reporter.start(appConfig.getReportPeriod(), TimeUnit.SECONDS);
+        JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).inDomain(hostName)
+                .build();
+        reporter.start();
     }
 }
