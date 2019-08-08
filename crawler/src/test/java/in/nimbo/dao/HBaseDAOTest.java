@@ -87,6 +87,8 @@ public class HBaseDAOTest {
             System.out.println("there");
             e.printStackTrace();
             throw new HBaseException(e);
+        } catch (Throwable e){
+            e.printStackTrace();
         }
 //        assertTrue(hBaseDAO.contains("http://com.google.www/"));
     }
