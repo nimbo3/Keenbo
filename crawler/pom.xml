@@ -61,7 +61,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <!--$NO-MVN-MAN-VER$ -->
                 <inherited>false</inherited>
                 <executions>
                     <execution>
@@ -95,6 +94,7 @@
                                     <directory>../crawler/src/main/resources/</directory>
                                     <includes>
                                         <include>*.properties</include>
+                                        <include>*.yaml</include>
                                         <include>*.xml</include>
                                         <include>profiles/*</include>
                                     </includes>
@@ -103,7 +103,26 @@
                                     <directory>../common/src/main/resources/</directory>
                                     <includes>
                                         <include>*.properties</include>
+                                        <include>*.yaml</include>
                                         <include>*.xml</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-jar</id>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <outputDirectory>target/${project.name}/lib</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>../common/lib/</directory>
+                                    <includes>
+                                        <include>*.jar</include>
                                     </includes>
                                 </resource>
                             </resources>
@@ -152,6 +171,7 @@
                         <exclude>*.properties</exclude>
                         <exclude>*.xml</exclude>
                         <exclude>*.sh</exclude>
+                        <exclude>*.yaml</exclude>
                     </excludes>
                 </configuration>
             </plugin>
