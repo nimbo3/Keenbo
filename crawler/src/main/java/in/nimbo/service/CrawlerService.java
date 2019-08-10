@@ -9,6 +9,7 @@ import in.nimbo.common.exception.HBaseException;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.dao.redis.RedisDAO;
 import in.nimbo.entity.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -33,17 +34,19 @@ public class CrawlerService {
     private Logger appLogger = LoggerFactory.getLogger("app");
     private Logger parserLogger = LoggerFactory.getLogger("parser");
     private Cache<String, LocalDateTime> cache;
+    private RedisDAO redisDAO;
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
     private ParserService parserService;
 
     public CrawlerService(Cache<String, LocalDateTime> cache,
-                          HBaseDAO hBaseDAO, ElasticDAO elasticDAO,
+                          RedisDAO redisDAO, HBaseDAO hBaseDAO, ElasticDAO elasticDAO,
                           ParserService parserService) {
         this.cache = cache;
         this.hBaseDAO = hBaseDAO;
         this.elasticDAO = elasticDAO;
         this.parserService = parserService;
+        this.redisDAO = redisDAO;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
         crawledPages = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledPages"));
         getPageTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "getPage"));
@@ -62,7 +65,7 @@ public class CrawlerService {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
                 Timer.Context hBaseContainContext = hBaseContainTimer.time();
-                boolean contains = hBaseDAO.contains(LinkUtility.reverseLink(siteLink));
+                boolean contains = redisDAO.contains(LinkUtility.reverseLink(siteLink));
                 hBaseContainContext.stop();
                 if (!contains) {
                     isLinkSkipped = false;
@@ -95,6 +98,7 @@ public class CrawlerService {
 
     private Set<String> processPage(Page page) {
         try {
+            redisDAO.add(page.getLink());
             Set<String> links = new HashSet<>();
             page.getAnchors().forEach(anchor -> links.add(anchor.getHref()));
             boolean isAddedToHBase;

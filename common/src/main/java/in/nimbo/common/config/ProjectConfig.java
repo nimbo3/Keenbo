@@ -4,8 +4,8 @@ import in.nimbo.common.exception.LoadConfigurationException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
-public class AppConfig {
-    private static final String CONFIG_NAME = "app-config.properties";
+public class ProjectConfig {
+    private static final String CONFIG_NAME = "project-config.properties";
     private int caffeineMaxSize;
     private int caffeineExpireTime;
     private int jsoupTimeout;
@@ -17,21 +17,21 @@ public class AppConfig {
     private int reportPeriod;
     private int monitoringPeriod;
 
-    public static AppConfig load() {
-        AppConfig appConfig = new AppConfig();
+    public static ProjectConfig load() {
+        ProjectConfig projectConfig = new ProjectConfig();
         try {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
-            appConfig.setCaffeineMaxSize(config.getInt("caffeine.max.size"));
-            appConfig.setCaffeineExpireTime(config.getInt("caffeine.expire.time"));
-            appConfig.setJsoupTimeout(config.getInt("jsoup.timeout"));
-            appConfig.setJsoupUserAgent(config.getString("jsoup.user.agent"));
-            appConfig.setEnglishProbability(config.getDouble("english.probability"));
-            appConfig.setReportName(config.getString("report.name"));
-            appConfig.setReportHost(config.getString("report.host"));
-            appConfig.setReportPort(config.getInt("report.port"));
-            appConfig.setReportPeriod(config.getInt("report.period"));
-            appConfig.setMonitoringPeriod(config.getInt("monitoring.period.seconds"));
-            return appConfig;
+            projectConfig.setCaffeineMaxSize(config.getInt("caffeine.max.size"));
+            projectConfig.setCaffeineExpireTime(config.getInt("caffeine.expire.time"));
+            projectConfig.setJsoupTimeout(config.getInt("jsoup.timeout"));
+            projectConfig.setJsoupUserAgent(config.getString("jsoup.user.agent"));
+            projectConfig.setEnglishProbability(config.getDouble("english.probability"));
+            projectConfig.setReportName(config.getString("report.name"));
+            projectConfig.setReportHost(config.getString("report.host"));
+            projectConfig.setReportPort(config.getInt("report.port"));
+            projectConfig.setReportPeriod(config.getInt("report.period"));
+            projectConfig.setMonitoringPeriod(config.getInt("monitoring.period.seconds"));
+            return projectConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }

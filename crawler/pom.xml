@@ -17,22 +17,9 @@
         <caffeine.version>2.7.0</caffeine.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
         <langdetect.version>1.1-20120112</langdetect.version>
-        <dropwizard-metrics.version>4.0.0</dropwizard-metrics.version>
     </properties>
 
     <dependencies>
-        <!-- Drop wizard metrics -->
-        <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-core</artifactId>
-            <version>${dropwizard-metrics.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>io.dropwizard.metrics</groupId>
-            <artifactId>metrics-graphite</artifactId>
-            <version>${dropwizard-metrics.version}</version>
-        </dependency>
-
         <!--Producer/Consumer API of Apache Kafka-->
         <dependency>
             <groupId>org.apache.kafka</groupId>
@@ -74,7 +61,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-resources-plugin</artifactId>
-                <!--$NO-MVN-MAN-VER$ -->
                 <inherited>false</inherited>
                 <executions>
                     <execution>
@@ -108,6 +94,7 @@
                                     <directory>../crawler/src/main/resources/</directory>
                                     <includes>
                                         <include>*.properties</include>
+                                        <include>*.yaml</include>
                                         <include>*.xml</include>
                                         <include>profiles/*</include>
                                     </includes>
@@ -116,7 +103,26 @@
                                     <directory>../common/src/main/resources/</directory>
                                     <includes>
                                         <include>*.properties</include>
+                                        <include>*.yaml</include>
                                         <include>*.xml</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-jar</id>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <phase>validate</phase>
+                        <configuration>
+                            <outputDirectory>target/${project.name}/lib</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>../common/lib/</directory>
+                                    <includes>
+                                        <include>*.jar</include>
                                     </includes>
                                 </resource>
                             </resources>
@@ -165,6 +171,7 @@
                         <exclude>*.properties</exclude>
                         <exclude>*.xml</exclude>
                         <exclude>*.sh</exclude>
+                        <exclude>*.yaml</exclude>
                     </excludes>
                 </configuration>
             </plugin>

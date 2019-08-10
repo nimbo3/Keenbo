@@ -1,23 +1,19 @@
 package in.nimbo;
 
-import com.codahale.metrics.MetricFilter;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import com.codahale.metrics.graphite.Graphite;
-import com.codahale.metrics.graphite.GraphiteReporter;
+import com.codahale.metrics.jmx.JmxReporter;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
-import in.nimbo.common.config.AppConfig;
-import in.nimbo.common.config.ElasticConfig;
-import in.nimbo.common.config.HBaseConfig;
-import in.nimbo.common.config.KafkaConfig;
+import in.nimbo.common.config.*;
 import in.nimbo.dao.elastic.ElasticBulkListener;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
+import in.nimbo.dao.redis.RedisDAOImpl;
 import in.nimbo.entity.Page;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
@@ -38,10 +34,10 @@ import org.elasticsearch.common.unit.ByteSizeValue;
 import org.elasticsearch.common.unit.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import redis.clients.jedis.JedisCluster;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -69,12 +65,12 @@ public class App {
         loadLanguageDetector();
 
         HBaseConfig hBaseConfig = HBaseConfig.load();
-        AppConfig appConfig = AppConfig.load();
+        ProjectConfig projectConfig = ProjectConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
         ElasticConfig elasticConfig = ElasticConfig.load();
         appLogger.info("Configuration loaded");
 
-        initReporter(appConfig);
+        initReporter(projectConfig);
         appLogger.info("Reporter started");
 
         List<Page> backupPages = new ArrayList<>();
@@ -83,6 +79,12 @@ public class App {
         BulkProcessor bulkProcessor = initializeElasticSearchBulk(elasticConfig, restHighLevelClient, elasticBulkListener);
         ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, restHighLevelClient);
         elasticBulkListener.setElasticDAO(elasticDAO);
+        appLogger.info("ElasticSearch started");
+
+        RedisConfig redisConfig = RedisConfig.load();
+        JedisCluster redisCluster = new JedisCluster(redisConfig.getHostAndPorts());
+        RedisDAOImpl redisDAO = new RedisDAOImpl(redisCluster, redisConfig);
+        appLogger.info("Redis started");
 
         Connection hBaseConnection = null;
         try {
@@ -96,15 +98,15 @@ public class App {
         HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBaseConfig);
         appLogger.info("DAO interface created");
 
-        Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
-                .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
+        Cache<String, LocalDateTime> cache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
+                .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
 
-        ParserService parserService = new ParserService(appConfig);
-        CrawlerService crawlerService = new CrawlerService(cache, hBaseDAO, elasticDAO, parserService);
+        ParserService parserService = new ParserService(projectConfig);
+        CrawlerService crawlerService = new CrawlerService(cache, redisDAO, hBaseDAO, elasticDAO, parserService);
         KafkaService kafkaService = new KafkaServiceImpl(crawlerService, kafkaConfig);
         appLogger.info("Services started");
 
-        ElasticMonitoring elasticMonitoring = runElasticMonitoring(appConfig, elasticDAO);
+        ElasticMonitoring elasticMonitoring = runElasticMonitoring(projectConfig, elasticDAO);
         appLogger.info("Monitoring started");
 
         appLogger.info("Application started");
@@ -114,8 +116,8 @@ public class App {
         app.startApp();
     }
 
-    private static ElasticMonitoring runElasticMonitoring(AppConfig appConfig, ElasticDAO elasticDAO) {
-        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO, appConfig);
+    private static ElasticMonitoring runElasticMonitoring(ProjectConfig projectConfig, ElasticDAO elasticDAO) {
+        ElasticMonitoring elasticMonitoring = new ElasticMonitoring(elasticDAO, projectConfig);
         elasticMonitoring.monitor();
         return elasticMonitoring;
     }
@@ -185,21 +187,18 @@ public class App {
         }
     }
 
-    private static void initReporter(AppConfig appConfig) {
-        String hostName = appConfig.getReportName();
+    private static void initReporter(ProjectConfig projectConfig) {
+        String hostName = projectConfig.getReportName();
         try {
             hostName = InetAddress.getLocalHost().getHostName();
         } catch (UnknownHostException e) {
             appLogger.info("Unable to detect host name. Use default value");
         }
-        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(appConfig.getReportName());
-        Graphite graphite = new Graphite(new InetSocketAddress(appConfig.getReportHost(), appConfig.getReportPort()));
-        GraphiteReporter reporter = GraphiteReporter.forRegistry(metricRegistry)
-                .convertRatesTo(TimeUnit.MILLISECONDS)
+        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(projectConfig.getReportName());
+        JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).inDomain(hostName)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
-                .prefixedWith(hostName)
-                .filter(MetricFilter.ALL)
-                .build(graphite);
-        reporter.start(appConfig.getReportPeriod(), TimeUnit.SECONDS);
+                .convertRatesTo(TimeUnit.MILLISECONDS)
+                .build();
+        reporter.start();
     }
 }
