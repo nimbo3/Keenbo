@@ -1,6 +1,8 @@
 package in.nimbo;
 
 import in.nimbo.config.PageRankConfig;
+import in.nimbo.entity.Page;
+import in.nimbo.entity.Relation;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
@@ -11,6 +13,11 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.graphx.Graph;
+import org.apache.spark.graphx.impl.GraphImpl;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import scala.Tuple2;
 
 import java.util.NavigableMap;
@@ -20,7 +27,9 @@ public class App {
     public static void main(String[] args) {
         PageRankConfig pageRankConfig = PageRankConfig.load();
         SparkConf sparkConf = new SparkConf()
-                .setAppName(pageRankConfig.getAppName());
+                .setAppName("pagerank");
+        SparkSession spark = SparkSession.builder().appName("pagerank").master("local").getOrCreate();
+
 
         String columnFamily = pageRankConfig.getHbaseColumnFamily();
 
@@ -30,12 +39,13 @@ public class App {
         hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, pageRankConfig.getHbaseTable());
         hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, columnFamily);
 
+
         try (JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf)) {
             JavaRDD<Result> hBaseRDD = javaSparkContext
                     .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                             , ImmutableBytesWritable.class, Result.class).values();
 
-            JavaPairRDD<Set<byte[]>, Double> map = hBaseRDD
+            /*JavaPairRDD<Set<byte[]>, Double> map = hBaseRDD
                     .mapToPair(result -> {
                         double rank = Bytes.toDouble(result.getValue(Bytes.toBytes("R"), Bytes.toBytes("R")));
                         NavigableMap<byte[], byte[]> familyMap = result.getFamilyMap(Bytes.toBytes("A"));
@@ -48,11 +58,20 @@ public class App {
                     new Tuple2<>(bytes, setRank._2)).iterator());
 
             JavaPairRDD<byte[], Double> reduced = flatMapToPair.reduceByKey((v1, v2) -> (v1 + v2));
-            reduced.saveAsTextFile("result.txt");
-            /*JavaRDD<String> vertexes = hBaseRDD.map(result -> Bytes.toString(result.getRow()));
-            JavaPairRDD<String, String> edges = hBaseRDD.flatMapToPair(result -> result.getFamilyMap(Bytes.toBytes("A")).keySet().stream().map(bytes -> {
+            reduced.saveAsTextFile("result.txt");*/
+            JavaRDD<String> vertexes = hBaseRDD.map(result -> Bytes.toString(result.getRow()));
+            JavaRDD<Relation> edges = hBaseRDD.flatMapToPair(result -> result.getFamilyMap(Bytes.toBytes("A")).keySet().stream().map(bytes -> {
                 return new Tuple2<>(Bytes.toString(result.getRow()), Bytes.toString(bytes));
-            }).iterator());*/
+            }).iterator()).map(stringStringTuple2 -> {
+                Relation relation = new Relation();
+                relation.setSrc(stringStringTuple2._1);
+                relation.setDst(stringStringTuple2._2);
+                relation.setRelationship("forward");
+                return relation;
+            });
+            Dataset<Row> vertexesDF = spark.createDataFrame(vertexes, Page.class);
+            Dataset<Row> edgesDF = spark.createDataFrame(edges, Relation.class);
+
         }
     }
 }
