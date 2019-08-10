@@ -18,7 +18,9 @@ import org.apache.spark.graphx.impl.GraphImpl;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.graphframes.GraphFrame;
 import scala.Tuple2;
+import scala.collection.immutable.Map;
 
 import java.util.NavigableMap;
 import java.util.Set;
@@ -71,7 +73,9 @@ public class App {
             });
             Dataset<Row> vertexesDF = spark.createDataFrame(vertexes, Page.class);
             Dataset<Row> edgesDF = spark.createDataFrame(edges, Relation.class);
-
+            GraphFrame graphFrame = new GraphFrame(vertexesDF, edgesDF);
+            GraphFrame run = graphFrame.pageRank().resetProbability(0.01).maxIter(20).run();
+            run.vertices().select("id", "pagerank").show();
         }
     }
 }
