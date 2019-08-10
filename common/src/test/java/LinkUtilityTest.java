@@ -1,5 +1,4 @@
-package in.nimbo;
-
+import in.nimbo.common.exception.LinkUtilityException;
 import in.nimbo.common.utility.LinkUtility;
 import org.junit.Test;
 
@@ -35,8 +34,8 @@ public class LinkUtilityTest {
         assertEquals("http://com.stackoverflow.blog.www:8080/uri", reverseLink);
     }
 
-    @Test(expected = MalformedURLException.class)
-    public void testReverseLinkWithoutProtocol() throws MalformedURLException {
+    @Test(expected = LinkUtilityException.class)
+    public void testReverseLinkWithoutProtocol() {
         LinkUtility.reverseLink("www.google.com");
     }
 
