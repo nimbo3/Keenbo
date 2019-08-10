@@ -49,7 +49,7 @@ public class App {
                         , ImmutableBytesWritable.class, Result.class).toJavaRDD()
                 .map(tuple -> tuple._2);
 
-        JavaRDD<Page> nodes = hBaseRDD
+        JavaRDD<Page> nodes = hBaseRDD.filter(result -> result.getValue(Bytes.toBytes("R"), Bytes.toBytes("R")) != null)
                 .map(result -> {
                     Page page = new Page();
                     page.setId(Bytes.toString(result.getRow()));
