@@ -39,6 +39,8 @@ public class HBaseDAOImpl implements HBaseDAO {
                         Bytes.toBytes(meta.getKey()), Bytes.toBytes(meta.getContent()));
             }
 
+            put.addColumn(config.getRankColumnFamily(), config.getRankColumn(), Bytes.toBytes("1"));
+
             table.put(put);
             return true;
         } catch (IllegalArgumentException e) {
