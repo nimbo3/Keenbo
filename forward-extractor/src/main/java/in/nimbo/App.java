@@ -12,9 +12,7 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -30,7 +28,7 @@ public class App {
         AppConfig appConfig = AppConfig.load();
         HBaseConfig hBaseConfig = HBaseConfig.load();
 
-        String columnFamily = hBaseConfig.getAnchorColumnFamily().toString();
+        byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
@@ -51,19 +49,20 @@ public class App {
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                         , ImmutableBytesWritable.class, Result.class).toJavaRDD()
                 .map(tuple -> tuple._2);
-        byte[] columnFamilyBytes = Bytes.toBytes(columnFamily);
 
         JavaRDD<Node> nodes = hBaseRDD
-                .flatMap(result -> result.getFamilyMap(columnFamilyBytes).entrySet().iterator())
+                .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().iterator())
                 .map(entry -> new Node(Bytes.toString(entry.getKey())));
 
         JavaRDD<Edge> edges = hBaseRDD
-                .flatMap(result -> result.getFamilyMap(columnFamilyBytes).entrySet().stream().map(
+                .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(
                         entry -> new Edge(Bytes.toString(result.getRow()), Bytes.toString(entry.getKey())
                                 , Bytes.toString(entry.getValue())))
                         .iterator());
 
         Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);
+
+        verDF.show();
 
         Dataset<Row> edgDF = spark.createDataFrame(edges, Edge.class);
 
