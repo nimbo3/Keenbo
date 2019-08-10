@@ -13,6 +13,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.SparkSession;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import scala.Tuple2;
 
@@ -29,13 +30,18 @@ public class App {
                 .set("es.mapping.id", "id")
                 .set("es.index.auto.create", appConfig.getEsCreateIndex());
 
+        SparkSession spark = SparkSession.builder()
+                .appName(appConfig.getAppName())
+                .config("spark.sql.warehouse.dir", "/file:C:/temp")
+                .master("local[2]")
+                .getOrCreate();
+
         String columnFamily = appConfig.getHbaseColumnFamily();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
         hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, appConfig.getHbaseTable());
-        hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, columnFamily);
         hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, appConfig.getScanBatchSize());
 
         try (JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf)) {
