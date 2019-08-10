@@ -51,24 +51,24 @@ public class App {
                 .map(tuple -> tuple._2);
 
         JavaRDD<Node> nodes = hBaseRDD
-                .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().iterator())
-                .map(entry -> new Node(Bytes.toString(entry.getKey())));
+                .map(result -> new Node(Bytes.toString(result.getRow())));
 
         JavaRDD<Edge> edges = hBaseRDD
                 .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(
-                        entry -> new Edge(Bytes.toString(result.getRow()), Bytes.toString(entry.getKey())
-                                , Bytes.toString(entry.getValue())))
+                        entry -> new Edge(
+                                Bytes.toString(result.getRow()),
+                                LinkUtility.reverseLink(Bytes.toString(entry.getKey())),
+                                Bytes.toString(entry.getValue())))
                         .iterator());
 
         Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);
-
-        verDF.show();
 
         Dataset<Row> edgDF = spark.createDataFrame(edges, Edge.class);
 
         GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
         Dataset<Row> anchors = graphFrame.triplets().groupBy("dst")
                 .agg(collect_set("edge.anchor").alias("anchors"), count("edge.anchor").alias("count"));
+
         JavaRDD<Page> anchorsRDD = anchors.toJavaRDD()
                 .map(row -> new Page(
                         LinkUtility.hashLink(LinkUtility.reverseLink(row.getStruct(0).getString(0))),
