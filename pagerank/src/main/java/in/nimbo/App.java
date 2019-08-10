@@ -39,13 +39,13 @@ public class App {
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
         hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, pageRankConfig.getHbaseTable());
-        hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, columnFamily);
+//        hBaseConfiguration.set(TableInputFormat.SCAN_COLUMN_FAMILY, columnFamily);
 
 
-        try (JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf)) {
-            JavaRDD<Result> hBaseRDD = javaSparkContext
-                    .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
-                            , ImmutableBytesWritable.class, Result.class).values();
+        JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf);
+        JavaRDD<Result> hBaseRDD = javaSparkContext
+                .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
+                        , ImmutableBytesWritable.class, Result.class).values();
 
             /*JavaPairRDD<Set<byte[]>, Double> map = hBaseRDD
                     .mapToPair(result -> {
@@ -61,21 +61,29 @@ public class App {
 
             JavaPairRDD<byte[], Double> reduced = flatMapToPair.reduceByKey((v1, v2) -> (v1 + v2));
             reduced.saveAsTextFile("result.txt");*/
-            JavaRDD<String> vertexes = hBaseRDD.map(result -> Bytes.toString(result.getRow()));
-            JavaRDD<Relation> edges = hBaseRDD.flatMapToPair(result -> result.getFamilyMap(Bytes.toBytes("A")).keySet().stream().map(bytes -> {
-                return new Tuple2<>(Bytes.toString(result.getRow()), Bytes.toString(bytes));
-            }).iterator()).map(stringStringTuple2 -> {
-                Relation relation = new Relation();
-                relation.setSrc(stringStringTuple2._1);
-                relation.setDst(stringStringTuple2._2);
-                relation.setRelationship("forward");
-                return relation;
-            });
-            Dataset<Row> vertexesDF = spark.createDataFrame(vertexes, Page.class);
-            Dataset<Row> edgesDF = spark.createDataFrame(edges, Relation.class);
-            GraphFrame graphFrame = new GraphFrame(vertexesDF, edgesDF);
-            GraphFrame run = graphFrame.pageRank().resetProbability(0.01).maxIter(20).run();
-            run.vertices().select("id", "pagerank").show();
-        }
+        JavaRDD<Page> vertexes = hBaseRDD.map(result -> {
+            String id = Bytes.toString(result.getRow());
+            Page page = new Page();
+            page.setId(id);
+            byte[] value = result.getValue(Bytes.toBytes("R"), Bytes.toBytes("R"));
+            String pageRank = Bytes.toString(value);
+            page.setPagerank(Double.parseDouble(pageRank));
+            return page;
+        });
+        JavaRDD<Relation> edges = hBaseRDD.flatMapToPair(result -> result.getFamilyMap(Bytes.toBytes("A")).keySet().stream().map(bytes -> {
+            return new Tuple2<>(Bytes.toString(result.getRow()), Bytes.toString(bytes));
+        }).iterator()).map(stringStringTuple2 -> {
+            Relation relation = new Relation();
+            relation.setSrc(stringStringTuple2._1);
+            relation.setDst(stringStringTuple2._2);
+            relation.setRelationship("forward");
+            return relation;
+        });
+        Dataset<Row> vertexesDF = spark.createDataFrame(vertexes, Page.class);
+        Dataset<Row> edgesDF = spark.createDataFrame(edges, Relation.class);
+        GraphFrame graphFrame = new GraphFrame(vertexesDF, edgesDF);
+        GraphFrame run = graphFrame.pageRank().resetProbability(0.01).maxIter(20).run();
+        run.vertices().select("id", "pagerank").show();
+
     }
 }
