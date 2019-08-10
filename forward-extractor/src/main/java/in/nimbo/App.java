@@ -1,7 +1,10 @@
 package in.nimbo;
 
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.AppConfig;
+import in.nimbo.entity.Edge;
+import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
@@ -10,17 +13,22 @@ import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.spark.SparkConf;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
-import scala.Tuple2;
+import org.graphframes.GraphFrame;
+
+import static org.apache.spark.sql.functions.collect_set;
+import static org.apache.spark.sql.functions.count;
 
 
 public class App {
     public static void main(String[] args) {
         AppConfig appConfig = AppConfig.load();
+        HBaseConfig hBaseConfig = HBaseConfig.load();
 
         SparkConf sparkConf = new SparkConf()
                 .setAppName(appConfig.getAppName())
@@ -32,16 +40,16 @@ public class App {
 
         SparkSession spark = SparkSession.builder()
                 .appName(appConfig.getAppName())
-                .config("spark.sql.warehouse.dir", "/file:C:/temp")
-                .master("local[2]")
+                //.config("spark.sql.warehouse.dir", "/file:C:/temp")
+                .master(appConfig.getResourceManager())
                 .getOrCreate();
 
-        String columnFamily = appConfig.getHbaseColumnFamily();
+        String columnFamily = hBaseConfig.getAnchorColumnFamily().toString();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, appConfig.getHbaseTable());
+        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBaseConfig.getLinksTable());
         hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, appConfig.getScanBatchSize());
 
         try (JavaSparkContext javaSparkContext = new JavaSparkContext(sparkConf)) {
@@ -49,14 +57,32 @@ public class App {
                     .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                             , ImmutableBytesWritable.class, Result.class).values();
             byte[] columnFamilyBytes = Bytes.toBytes(columnFamily);
-            JavaPairRDD<String, String> a = hBaseRDD
+
+            JavaRDD<Node> nodes = hBaseRDD
                     .flatMap(result -> result.getFamilyMap(columnFamilyBytes).entrySet().iterator())
-                    .mapToPair(entry -> new Tuple2<>(Bytes.toString(entry.getKey()), Bytes.toString(entry.getValue())));
-            JavaPairRDD<String, Iterable<String>> reduced = a.groupByKey();
+                    .map(entry -> new Node(Bytes.toString(entry.getKey())));
 
-            JavaRDD<Page> pages = reduced.map(tuple2 -> new Page(LinkUtility.hashLink(tuple2._1), tuple2._2));
+            JavaRDD<Edge> edges = hBaseRDD
+                    .flatMap(result -> result.getFamilyMap(columnFamilyBytes).entrySet().stream().map(
+                            entry -> new Edge(Bytes.toString(result.getRow()), Bytes.toString(entry.getKey())
+                            , Bytes.toString(entry.getValue())))
+                            .iterator());
 
-            JavaEsSpark.saveToEs(pages, appConfig.getEsIndexName() + "/" + appConfig.getEsTableName());
+            Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);
+
+            Dataset<Row> edgDF = spark.createDataFrame(edges, Edge.class);
+
+            GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
+            Dataset<Row> anchors = graphFrame.triplets().groupBy("dst")
+                    .agg(collect_set("edge.anchor").alias("anchors"), count("edge.anchor").alias("count"));
+            JavaRDD<Page> anchorsRDD = anchors.toJavaRDD()
+                    .map(row -> new Page(
+                            LinkUtility.hashLink(LinkUtility.reverseLink(row.getStruct(0).getString(0))),
+                            row.getList(1), row.getLong(2)));
+
+            JavaEsSpark.saveToEs(anchorsRDD, appConfig.getEsIndexName() + "/" + appConfig.getEsType());
+
+            spark.stop();
         }
     }
 }
