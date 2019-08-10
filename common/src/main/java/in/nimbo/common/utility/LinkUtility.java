@@ -1,7 +1,7 @@
 package in.nimbo.common.utility;
 
 import in.nimbo.common.exception.HashException;
-import in.nimbo.common.exception.LinkUtilityException;
+import in.nimbo.common.exception.ReverseLinkException;
 
 import java.math.BigInteger;
 import java.net.MalformedURLException;
@@ -43,7 +43,7 @@ public class LinkUtility {
             }
             return answer;
         } catch (MalformedURLException e) {
-            throw new LinkUtilityException(e);
+            throw new ReverseLinkException(e);
         }
     }
 
