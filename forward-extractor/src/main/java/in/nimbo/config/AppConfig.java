@@ -10,10 +10,8 @@ public class AppConfig {
     private String appName;
     private String nodesIP;
     private String esCreateIndex;
-    private String hbaseTable;
-    private String hbaseColumnFamily;
     private String esIndexName;
-    private String esTableName;
+    private String esType;
     private String scanBatchSize;
 
     public static AppConfig load() {
@@ -25,9 +23,7 @@ public class AppConfig {
             appConfig.setNodesIP(config.getString("nodes.ip"));
             appConfig.setEsCreateIndex(config.getString("es.index.auto.create"));
             appConfig.setEsIndexName(config.getString("es.index"));
-            appConfig.setEsTableName(config.getString("es.type"));
-            appConfig.setHbaseTable(config.getString("hBase.table"));
-            appConfig.setHbaseColumnFamily(config.getString("hBase.column.family"));
+            appConfig.setEsType(config.getString("es.type"));
             appConfig.setScanBatchSize(config.getString("hbase.scan.batch.size"));
             return appConfig;
         } catch (ConfigurationException e) {
@@ -67,22 +63,6 @@ public class AppConfig {
         this.esCreateIndex = esCreateIndex;
     }
 
-    public String getHbaseTable() {
-        return hbaseTable;
-    }
-
-    public void setHbaseTable(String hbaseTable) {
-        this.hbaseTable = hbaseTable;
-    }
-
-    public String getHbaseColumnFamily() {
-        return hbaseColumnFamily;
-    }
-
-    public void setHbaseColumnFamily(String hbaseColumnFamily) {
-        this.hbaseColumnFamily = hbaseColumnFamily;
-    }
-
     public String getEsIndexName() {
         return esIndexName;
     }
@@ -91,12 +71,12 @@ public class AppConfig {
         this.esIndexName = esIndexName;
     }
 
-    public String getEsTableName() {
-        return esTableName;
+    public String getEsType() {
+        return esType;
     }
 
-    public void setEsTableName(String esTableName) {
-        this.esTableName = esTableName;
+    public void setEsType(String esType) {
+        this.esType = esType;
     }
 
     public String getScanBatchSize() {
