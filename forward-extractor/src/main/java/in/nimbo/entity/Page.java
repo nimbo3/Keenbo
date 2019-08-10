@@ -5,13 +5,15 @@ import java.io.Serializable;
 public class Page implements Serializable {
     private String id;
     private Iterable<String> anchors;
+    private long anchorsSize;
 
     public Page() {
     }
 
-    public Page(String id, Iterable<String> anchors) {
+    public Page(String id, Iterable<String> anchors, long anchorsSize) {
         this.id = id;
         this.anchors = anchors;
+        this.anchorsSize = anchorsSize;
     }
 
     public String getId() {
@@ -28,5 +30,13 @@ public class Page implements Serializable {
 
     public void setAnchors(Iterable<String> anchors) {
         this.anchors = anchors;
+    }
+
+    public long getLength() {
+        return anchorsSize;
+    }
+
+    public void setLength(int anchorsLength) {
+        this.anchorsSize = anchorsLength;
     }
 }
