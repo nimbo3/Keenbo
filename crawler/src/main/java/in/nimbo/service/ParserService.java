@@ -80,9 +80,9 @@ public class ParserService {
         for (Element linkElement : linkElements) {
             String absUrl = linkElement.absUrl("href");
             if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
-                    && LinkUtility.isValidUrl(absUrl)) {
+                    && LinkUtility.isValidUrl(absUrl) && !linkElement.text().equals("")) {
                 try {
-                    anchors.add(new Anchor(LinkUtility.normalize(absUrl), linkElement.text()));
+                    anchors.add(new Anchor(LinkUtility.normalize(absUrl), linkElement.text().toLowerCase()));
                 } catch (MalformedURLException e) {
                     logger.warn("Unable to normalize link: {}", absUrl);
                 }

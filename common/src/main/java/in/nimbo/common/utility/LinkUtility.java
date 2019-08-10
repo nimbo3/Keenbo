@@ -1,6 +1,7 @@
 package in.nimbo.common.utility;
 
 import in.nimbo.common.exception.HashException;
+import in.nimbo.common.exception.ReverseLinkException;
 
 import java.math.BigInteger;
 import java.net.MalformedURLException;
@@ -21,25 +22,29 @@ public class LinkUtility {
      * @param link link
      * @return reversed link (only domain)
      */
-    public static String reverseLink(String link) throws MalformedURLException {
-        URL url = new URL(link);
-        String host = url.getHost();
-        String[] hostParts = host.split("\\.");
-        Collections.reverse(Arrays.asList(hostParts));
-        String newHost = String.join(".", hostParts);
-        String protocol = url.getProtocol();
-        int port = url.getPort();
-        String uri = url.getPath();
-        String query = url.getQuery();
-        String answer = protocol + "://" + newHost + (port != -1 ? ":" + port : "");
-        if (uri != null) {
-            answer += uri;
+    public static String reverseLink(String link) {
+        try {
+            URL url = new URL(link);
+            String host = url.getHost();
+            String[] hostParts = host.split("\\.");
+            Collections.reverse(Arrays.asList(hostParts));
+            String newHost = String.join(".", hostParts);
+            String protocol = url.getProtocol();
+            int port = url.getPort();
+            String uri = url.getPath();
+            String query = url.getQuery();
+            String answer = protocol + "://" + newHost + (port != -1 ? ":" + port : "");
+            if (uri != null) {
+                answer += uri;
+            }
+            if (query != null) {
+                answer += "?";
+                answer += query;
+            }
+            return answer;
+        } catch (MalformedURLException e) {
+            throw new ReverseLinkException(e);
         }
-        if (query != null) {
-            answer += "?";
-            answer += query;
-        }
-        return answer;
     }
 
     /**
