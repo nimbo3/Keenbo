@@ -12,8 +12,8 @@ public class SearchController {
         this.elasticDAO = elasticDAO;
     }
 
-    public List<Page> search(String query) {
-        return elasticDAO.search(query);
+    public List<Page> search(String query, String site) {
+        return elasticDAO.search(query, site);
     }
 
 }
