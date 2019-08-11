@@ -10,8 +10,10 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
+import org.apache.hadoop.hbase.mapred.TableOutputFormat;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.mapred.JobConf;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -26,6 +28,7 @@ import scala.Tuple2;
 import scala.collection.immutable.Map;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.NavigableMap;
 import java.util.Set;
 
@@ -76,18 +79,14 @@ public class App {
         GraphFrame pageRank = graphFrame.pageRank().maxIter(20).resetProbability(0.01).run();
         pageRank.vertices().sort("pagerank").show(2000, false);
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
-        try {
-            Connection connection = ConnectionFactory.createConnection();
-            pageRankRdd.foreach(row -> {
-                Table dummyPageTable = connection.getTable(TableName.valueOf("dummy_page"));
-                Put put = new Put(Bytes.toBytes(row.getString(1)));
-                put.addColumn(Bytes.toBytes("R"), Bytes.toBytes("R"), Bytes.toBytes(String.valueOf(row.getDouble(2))));
-                dummyPageTable.put(put);
-            });
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
+        JavaPairRDD<String, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
+            Put put = new Put(Bytes.toBytes(row.getString(1)));
+            put.addColumn(Bytes.toBytes("R"), Bytes.toBytes("R"), Bytes.toBytes(String.valueOf(row.getDouble(2))));
+            return new Tuple2<>(row.getString(1), put);
+        });
+        JobConf jobConf = new JobConf(hBaseConfiguration);
+        jobConf.set(TableOutputFormat.OUTPUT_TABLE, "dummy_page");
+        javaPairRDD.saveAsNewAPIHadoopDataset(jobConf);
 
         spark.stop();
 
