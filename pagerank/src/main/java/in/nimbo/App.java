@@ -53,7 +53,7 @@ public class App {
                 .map(result -> {
                     Page page = new Page();
                     page.setId(Bytes.toString(result.getRow()));
-                    page.setPagerank(Double.parseDouble(Bytes.toString(result.getValue(Bytes.toBytes("R"), Bytes.toBytes("R")))));
+                    page.setPr(Double.parseDouble(Bytes.toString(result.getValue(Bytes.toBytes("R"), Bytes.toBytes("R")))));
                     return page;
                 });
 
@@ -74,6 +74,8 @@ public class App {
         GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(20).resetProbability(0.01).run();
         pageRank.vertices().sort("pagerank").show(2000, false);
+        JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
+        pageRankRdd.saveAsTextFile("result");
 
         spark.stop();
 
