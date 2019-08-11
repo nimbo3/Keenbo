@@ -3,14 +3,14 @@ package in.nimbo.entity;
 public class Edge {
     private String src;
     private String dst;
-    private String anchor;
+    private int numOfAnchors;
 
     public Edge() {}
 
-    public Edge(String src, String dst, String anchor) {
+    public Edge(String src, String dst) {
         this.src = src;
         this.dst = dst;
-        this.anchor = anchor;
+        this.numOfAnchors = 1;
     }
 
     public String getSrc() {
@@ -29,11 +29,11 @@ public class Edge {
         this.dst = dst;
     }
 
-    public String getAnchor() {
-        return anchor;
+    public int getNumOfAnchors() {
+        return numOfAnchors;
     }
 
-    public void setAnchor(String anchor) {
-        this.anchor = anchor;
+    public void setNumOfAnchors(int numOfAnchors) {
+        this.numOfAnchors = numOfAnchors;
     }
 }
