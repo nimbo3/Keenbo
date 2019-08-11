@@ -58,11 +58,11 @@ public class App {
                 });
 
         JavaRDD<Relation> edges = hBaseRDD
-                .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(
+                .flatMap(result -> result.getFamilyMap(anchorColumnFamily).keySet().stream().map(
                         entry -> {
                             Relation relation = new Relation();
-                            relation.setSrc(Bytes.toString(entry.getKey()));
-                            relation.setDst(Bytes.toString(entry.getValue()));
+                            relation.setSrc(Bytes.toString(result.getRow()));
+                            relation.setDst(LinkUtility.reverseLink(Bytes.toString(entry)));
                             return relation;
                         })
                         .iterator());
@@ -73,7 +73,7 @@ public class App {
 
         GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(20).resetProbability(0.01).run();
-        pageRank.vertices().show();
+        pageRank.vertices().sort("pagerank").show(2000, false);
 
         spark.stop();
 

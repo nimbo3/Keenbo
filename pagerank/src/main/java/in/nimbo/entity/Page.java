@@ -2,7 +2,7 @@ package in.nimbo.entity;
 
 public class Page {
     private String id;
-    private double pagerank;
+    private double pr;
 
     public String getId() {
         return id;
@@ -12,11 +12,11 @@ public class Page {
         this.id = id;
     }
 
-    public double getPagerank() {
-        return pagerank;
+    public double getPr() {
+        return pr;
     }
 
-    public void setPagerank(double pagerank) {
-        this.pagerank = pagerank;
+    public void setPr(double pr) {
+        this.pr = pr;
     }
 }
