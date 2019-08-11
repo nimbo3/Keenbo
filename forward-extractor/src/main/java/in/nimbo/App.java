@@ -55,10 +55,16 @@ public class App {
 
         JavaRDD<Edge> edges = hBaseRDD
                 .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(
-                        entry -> new Edge(
-                                Bytes.toString(result.getRow()),
-                                LinkUtility.reverseLink(Bytes.toString(entry.getKey())),
-                                Bytes.toString(entry.getValue())))
+                        entry -> {
+                            String anchorLink = Bytes.toString(entry.getKey());
+                            int index = anchorLink.indexOf("#");
+                            if (index != -1)
+                                anchorLink = anchorLink.substring(0, index);
+                            return new Edge(
+                                    Bytes.toString(result.getRow()),
+                                    LinkUtility.reverseLink(anchorLink),
+                                    Bytes.toString(entry.getValue()));
+                        })
                         .iterator());
 
         Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);
