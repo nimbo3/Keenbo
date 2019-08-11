@@ -84,8 +84,8 @@ public class ParserService {
                     && LinkUtility.isValidUrl(absUrl) && !linkElement.text().equals("")) {
                 try {
                     String normalizedUrl = LinkUtility.normalize(absUrl);
-                    map.merge(normalizedUrl, 0, Integer::sum);
-                    if (map.get(normalizedUrl) > 0) {
+                    map.merge(normalizedUrl, 1, Integer::sum);
+                    if (map.get(normalizedUrl) > 1) {
                         normalizedUrl += "#" + map.get(normalizedUrl);
                     }
                     anchors.add(new Anchor(normalizedUrl, linkElement.text().toLowerCase()));
