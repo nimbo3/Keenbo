@@ -5,5 +5,5 @@ import in.nimbo.entity.Page;
 import java.util.List;
 
 public interface ElasticDAO {
-    List<Page> search(String query);
+    List<Page> search(String query, String site);
 }
