@@ -57,7 +57,7 @@ public class App {
                 .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(
                         entry -> new Edge(
                                 Bytes.toString(result.getRow()),
-                                LinkUtility.reverseLink(Bytes.toString(entry.getKey())),
+                                LinkUtility.reverseLink(Bytes.toString(entry.getKey()).substring(0, Bytes.toString(entry.getKey()).indexOf("#"))),
                                 Bytes.toString(entry.getValue())))
                         .iterator());
 
