@@ -7,7 +7,8 @@ import in.nimbo.entity.Page;
 import in.nimbo.entity.Relation;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -24,6 +25,7 @@ import org.graphframes.GraphFrame;
 import scala.Tuple2;
 import scala.collection.immutable.Map;
 
+import java.io.IOException;
 import java.util.NavigableMap;
 import java.util.Set;
 
@@ -53,7 +55,6 @@ public class App {
                 .map(result -> {
                     Page page = new Page();
                     page.setId(Bytes.toString(result.getRow()));
-                    page.setPr(Double.parseDouble(Bytes.toString(result.getValue(Bytes.toBytes("R"), Bytes.toBytes("R")))));
                     return page;
                 });
 
@@ -75,7 +76,18 @@ public class App {
         GraphFrame pageRank = graphFrame.pageRank().maxIter(20).resetProbability(0.01).run();
         pageRank.vertices().sort("pagerank").show(2000, false);
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
-        pageRankRdd.saveAsTextFile("result");
+        try {
+            Connection connection = ConnectionFactory.createConnection();
+            pageRankRdd.foreach(row -> {
+                Table dummyPageTable = connection.getTable(TableName.valueOf("dummy_page"));
+                Put put = new Put(Bytes.toBytes(row.getString(1)));
+                put.addColumn(Bytes.toBytes("R"), Bytes.toBytes("R"), Bytes.toBytes(String.valueOf(row.getDouble(2))));
+                dummyPageTable.put(put);
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
         spark.stop();
 
