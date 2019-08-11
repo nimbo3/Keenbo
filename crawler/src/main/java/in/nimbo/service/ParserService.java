@@ -77,12 +77,18 @@ public class ParserService {
     Set<Anchor> getAnchors(Document document) {
         Set<Anchor> anchors = new HashSet<>();
         Elements linkElements = document.getElementsByTag("a");
+        Map<String, Integer> map = new HashMap<>();
         for (Element linkElement : linkElements) {
             String absUrl = linkElement.absUrl("href");
             if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
                     && LinkUtility.isValidUrl(absUrl) && !linkElement.text().equals("")) {
                 try {
-                    anchors.add(new Anchor(LinkUtility.normalize(absUrl), linkElement.text().toLowerCase()));
+                    String normalizedUrl = LinkUtility.normalize(absUrl);
+                    map.merge(normalizedUrl, 1, Integer::sum);
+                    if (map.get(normalizedUrl) > 1) {
+                        normalizedUrl += "#" + map.get(normalizedUrl);
+                    }
+                    anchors.add(new Anchor(normalizedUrl, linkElement.text().toLowerCase()));
                 } catch (MalformedURLException e) {
                     logger.warn("Unable to normalize link: {}", absUrl);
                 }
