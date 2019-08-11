@@ -3,6 +3,7 @@ package in.nimbo;
 import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.PageRankConfig;
+import in.nimbo.entity.ESPage;
 import in.nimbo.entity.Page;
 import in.nimbo.entity.Relation;
 import org.apache.hadoop.conf.Configuration;
@@ -19,6 +20,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
@@ -41,6 +43,10 @@ public class App {
                 .appName(pageRankConfig.getAppName())
                 .master(pageRankConfig.getResourceManager())
                 .getOrCreate();
+        spark.conf().set("es.nodes", "master");
+        spark.conf().set("es.write.operation", "upsert");
+        spark.conf().set("es.mapping.id", "id");
+        spark.conf().set("es.index.auto.create", "auto");
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
@@ -53,7 +59,6 @@ public class App {
                     page.setId(Bytes.toString(result.getRow()));
                     return page;
                 });
-
         JavaRDD<Relation> edges = hBaseRDD
                 .flatMap(result -> result.getFamilyMap(anchorColumnFamily).keySet().stream().map(
                         entry -> {
@@ -65,17 +70,20 @@ public class App {
                         .iterator());
 
         Dataset<Row> verDF = spark.createDataFrame(nodes, Page.class);
-
         Dataset<Row> edgDF = spark.createDataFrame(edges, Relation.class);
 
         GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
-        GraphFrame pageRank = graphFrame.pageRank().maxIter(1).resetProbability(0.01).run();
+        GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
+
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
         JavaPairRDD<ImmutableBytesWritable, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
             Put put = new Put(Bytes.toBytes(row.getString(0)));
             put.addColumn(Bytes.toBytes(pageRankConfig.gethBaseColumnFamily()), Bytes.toBytes(pageRankConfig.gethBaseColumnFamily()), Bytes.toBytes(String.valueOf(row.getDouble(1))));
             return new Tuple2<>(new ImmutableBytesWritable(), put);
         });
+
+        JavaRDD<ESPage> esPageJavaRDD = pageRankRdd.map(row -> new ESPage(LinkUtility.hashLink(LinkUtility.reverseLink(row.getString(0))), row.getDouble(1)));
+
         try {
             Job jobConf = Job.getInstance();
             jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, pageRankConfig.gethBaseTable());
@@ -85,6 +93,8 @@ public class App {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        JavaEsSpark.saveToEs(esPageJavaRDD, "spark" + "/" + "docs");
 
         spark.stop();
     }

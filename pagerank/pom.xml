@@ -60,6 +60,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch-spark-20_2.11</artifactId>
+            <version>6.6.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>in.nimbo</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>

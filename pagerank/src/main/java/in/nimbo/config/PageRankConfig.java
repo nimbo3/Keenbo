@@ -10,6 +10,8 @@ public class PageRankConfig {
     private String appName;
     private String hBaseTable;
     private String hBaseColumnFamily;
+    private double resetProbability;
+    private int maxIter;
 
     public static PageRankConfig load() {
         PageRankConfig pageRankConfig = new PageRankConfig();
@@ -19,10 +21,28 @@ public class PageRankConfig {
             pageRankConfig.setAppName(config.getString("app.name"));
             pageRankConfig.sethBaseTable(config.getString("hBase.table"));
             pageRankConfig.sethBaseColumnFamily(config.getString("hBase.column.family"));
+            pageRankConfig.setMaxIter(config.getInt("algorithm.max.iter"));
+            pageRankConfig.setResetProbability(config.getDouble("algorithm.reset.probability"));
             return pageRankConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public double getResetProbability() {
+        return resetProbability;
+    }
+
+    public void setResetProbability(double resetProbability) {
+        this.resetProbability = resetProbability;
+    }
+
+    public int getMaxIter() {
+        return maxIter;
+    }
+
+    public void setMaxIter(int maxIter) {
+        this.maxIter = maxIter;
     }
 
     public String getResourceManager() {
