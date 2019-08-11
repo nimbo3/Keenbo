@@ -15,6 +15,7 @@
         <module>crawler</module>
         <module>search</module>
         <module>forward-extractor</module>
+        <module>site-graph</module>
     </modules>
 
     <properties>
