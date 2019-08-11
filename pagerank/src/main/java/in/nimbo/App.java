@@ -2,6 +2,7 @@ package in.nimbo;
 
 import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.LinkUtility;
+import in.nimbo.config.PageRankConfig;
 import in.nimbo.entity.Page;
 import in.nimbo.entity.Relation;
 import org.apache.hadoop.conf.Configuration;
@@ -26,6 +27,7 @@ import java.io.IOException;
 public class App {
     public static void main(String[] args) {
         HBaseConfig hBaseConfig = HBaseConfig.load();
+        PageRankConfig pageRankConfig = PageRankConfig.load();
 
         byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
 
@@ -36,8 +38,8 @@ public class App {
 
         SparkSession spark = SparkSession.builder()
                 .config("spark.hadoop.validateOutputSpecs", false)
-                .appName("pagerank")
-                .master("local")
+                .appName(pageRankConfig.getAppName())
+                .master(pageRankConfig.getResourceManager())
                 .getOrCreate();
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
@@ -68,16 +70,15 @@ public class App {
 
         GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(1).resetProbability(0.01).run();
-        pageRank.vertices().sort("pagerank").show(2000, false);
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
         JavaPairRDD<ImmutableBytesWritable, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
             Put put = new Put(Bytes.toBytes(row.getString(0)));
-            put.addColumn(Bytes.toBytes("R"), Bytes.toBytes("R"), Bytes.toBytes(String.valueOf(row.getDouble(1))));
+            put.addColumn(Bytes.toBytes(pageRankConfig.gethBaseColumnFamily()), Bytes.toBytes(pageRankConfig.gethBaseColumnFamily()), Bytes.toBytes(String.valueOf(row.getDouble(1))));
             return new Tuple2<>(new ImmutableBytesWritable(), put);
         });
         try {
             Job jobConf = Job.getInstance();
-            jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, "dummy_page");
+            jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, pageRankConfig.gethBaseTable());
             jobConf.setOutputFormatClass(TableOutputFormat.class);
             jobConf.getConfiguration().set("mapreduce.output.fileoutputformat.outputdir", "/tmp");
             javaPairRDD.saveAsNewAPIHadoopDataset(jobConf.getConfiguration());
