@@ -12,6 +12,10 @@ public class PageRankConfig {
     private String hBaseColumnFamily;
     private double resetProbability;
     private int maxIter;
+    private String esNodes;
+    private String esWriteOperation;
+    private String esMappingId;
+    private String esIndexAutoCreate;
 
     public static PageRankConfig load() {
         PageRankConfig pageRankConfig = new PageRankConfig();
@@ -23,10 +27,46 @@ public class PageRankConfig {
             pageRankConfig.sethBaseColumnFamily(config.getString("hBase.column.family"));
             pageRankConfig.setMaxIter(config.getInt("algorithm.max.iter"));
             pageRankConfig.setResetProbability(config.getDouble("algorithm.reset.probability"));
+            pageRankConfig.setEsNodes(config.getString("es.nodes"));
+            pageRankConfig.setEsWriteOperation(config.getString("es.write.operation"));
+            pageRankConfig.setEsMappingId(config.getString("es.mapping.id"));
+            pageRankConfig.setEsIndexAutoCreate(config.getString("es.index.auto.create"));
             return pageRankConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public String getEsNodes() {
+        return esNodes;
+    }
+
+    public void setEsNodes(String esNodes) {
+        this.esNodes = esNodes;
+    }
+
+    public String getEsWriteOperation() {
+        return esWriteOperation;
+    }
+
+    public void setEsWriteOperation(String esWriteOperation) {
+        this.esWriteOperation = esWriteOperation;
+    }
+
+    public String getEsMappingId() {
+        return esMappingId;
+    }
+
+    public void setEsMappingId(String esMappingId) {
+        this.esMappingId = esMappingId;
+    }
+
+    public String getEsIndexAutoCreate() {
+        return esIndexAutoCreate;
+    }
+
+    public void setEsIndexAutoCreate(String esIndexAutoCreate) {
+        this.esIndexAutoCreate = esIndexAutoCreate;
     }
 
     public double getResetProbability() {

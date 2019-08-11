@@ -30,6 +30,7 @@ public class App {
     public static void main(String[] args) {
         HBaseConfig hBaseConfig = HBaseConfig.load();
         PageRankConfig pageRankConfig = PageRankConfig.load();
+        String rankColumn = pageRankConfig.gethBaseColumnFamily();
 
         byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
 
@@ -43,10 +44,10 @@ public class App {
                 .appName(pageRankConfig.getAppName())
                 .master(pageRankConfig.getResourceManager())
                 .getOrCreate();
-        spark.conf().set("es.nodes", "master");
-        spark.conf().set("es.write.operation", "upsert");
-        spark.conf().set("es.mapping.id", "id");
-        spark.conf().set("es.index.auto.create", "auto");
+        spark.sparkContext().conf().set("es.nodes", pageRankConfig.getEsNodes());
+        spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
+        spark.sparkContext().conf().set("es.mapping.id", pageRankConfig.getEsMappingId());
+        spark.sparkContext().conf().set("es.index.auto.create", pageRankConfig.getEsIndexAutoCreate());
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
@@ -78,7 +79,7 @@ public class App {
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
         JavaPairRDD<ImmutableBytesWritable, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
             Put put = new Put(Bytes.toBytes(row.getString(0)));
-            put.addColumn(Bytes.toBytes(pageRankConfig.gethBaseColumnFamily()), Bytes.toBytes(pageRankConfig.gethBaseColumnFamily()), Bytes.toBytes(String.valueOf(row.getDouble(1))));
+            put.addColumn(Bytes.toBytes(rankColumn), Bytes.toBytes(rankColumn), Bytes.toBytes(String.valueOf(row.getDouble(1))));
             return new Tuple2<>(new ImmutableBytesWritable(), put);
         });
 

@@ -1,6 +1,8 @@
 package in.nimbo.entity;
 
-public class ESPage {
+import java.io.Serializable;
+
+public class ESPage implements Serializable {
     private String id;
     private double pagerank;
 
@@ -18,5 +20,13 @@ public class ESPage {
 
     public void setPagerank(double pagerank) {
         this.pagerank = pagerank;
+    }
+
+    public String getId() {
+        return id;
+    }
+
+    public double getPagerank() {
+        return pagerank;
     }
 }
