@@ -1,6 +1,6 @@
 package in.nimbo.entity;
 
-public class Relation {
+public class Edge {
     private String src;
     private String dst;
     private String relationship;

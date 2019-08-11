@@ -129,6 +129,13 @@
 
     </dependencies>
 
+    <repositories>
+        <repository>
+            <id>SparkPackagesRepo</id>
+            <url>http://dl.bintray.com/spark-packages/maven</url>
+        </repository>
+    </repositories>
+
     <build>
         <plugins>
             <plugin>

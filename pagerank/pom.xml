@@ -12,8 +12,6 @@
     <artifactId>pagerank</artifactId>
 
     <name>pagerank</name>
-    <!-- FIXME change it to the project's website -->
-    <url>http://www.example.com</url>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -21,16 +19,11 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <spark.version>2.2.0</spark.version>
         <hbase.version>1.4.10</hbase.version>
+        <elastic.version>6.6.2</elastic.version>
+        <graphframes.version>0.7.0-spark2.4-s_2.11</graphframes.version>
     </properties>
 
     <dependencies>
-        <dependency>
-            <groupId>junit</groupId>
-            <artifactId>junit</artifactId>
-            <version>4.11</version>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.11</artifactId>
@@ -44,7 +37,7 @@
         <dependency>
             <groupId>graphframes</groupId>
             <artifactId>graphframes</artifactId>
-            <version>0.7.0-spark2.4-s_2.11</version>
+            <version>${graphframes.version}</version>
         </dependency>
 
         <dependency>
@@ -62,7 +55,7 @@
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch-spark-20_2.11</artifactId>
-            <version>6.6.2</version>
+            <version>${elastic.version}</version>
         </dependency>
 
         <dependency>
@@ -74,56 +67,10 @@
 
 
     </dependencies>
-    <repositories>
-        <repository>
-            <id>SparkPackagesRepo</id>
-            <url>http://dl.bintray.com/spark-packages/maven</url>
-        </repository>
-    </repositories>
 
     <build>
-        <pluginManagement><!-- lock down plugins versions to avoid using Maven defaults (may be moved to parent pom) -->
-            <plugins>
-                <!-- clean lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#clean_Lifecycle -->
-                <plugin>
-                    <artifactId>maven-clean-plugin</artifactId>
-                    <version>3.1.0</version>
-                </plugin>
-                <!-- default lifecycle, jar packaging: see https://maven.apache.org/ref/current/maven-core/default-bindings.html#Plugin_bindings_for_jar_packaging -->
-                <plugin>
-                    <artifactId>maven-resources-plugin</artifactId>
-                    <version>3.0.2</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>3.8.0</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-surefire-plugin</artifactId>
-                    <version>2.22.1</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-jar-plugin</artifactId>
-                    <version>3.0.2</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-install-plugin</artifactId>
-                    <version>2.5.2</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-deploy-plugin</artifactId>
-                    <version>2.8.2</version>
-                </plugin>
-                <!-- site lifecycle, see https://maven.apache.org/ref/current/maven-core/lifecycles.html#site_Lifecycle -->
-                <plugin>
-                    <artifactId>maven-site-plugin</artifactId>
-                    <version>3.7.1</version>
-                </plugin>
-                <plugin>
-                    <artifactId>maven-project-info-reports-plugin</artifactId>
-                    <version>3.0.0</version>
-                </plugin>
-            </plugins>
+        <pluginManagement>
+
         </pluginManagement>
         <plugins>
             <plugin>

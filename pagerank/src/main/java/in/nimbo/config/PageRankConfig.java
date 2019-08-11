@@ -8,14 +8,14 @@ public class PageRankConfig {
     private static final String CONFIG_NAME = "pagerank.properties";
     private String resourceManager;
     private String appName;
-    private String hBaseTable;
-    private String hBaseColumnFamily;
     private double resetProbability;
     private int maxIter;
     private String esNodes;
     private String esWriteOperation;
     private String esMappingId;
     private String esIndexAutoCreate;
+    private String esIndex;
+    private String esType;
 
     public static PageRankConfig load() {
         PageRankConfig pageRankConfig = new PageRankConfig();
@@ -23,18 +23,33 @@ public class PageRankConfig {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
             pageRankConfig.setResourceManager(config.getString("resource.manager"));
             pageRankConfig.setAppName(config.getString("app.name"));
-            pageRankConfig.sethBaseTable(config.getString("hBase.table"));
-            pageRankConfig.sethBaseColumnFamily(config.getString("hBase.column.family"));
             pageRankConfig.setMaxIter(config.getInt("algorithm.max.iter"));
             pageRankConfig.setResetProbability(config.getDouble("algorithm.reset.probability"));
             pageRankConfig.setEsNodes(config.getString("es.nodes"));
             pageRankConfig.setEsWriteOperation(config.getString("es.write.operation"));
-            pageRankConfig.setEsMappingId(config.getString("es.mapping.id"));
             pageRankConfig.setEsIndexAutoCreate(config.getString("es.index.auto.create"));
+            pageRankConfig.setEsIndex(config.getString("es.index"));
+            pageRankConfig.setEsType(config.getString("es.type"));
             return pageRankConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public String getEsIndex() {
+        return esIndex;
+    }
+
+    public void setEsIndex(String esIndex) {
+        this.esIndex = esIndex;
+    }
+
+    public String getEsType() {
+        return esType;
+    }
+
+    public void setEsType(String esType) {
+        this.esType = esType;
     }
 
     public String getEsNodes() {
@@ -51,14 +66,6 @@ public class PageRankConfig {
 
     public void setEsWriteOperation(String esWriteOperation) {
         this.esWriteOperation = esWriteOperation;
-    }
-
-    public String getEsMappingId() {
-        return esMappingId;
-    }
-
-    public void setEsMappingId(String esMappingId) {
-        this.esMappingId = esMappingId;
     }
 
     public String getEsIndexAutoCreate() {
@@ -99,22 +106,6 @@ public class PageRankConfig {
 
     public void setAppName(String appName) {
         this.appName = appName;
-    }
-
-    public String gethBaseTable() {
-        return hBaseTable;
-    }
-
-    public void sethBaseTable(String hBaseTable) {
-        this.hBaseTable = hBaseTable;
-    }
-
-    public String gethBaseColumnFamily() {
-        return hBaseColumnFamily;
-    }
-
-    public void sethBaseColumnFamily(String hBaseColumnFamily) {
-        this.hBaseColumnFamily = hBaseColumnFamily;
     }
 
 }
