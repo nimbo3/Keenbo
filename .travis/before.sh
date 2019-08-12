@@ -2,7 +2,7 @@
 export HBASE_DOWNLOAD_FILE="$HOME/Downloads/hbase-1.2.4-bin.tar.gz"
 export HBASE_FILES="hbase-1.2.4"
 
-sudo mkdir /home/Downloads /home/travis/hbase /home/travis/zookeeper
+sudo mkdir -p $HOME/Downloads $HOME/hbase $HOME/zookeeper
 echo "Downloading HBase"
 sudo wget -O $HBASE_DOWNLOAD_FILE https://archive.apache.org/dist/hbase/1.2.4/hbase-1.2.4-bin.tar.gz
 
