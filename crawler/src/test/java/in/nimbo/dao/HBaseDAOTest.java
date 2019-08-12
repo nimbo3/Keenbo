@@ -53,13 +53,11 @@ public class HBaseDAOTest {
     @Test
     public void testAdd() throws MalformedURLException {
         Set<Anchor> anchors = new HashSet<>();
-        for (int i = 0; i < 5; i++) {
-            Anchor anchor = new Anchor("https://google.com/" + i, "content" + i);
-            anchors.add(anchor);
-        }
         List<Meta> metas = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
+            Anchor anchor = new Anchor("https://google.com/" + i, "content" + i);
             Meta meta = new Meta("key" + i, "content" + i);
+            anchors.add(anchor);
             metas.add(meta);
         }
         Page page = new Page("http://www.google.com/", "Google", "content", anchors, metas, 100.0);
