@@ -14,7 +14,8 @@ before_script:
   - .travis/before.sh
 
 script:
-  - mvn -B clean test
+  - mvn compile > /dev/null 2>&1
+  - mvn clean test
 
 cache:
   directories:

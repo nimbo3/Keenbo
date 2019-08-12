@@ -10,7 +10,7 @@ echo "Copying HBase Files"
 cp $HBASE_DOWNLOAD_FILE hbase-1.2.4.tar.gz
 
 echo "Extracting HBase Files"
-tar -xvzf hbase-1.2.4.tar.gz > /dev/null 2>&1
+tar -xzf hbase-1.2.4.tar.gz > /dev/null 2>&1
 
 echo "HBase Configuration"
 cp .travis/hbase-site.xml $HBASE_FILES/conf/
