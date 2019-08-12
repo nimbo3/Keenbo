@@ -9,6 +9,7 @@ import in.nimbo.entity.Meta;
 import in.nimbo.entity.Page;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import pl.allegro.tech.embeddedelasticsearch.EmbeddedElastic;
@@ -27,16 +28,20 @@ import static org.junit.Assert.assertTrue;
 public class ElasticDAOTest {
     private static ElasticConfig elasticConfig;
     private static ElasticDAO elasticDAO;
+    private static RestHighLevelClient client;
     private static List<Page> backupPages;
+    private static BulkProcessor bulkProcessor;
+    private static EmbeddedElastic embeddedElastic;
 
     @BeforeClass
     public static void init() throws IOException, InterruptedException {
         elasticConfig = ElasticConfig.load();
         elasticConfig.setHost("localhost");
         elasticConfig.setBulkActions(2);
+        elasticConfig.setBulkSize(1);
         elasticConfig.setIndexName("test-index");
 
-        EmbeddedElastic embeddedElastic = EmbeddedElastic.builder()
+        embeddedElastic = EmbeddedElastic.builder()
                 .withElasticVersion("6.6.2")
                 .withDownloadDirectory(new File(System.getenv("$HOME") + "/Downloads"))
                 .withSetting(PopularProperties.TRANSPORT_TCP_PORT, 9350)
@@ -48,15 +53,20 @@ public class ElasticDAOTest {
                 .start();
 
         backupPages = new ArrayList<>();
-        RestHighLevelClient client = App.initializeElasticSearchClient(elasticConfig);
+        client = App.initializeElasticSearchClient(elasticConfig);
         ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
-        BulkProcessor bulkProcessor = App.initializeElasticSearchBulk(elasticConfig, client, elasticBulkListener);
+        bulkProcessor = App.initializeElasticSearchBulk(elasticConfig, client, elasticBulkListener);
         elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, client);
         elasticBulkListener.setElasticDAO(elasticDAO);
     }
 
+    @AfterClass
+    public static void stop() {
+        embeddedElastic.stop();
+    }
+
     @Test
-    public void addTest() throws IOException {
+    public void addTest() throws IOException, InterruptedException {
         List<Meta> metas = new ArrayList<>();
         metas.add(new Meta("description", "What"));
         Page page1 = new Page("http://aminborjian.com", "AminBorjian", "content 1", new HashSet<>(), metas, 2);
@@ -68,6 +78,7 @@ public class ElasticDAOTest {
 
         elasticDAO.save(page2);
         assertTrue(backupPages.isEmpty());
+        TimeUnit.SECONDS.sleep(1);
         assertEquals(2, elasticDAO.count());
     }
 }
