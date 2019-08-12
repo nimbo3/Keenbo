@@ -30,11 +30,13 @@ cp .travis/hbase-site.xml $HBASE_FILES/conf/
 echo "export JAVA_HOME=$JAVA_HOME" >> $HBASE_FILES/conf/hbase-env.sh
 
 echo "Running HBase"
+
 #source /home/travis/.bashrc
 #sudo chmod -R 777 hbase-1.2.4
 sudo $HBASE_FILES/bin/start-hbase.sh
 echo "Preparing HBase"
-echo 'list' | $HBASE_FILES/bin/hbase shell -n
+$HBASE_FILES/bin/hbase shell
+#echo 'list' | $HBASE_FILES/bin/hbase shell -n
 #echo 'create "page", "meta", "anchor"' | hbase-1.2.4/bin/hbase shell -n
 #echo 'list' | hbase-1.2.4/bin/hbase shell -n
 echo "HBase is ready"
