@@ -48,7 +48,7 @@ public class HBaseDAOTest {
     }
 
     @Test
-    public void testAdd() {
+    public void testAdd() throws MalformedURLException {
         Set<Anchor> anchors = new HashSet<>();
         for (int i = 0; i < 5; i++) {
             Anchor anchor = new Anchor("https://google.com/" + i, "content" + i);
@@ -59,12 +59,7 @@ public class HBaseDAOTest {
             Meta meta = new Meta("key" + i, "content" + i);
             metas.add(meta);
         }
-        Page page = null;
-        try {
-            page = new Page("http://www.google.com/", "Google", "a", anchors, metas, 100.0);
-        } catch (MalformedURLException e) {
-            e.printStackTrace();
-        }
+        Page page = new Page("http://www.google.com/", "Google", "a", anchors, metas, 100.0);
 
         try (Table table = connection.getTable(TableName.valueOf(hBaseConfig.getLinksTable()))) {
             Put put = new Put(Bytes.toBytes(page.getReversedLink()));
@@ -88,7 +83,7 @@ public class HBaseDAOTest {
             System.out.println("there");
             e.printStackTrace();
             throw new HBaseException(e);
-        } catch (Throwable e){
+        } catch (Throwable e) {
             e.printStackTrace();
         }
 //        assertTrue(hBaseDAO.contains("http://com.google.www/"));

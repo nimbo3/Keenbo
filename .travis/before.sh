@@ -7,12 +7,12 @@ if [[ ! -d $HOME/Downloads/hbase-1.2.4-bin ]];
 then
     echo "Downloading HBase"
     sudo wget -O $HBASE_DOWNLOAD_FILE https://archive.apache.org/dist/hbase/1.2.4/hbase-1.2.4-bin.tar.gz
-    echo "Extracting HBase Files"
-    tar -xvzf $HBASE_DOWNLOAD_FILE
 fi
 echo "Copying HBase Files"
-cp -r $HBASE_DOWNLOAD_FILE $HBASE_FILES
-echo "Config ..."
+cp -r $HBASE_DOWNLOAD_FILE hbase-1.2.4.tar.gz
+echo "Extracting HBase Files"
+tar -xvzf hbase-1.2.4.tar.gz
+echo "Config HBase"
 cp .travis/hbase-site.xml $HBASE_FILES/conf/
 echo "Running HBase"
 #echo "export HBASE_HOME=/home/travis/build/nimbo3/Keenbo/hbase-1.2.4" >> /home/travis/.bashrc
