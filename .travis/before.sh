@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
+export HBASE_DOWNLOAD_FILE="$HOME/Downloads/hbase-1.2.4-bin.tar.gz"
+
 mkdir /home/travis/hbase /home/travis/zookeeper
 if [[ ! -d $HOME/Downloads/hbase-1.2.4-bin ]];
 then
     echo "Downloading HBase"
-    sudo wget -O $HOME/Downloads/hbase-1.2.4-bin.tar.gz https://archive.apache.org/dist/hbase/1.2.4/hbase-1.2.4-bin.tar.gz
+    sudo wget -O $HBASE_DOWNLOAD_FILE https://archive.apache.org/dist/hbase/1.2.4/hbase-1.2.4-bin.tar.gz
     echo "Extracting HBase Files"
-    tar -xvzf hbase-1.2.4-bin.tar.gz
+    tar -xvzf $HBASE_DOWNLOAD_FILE
 fi
 echo "Copying HBase Files"
-cp -r $HOME/Downloads/hbase-1.2.4-bin hbase-1.2.4
+cp -r $HBASE_DOWNLOAD_FILE hbase-1.2.4
 echo "Config ..."
 cp .travis/hbase-site.xml hbase-1.2.4/conf/
 echo "Running HBase"
