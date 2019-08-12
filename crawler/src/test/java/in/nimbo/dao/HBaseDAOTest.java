@@ -11,6 +11,7 @@ import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -29,20 +30,23 @@ public class HBaseDAOTest {
     private static Connection connection;
 
     @BeforeClass
-    public static void init() {
+    public static void init() throws IOException {
         hBaseConfig = HBaseConfig.load();
-        try {
-            connection = ConnectionFactory.createConnection();
-            TableName tableName = TableName.valueOf(hBaseConfig.getLinksTable());
-            HTableDescriptor descriptor = new HTableDescriptor(tableName);
-            descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getAnchorColumnFamily()));
-            descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getMetaColumnFamily()));
-            descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getRankColumnFamily()));
-            connection.getAdmin().createTable(descriptor);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        connection = ConnectionFactory.createConnection();
+        TableName tableName = TableName.valueOf(hBaseConfig.getLinksTable());
+        HTableDescriptor descriptor = new HTableDescriptor(tableName);
+        descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getAnchorColumnFamily()));
+        descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getMetaColumnFamily()));
+        descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getRankColumnFamily()));
+        connection.getAdmin().createTable(descriptor);
         hBaseDAO = new HBaseDAOImpl(connection, hBaseConfig);
+    }
+
+    @Before
+    public void afterEachTest() throws IOException {
+        TableName tableName = TableName.valueOf(hBaseConfig.getLinksTable());
+        connection.getAdmin().disableTable(tableName);
+        connection.getAdmin().truncateTable(tableName, false);
     }
 
     @Test
@@ -61,4 +65,5 @@ public class HBaseDAOTest {
         hBaseDAO.add(page);
         assertTrue(hBaseDAO.contains("http://com.google.www/"));
     }
+
 }
