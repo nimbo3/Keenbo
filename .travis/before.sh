@@ -35,6 +35,7 @@ echo "Running HBase"
 #sudo chmod -R 777 hbase-1.2.4
 sudo $HBASE_FILES/bin/start-hbase.sh
 echo "Preparing HBase"
+sudo cat /home/travis/build/nimbo3/Keenbo/hbase-1.2.4/bin/../logs/*
 $HBASE_FILES/bin/hbase shell
 #echo 'list' | $HBASE_FILES/bin/hbase shell -n
 #echo 'create "page", "meta", "anchor"' | hbase-1.2.4/bin/hbase shell -n
