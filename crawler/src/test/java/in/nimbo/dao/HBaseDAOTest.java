@@ -1,6 +1,7 @@
 package in.nimbo.dao;
 
 import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.entity.Anchor;
@@ -62,12 +63,12 @@ public class HBaseDAOTest {
         }
         Page page = new Page("http://www.google.com/", "Google", "content", anchors, metas, 100.0);
         hBaseDAO.add(page);
-        assertTrue(hBaseDAO.contains(page.getLink()));
+        assertTrue(hBaseDAO.contains(LinkUtility.reverseLink(page.getLink())));
     }
 
     @Test
     public void testContain() {
-        assertFalse(hBaseDAO.contains("http://www.google.com/"));
+        assertFalse(hBaseDAO.contains("http://com.google.www"));
         assertFalse(hBaseDAO.contains("fake link"));
     }
 }
