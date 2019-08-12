@@ -2,10 +2,15 @@ language: java
 
 script:
   - echo "salam!!!"
-#  - mvn clean test
+#  - mvn clean
+
+jdk:
+  - openjdk8
 
 before_install:
   - sudo chmod 777 .travis/before.sh
+
+install: true
 
 before_script:
   - .travis/before.sh

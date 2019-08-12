@@ -22,9 +22,10 @@ tar -xvzf jdk.tar.gz
 
 # HBase configuration
 echo "HBase Configuration"
-export JAVA_HOME=$HOME/build/nimbo3/Keenbo/jdk
-export HBASE_HOME="$HOME/build/nimbo3/Keenbo/$HBASE_FILES"
-
+#export JAVA_HOME=$HOME/build/nimbo3/Keenbo/jdk
+#export HBASE_HOME="$HOME/build/nimbo3/Keenbo/$HBASE_FILES"
+echo $JAVA_HOME
+ll $JAVA_HOME
 cp .travis/hbase-site.xml $HBASE_FILES/conf/
 echo "export JAVA_HOME=/home/travis/build/nimbo3/Keenbo/jdk" >> $HBASE_FILES/conf/hbase-env.sh
 
