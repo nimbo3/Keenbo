@@ -3,9 +3,9 @@ package in.nimbo;
 import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.PageRankConfig;
+import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
-import in.nimbo.entity.Edge;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
@@ -55,21 +55,13 @@ public class App {
                         , ImmutableBytesWritable.class, Result.class).toJavaRDD()
                 .map(tuple -> tuple._2);
 
-        JavaRDD<Node> nodes = hBaseRDD.filter(result -> result.getValue(rankColumn, rankColumn) != null)
-                .map(result -> {
-                    Node node = new Node();
-                    node.setId(Bytes.toString(result.getRow()));
-                    return node;
-                });
+        JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));
         JavaRDD<Edge> edges = hBaseRDD
                 .flatMap(result -> result.getFamilyMap(anchorColumnFamily).keySet().stream().map(
-                        entry -> {
-                            Edge edge = new Edge();
-                            edge.setSrc(Bytes.toString(result.getRow()));
-                            edge.setDst(LinkUtility.reverseLink(Bytes.toString(entry)));
-                            return edge;
-                        })
-                        .iterator());
+                        entry -> new Edge(
+                                Bytes.toString(result.getRow()),
+                                LinkUtility.reverseLink(Bytes.toString(entry))
+                        )).iterator());
 
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
@@ -84,7 +76,10 @@ public class App {
             return new Tuple2<>(new ImmutableBytesWritable(), put);
         });
 
-        JavaRDD<Page> esPageJavaRDD = pageRankRdd.map(row -> new Page(LinkUtility.hashLink(LinkUtility.reverseLink(row.getString(0))), row.getDouble(1)));
+        JavaRDD<Page> esPageJavaRDD = pageRankRdd
+                .map(row -> new Page(
+                        LinkUtility.hashLink(LinkUtility.reverseLink(row.getString(0))),
+                        row.getDouble(1)));
 
         Job jobConf = Job.getInstance();
         jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hBaseConfig.getLinksTable());

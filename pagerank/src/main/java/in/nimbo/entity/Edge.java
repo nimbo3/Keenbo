@@ -3,7 +3,15 @@ package in.nimbo.entity;
 public class Edge {
     private String src;
     private String dst;
-    private String relationship;
+
+    public Edge() {
+
+    }
+
+    public Edge(String src, String dst) {
+        this.src = src;
+        this.dst = dst;
+    }
 
     public String getSrc() {
         return src;
@@ -19,13 +27,5 @@ public class Edge {
 
     public void setDst(String dst) {
         this.dst = dst;
-    }
-
-    public String getRelationship() {
-        return relationship;
-    }
-
-    public void setRelationship(String relationship) {
-        this.relationship = relationship;
     }
 }
