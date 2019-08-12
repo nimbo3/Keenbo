@@ -65,7 +65,7 @@ public class CrawlerService {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
                 Timer.Context hBaseContainContext = hBaseContainTimer.time();
-                boolean contains = redisDAO.contains(LinkUtility.reverseLink(siteLink));
+                boolean contains = redisDAO.contains(siteLink);
                 hBaseContainContext.stop();
                 if (!contains) {
                     isLinkSkipped = false;
