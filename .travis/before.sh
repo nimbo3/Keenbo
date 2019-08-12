@@ -10,7 +10,7 @@ echo "Copying HBase Files"
 cp $HBASE_DOWNLOAD_FILE hbase-1.2.4.tar.gz
 
 echo "Extracting HBase Files"
-tar -xvzf hbase-1.2.4.tar.gz > extract.log 2>&1
+tar -xvzf hbase-1.2.4.tar.gz > /dev/null 2>&1
 
 echo "HBase Configuration"
 cp .travis/hbase-site.xml $HBASE_FILES/conf/
@@ -18,5 +18,3 @@ echo "export JAVA_HOME=$JAVA_HOME" >> $HBASE_FILES/conf/hbase-env.sh
 
 echo "Running HBase"
 sudo $HBASE_FILES/bin/start-hbase.sh
-
-echo "HBase is ready"

@@ -12,7 +12,6 @@ install: true
 
 before_script:
   - .travis/before.sh
-  - sleep 5
 
 script:
   - mvn clean test
