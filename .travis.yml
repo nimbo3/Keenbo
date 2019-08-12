@@ -11,7 +11,7 @@ before_install:
 
 before_script:
   - .travis/before.sh
-  - sleep 10
+  - sleep 5
 
 cache:
   directories:
