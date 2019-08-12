@@ -15,7 +15,7 @@ before_script:
 
 cache:
   directories:
-    - '$HOME/.m2/repositories'
+    - '$HOME/.m2'
     - '$HOME/Downloads'
 
 after_success:
