@@ -1,14 +1,9 @@
 language: java
+jdk:
+  - openjdk8
 
 git:
   quiet: true
-
-script:
-  - echo "salam!!!"
-  - mvn clean test
-
-jdk:
-  - openjdk8
 
 before_install:
   - sudo chmod 777 .travis/before.sh
@@ -19,10 +14,12 @@ before_script:
   - .travis/before.sh
   - sleep 5
 
+script:
+  - mvn clean test
+
 cache:
   directories:
     - $HOME/.m2
-    - $HOME/Downloads
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
