@@ -6,12 +6,12 @@ git:
   quiet: true
 
 before_install:
-  - sudo chmod 777 .travis/before.sh
+  - sudo chmod 777 .travis/hbase-init.sh
 
 install: true
 
 before_script:
-  - .travis/before.sh
+  - .travis/hbase-init.sh
 
 script:
   - mvn clean compile > /dev/null 2>&1
