@@ -5,7 +5,7 @@ then
     echo "Downloading HBase"
     sudo wget -O $HOME/Downloads/hbase-1.2.4-bin.tar.gz https://archive.apache.org/dist/hbase/1.2.4/hbase-1.2.4-bin.tar.gz
     echo "Extracting HBase Files"
-    tar -xvzf hbase-1.2.4.tar.gz
+    tar -xvzf hbase-1.2.4-bin.tar.gz
 fi
 echo "Copying HBase Files"
 cp -r $HOME/Downloads/hbase-1.2.4-bin hbase-1.2.4
