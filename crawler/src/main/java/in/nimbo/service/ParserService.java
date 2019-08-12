@@ -3,7 +3,7 @@ package in.nimbo.service;
 import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
-import in.nimbo.common.config.AppConfig;
+import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.entity.Anchor;
 import in.nimbo.entity.Meta;
@@ -28,10 +28,10 @@ import java.util.*;
 public class ParserService {
     private Logger logger = LoggerFactory.getLogger("parser");
     private Logger appLogger = LoggerFactory.getLogger("app");
-    private AppConfig appConfig;
+    private ProjectConfig projectConfig;
 
-    public ParserService(AppConfig appConfig) {
-        this.appConfig = appConfig;
+    public ParserService(ProjectConfig projectConfig) {
+        this.projectConfig = projectConfig;
     }
 
     /**
@@ -43,8 +43,8 @@ public class ParserService {
     Optional<Document> getDocument(String link) {
         try {
             Connection.Response response = Jsoup.connect(link)
-                    .userAgent(appConfig.getJsoupUserAgent())
-                    .timeout(appConfig.getJsoupTimeout())
+                    .userAgent(projectConfig.getJsoupUserAgent())
+                    .timeout(projectConfig.getJsoupTimeout())
                     .followRedirects(true)
                     .ignoreContentType(true)
                     .execute();
@@ -77,12 +77,18 @@ public class ParserService {
     Set<Anchor> getAnchors(Document document) {
         Set<Anchor> anchors = new HashSet<>();
         Elements linkElements = document.getElementsByTag("a");
+        Map<String, Integer> map = new HashMap<>();
         for (Element linkElement : linkElements) {
             String absUrl = linkElement.absUrl("href");
             if (!absUrl.isEmpty() && !absUrl.matches("mailto:.*")
-                    && LinkUtility.isValidUrl(absUrl)) {
+                    && LinkUtility.isValidUrl(absUrl) && !linkElement.text().equals("")) {
                 try {
-                    anchors.add(new Anchor(LinkUtility.normalize(absUrl), linkElement.text()));
+                    String normalizedUrl = LinkUtility.normalize(absUrl);
+                    map.merge(normalizedUrl, 1, Integer::sum);
+                    if (map.get(normalizedUrl) > 1) {
+                        normalizedUrl += "#" + map.get(normalizedUrl);
+                    }
+                    anchors.add(new Anchor(normalizedUrl, linkElement.text().toLowerCase()));
                 } catch (MalformedURLException e) {
                     logger.warn("Unable to normalize link: {}", absUrl);
                 }
@@ -132,7 +138,7 @@ public class ParserService {
             detector.append(text);
             detector.setAlpha(0);
             return detector.getProbabilities().stream()
-                    .anyMatch(x -> x.lang.equals("en") && x.prob > appConfig.getEnglishProbability());
+                    .anyMatch(x -> x.lang.equals("en") && x.prob > projectConfig.getEnglishProbability());
         } catch (LangDetectException e) {
             throw new LanguageDetectException(e);
         }

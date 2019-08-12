@@ -10,6 +10,8 @@ public class HBaseConfig {
     private String linksTable;
     private byte[] anchorColumnFamily;
     private byte[] metaColumnFamily;
+    private byte[] rankColumnFamily;
+    private byte[] rankColumn;
 
     public static HBaseConfig load() {
         HBaseConfig config = new HBaseConfig();
@@ -18,10 +20,28 @@ public class HBaseConfig {
             config.setLinksTable(configuration.getString("table"));
             config.setAnchorColumnFamily(Bytes.toBytes(configuration.getString("column.family.anchor")));
             config.setMetaColumnFamily(Bytes.toBytes(configuration.getString("column.family.meta")));
+            config.setRankColumnFamily(Bytes.toBytes(configuration.getString("column.family.rank")));
+            config.setRankColumn(Bytes.toBytes(configuration.getString("column.rank")));
             return config;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public byte[] getRankColumnFamily() {
+        return rankColumnFamily;
+    }
+
+    public void setRankColumnFamily(byte[] rankColumnFamily) {
+        this.rankColumnFamily = rankColumnFamily;
+    }
+
+    public byte[] getRankColumn() {
+        return rankColumn;
+    }
+
+    public void setRankColumn(byte[] rankColumn) {
+        this.rankColumn = rankColumn;
     }
 
     public String getLinksTable() {

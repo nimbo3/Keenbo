@@ -69,7 +69,8 @@ public class App {
             Spark.before("/*", (request, response) -> backendLogger.info("New request for uri: {}", request.uri()));
             Spark.get("/search", ((request, response) -> {
                 String query = request.queryParams("query");
-                List<Page> result = searchController.search(query != null ? query : "");
+                String site = request.queryParams("site");
+                List<Page> result = searchController.search(query != null ? query : "", site != null ? site : "");
                 response.type("application/json");
                 return result;
             }), transformer);

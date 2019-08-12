@@ -3,7 +3,7 @@ package in.nimbo.service.monitoring;
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
-import in.nimbo.common.config.AppConfig;
+import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 
 import java.util.concurrent.Executors;
@@ -13,12 +13,12 @@ import java.util.concurrent.TimeUnit;
 public class ElasticMonitoring {
     private ScheduledExecutorService executorService;
     private ElasticDAO elasticDAO;
-    private AppConfig appConfig;
+    private ProjectConfig projectConfig;
     private Histogram histogram;
 
-    public ElasticMonitoring(ElasticDAO elasticDAO, AppConfig appConfig) {
+    public ElasticMonitoring(ElasticDAO elasticDAO, ProjectConfig projectConfig) {
         this.elasticDAO = elasticDAO;
-        this.appConfig = appConfig;
+        this.projectConfig = projectConfig;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
         histogram = metricRegistry.histogram(MetricRegistry.name(ElasticMonitoring.class, "PageCount"));
     }
@@ -28,7 +28,7 @@ public class ElasticMonitoring {
         executorService.scheduleAtFixedRate(() -> {
             long count = elasticDAO.count();
             histogram.update(count);
-        }, 0, appConfig.getMonitoringPeriod(), TimeUnit.SECONDS);
+        }, 0, projectConfig.getMonitoringPeriod(), TimeUnit.SECONDS);
     }
 
     public void stopMonitor() {

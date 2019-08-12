@@ -4,7 +4,7 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.TestUtility;
-import in.nimbo.common.config.AppConfig;
+import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.dao.elastic.ElasticDAO;
@@ -37,7 +37,7 @@ public class CrawlerServiceTest {
     private static ElasticDAO elasticDAO;
     private static ParserService parserService;
     private static Document document;
-    private static AppConfig appConfig;
+    private static ProjectConfig projectConfig;
     private static Cache<String, LocalDateTime> cache;
     private static CrawlerService crawlerService;
     private static String link;
@@ -51,8 +51,8 @@ public class CrawlerServiceTest {
     @BeforeClass
     public static void init() {
         elasticDAO = mock(ElasticDAO.class);
-        parserService = spy(new ParserService(new AppConfig()));
-        appConfig = AppConfig.load();
+        parserService = spy(new ParserService(new ProjectConfig()));
+        projectConfig = ProjectConfig.load();
         SharedMetricRegistries.setDefault("Keenbo");
     }
 
@@ -64,7 +64,7 @@ public class CrawlerServiceTest {
         String title = "nimbo";
         anchors = new HashSet<>();
         anchors.add(new Anchor("https://google.com", "another link"));
-        anchors.add(new Anchor("http://sahab.com", "Hi"));
+        anchors.add(new Anchor("http://sahab.com", "hi"));
         metas = new ArrayList<>();
         metas.add(new Meta("nimbo", "sahab"));
         metas.add(new Meta("google", "search"));
@@ -78,9 +78,9 @@ public class CrawlerServiceTest {
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
         doNothing().when(elasticDAO).save(any(Page.class));
         doReturn(true).when(hBaseDAO).add(any(Page.class));
-        cache = Caffeine.newBuilder().maximumSize(appConfig.getCaffeineMaxSize())
-                .expireAfterWrite(appConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
-        crawlerService = spy(new CrawlerService(cache, hBaseDAO, elasticDAO, parserService));
+        cache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
+                .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
+        crawlerService = spy(new CrawlerService(cache, redisDAO, hBaseDAO, elasticDAO, parserService));
     }
 
     @Test
@@ -107,6 +107,7 @@ public class CrawlerServiceTest {
     @Test
     public void crawlRepeatedLinkTest() {
         when(hBaseDAO.contains(anyString())).thenReturn(true);
+        when(redisDAO.contains(anyString())).thenReturn(true);
         Set<String> actualResult = new HashSet<>();
         Set<String> answer = crawlerService.crawl(link);
         Assert.assertEquals(actualResult, answer);
@@ -114,6 +115,7 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlInvalidLink() {
+        when(redisDAO.contains(link)).thenReturn(true);
         when(hBaseDAO.contains(link)).thenReturn(true);
         Set<String> answer = crawlerService.crawl("http://");
         Set<String> actualResult = new HashSet<>();
