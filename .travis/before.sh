@@ -8,17 +8,17 @@ if [[ ! -d $HOME/Downloads/hbase-1.2.4-bin ]];
 then
     echo "Downloading HBase"
     sudo wget -O $HBASE_DOWNLOAD_FILE https://archive.apache.org/dist/hbase/1.2.4/hbase-1.2.4-bin.tar.gz
-    echo "Downloading JDK"
-    sudo wget -O JDK_DOWNLOAD_FILE http://dl.yasdl.com/Arash/2018/Software/jdk-8u181-linux-x64.tar.gz
+#    echo "Downloading JDK"
+#    sudo wget -O JDK_DOWNLOAD_FILE http://dl.yasdl.com/Arash/2018/Software/jdk-8u181-linux-x64.tar.gz
 fi
 echo "Copying HBase Files"
 cp $HBASE_DOWNLOAD_FILE hbase-1.2.4.tar.gz
-echo "Copying JDK Files"
-cp JDK_DOWNLOAD_FILE jdk.tar.gz
+#echo "Copying JDK Files"
+#cp JDK_DOWNLOAD_FILE jdk.tar.gz
 echo "Extracting HBase Files"
 tar -xvzf hbase-1.2.4.tar.gz
-echo "Extracting JDK Files"
-tar -xvzf jdk.tar.gz
+#echo "Extracting JDK Files"
+#tar -xvzf jdk.tar.gz
 
 # HBase configuration
 echo "HBase Configuration"
