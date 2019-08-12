@@ -22,6 +22,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 public class HBaseDAOTest {
     private static HBaseDAO hBaseDAO;
     private static HBaseConfig hBaseConfig;
@@ -59,12 +62,12 @@ public class HBaseDAOTest {
         }
         Page page = new Page("http://www.google.com/", "Google", "content", anchors, metas, 100.0);
         hBaseDAO.add(page);
-//        assertTrue(hBaseDAO.contains(page.getLink()));
+        assertTrue(hBaseDAO.contains(page.getLink()));
     }
 
-//    @Test
-//    public void testContain() {
-//        assertFalse(hBaseDAO.contains("http://www.google.com/"));
-//        assertFalse(hBaseDAO.contains("fake link"));
-//    }
+    @Test
+    public void testContain() {
+        assertFalse(hBaseDAO.contains("http://www.google.com/"));
+        assertFalse(hBaseDAO.contains("fake link"));
+    }
 }
