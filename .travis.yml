@@ -5,7 +5,7 @@ git:
 
 script:
   - echo "salam!!!"
-#  - mvn clean
+  - mvn clean test
 
 jdk:
   - openjdk8
