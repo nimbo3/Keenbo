@@ -15,7 +15,7 @@ before_script:
   - sleep 5
 
 script:
-  - mvn clean test > mvn-log.txt 2>&1
+  - mvn clean test
 
 cache:
   directories:
