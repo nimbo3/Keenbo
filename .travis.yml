@@ -1,8 +1,5 @@
 language: java
 
-git:
-  quiet: true
-
 script:
   - echo "salam!!!"
 #  - mvn clean

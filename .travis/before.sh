@@ -16,7 +16,7 @@ cp $HBASE_DOWNLOAD_FILE hbase-1.2.4.tar.gz
 #echo "Copying JDK Files"
 #cp JDK_DOWNLOAD_FILE jdk.tar.gz
 echo "Extracting HBase Files"
-tar -xvzf hbase-1.2.4.tar.gz
+tar -xvzf hbase-1.2.4.tar.gz > extract.log 2>&1
 #echo "Extracting JDK Files"
 #tar -xvzf jdk.tar.gz
 
@@ -25,9 +25,9 @@ echo "HBase Configuration"
 #export JAVA_HOME=$HOME/build/nimbo3/Keenbo/jdk
 #export HBASE_HOME="$HOME/build/nimbo3/Keenbo/$HBASE_FILES"
 echo $JAVA_HOME
-ll $JAVA_HOME
+ls $JAVA_HOME
 cp .travis/hbase-site.xml $HBASE_FILES/conf/
-echo "export JAVA_HOME=/home/travis/build/nimbo3/Keenbo/jdk" >> $HBASE_FILES/conf/hbase-env.sh
+echo "export JAVA_HOME=$JAVA_HOME" >> $HBASE_FILES/conf/hbase-env.sh
 
 echo "Running HBase"
 #source /home/travis/.bashrc
