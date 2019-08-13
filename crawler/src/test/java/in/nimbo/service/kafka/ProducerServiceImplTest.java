@@ -1,6 +1,7 @@
 package in.nimbo.service.kafka;
 
 import in.nimbo.common.config.KafkaConfig;
+import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.serializer.PageSerializer;
 import in.nimbo.service.CrawlerService;
@@ -10,7 +11,10 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.net.MalformedURLException;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -28,7 +32,7 @@ public class ProducerServiceImplTest {
     private CountDownLatch countDownLatch;
     private CrawlerService crawlerService;
     private MockProducer<String, String> linkProducer;
-    private MockProducer<String, Page> pageProducer;// TODO
+    private MockProducer<String, Page> pageProducer;
 
     @Before
     public void beforeEachTest() {
@@ -44,11 +48,15 @@ public class ProducerServiceImplTest {
     }
 
     @Test
-    public void producerTest() {
+    public void producerTest() throws MalformedURLException {
         Set<String> crawledLinks = new HashSet<>();
         crawledLinks.add("https://stackoverflow.com");
         crawledLinks.add("https://google.com");
-        when(crawlerService.crawl(anyString())).thenReturn(null); // TODO
+        Set<Anchor> anchors = new HashSet<>();
+        anchors.add(new Anchor("https://stackoverflow.com", "stackoverflow"));
+        anchors.add(new Anchor("https://google.com", "google"));
+        Page page = new Page("https://nimbo.in", "nimbo", "sahab internship", anchors, new ArrayList<>(), 1.0);
+        when(crawlerService.crawl(anyString())).thenReturn(Optional.of(page));
         messageQueue.add("https://nimbo.in");
 
         new Thread(() -> {
@@ -59,11 +67,11 @@ public class ProducerServiceImplTest {
                 // ignored
             }
         }).start();
-        //producerService.run();
+        producerService.run();
         for (ProducerRecord<String, String> record : linkProducer.history()) {
             assertEquals(record.key(), record.value());
             assertTrue(crawledLinks.contains(record.value()));
         }
-        //assertEquals(0, countDownLatch.getCount());
+        assertEquals(0, countDownLatch.getCount());
     }
 }
