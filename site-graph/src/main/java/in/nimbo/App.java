@@ -69,6 +69,19 @@ public class App {
         JavaRDD<Edge> edges = filteredMainDomains.map(link ->
                 new Edge(link._1, link._2));
 
+        Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);
+        verDF.show(false);
+
+        Dataset<Row> edgDF = spark.createDataFrame(edges, Edge.class);
+        edgDF.show(false);
+
+        GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
+        Dataset<Row> edgesWithWeight = graphFrame
+                .triplets()
+                .groupBy("src", "dst")
+                .agg(functions.sum("edge.numOfAnchors"));
+        edgesWithWeight.show(false);
+
         spark.stop();
     }
 
