@@ -13,6 +13,7 @@
     <modules>
         <module>common</module>
         <module>crawler</module>
+        <module>page-collector</module>
         <module>search</module>
         <module>forward-extractor</module>
     </modules>
