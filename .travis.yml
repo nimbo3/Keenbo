@@ -15,8 +15,7 @@ before_script:
 
 script:
   - mvn clean compile > /dev/null 2>&1
-  - mvn test
-  - mvn org.jacoco:jacoco-maven-plugin:prepare-agent install sonar:sonar -Dsonar.projectKey=nimbo3_Keenbo
+  - mvn org.jacoco:jacoco-maven-plugin:prepare-agent package sonar:sonar -Dsonar.projectKey=nimbo3_Keenbo
 
 cache:
   directories:
