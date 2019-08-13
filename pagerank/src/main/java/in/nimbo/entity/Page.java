@@ -4,29 +4,29 @@ import java.io.Serializable;
 
 public class Page implements Serializable {
     private String id;
-    private double pagerank;
+    private double rank;
 
     public Page() {
     }
 
-    public Page(String id, double pagerank) {
+    public Page(String id, double rank) {
         this.id = id;
-        this.pagerank = pagerank;
+        this.rank = rank;
     }
 
     public void setId(String id) {
         this.id = id;
     }
 
-    public void setPagerank(double pagerank) {
-        this.pagerank = pagerank;
+    public void setRank(double rank) {
+        this.rank = rank;
     }
 
     public String getId() {
         return id;
     }
 
-    public double getPagerank() {
-        return pagerank;
+    public double getRank() {
+        return rank;
     }
 }
