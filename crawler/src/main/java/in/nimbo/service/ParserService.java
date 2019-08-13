@@ -4,11 +4,12 @@ import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import in.nimbo.common.config.ProjectConfig;
+import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.LanguageDetectException;
-import in.nimbo.entity.Anchor;
-import in.nimbo.entity.Meta;
-import in.nimbo.entity.Page;
+import in.nimbo.common.exception.ParseLinkException;
 import in.nimbo.common.utility.LinkUtility;
+import in.nimbo.common.entity.Anchor;
+import in.nimbo.common.entity.Meta;
 import org.jsoup.Connection;
 import org.jsoup.HttpStatusException;
 import org.jsoup.Jsoup;
@@ -150,11 +151,11 @@ public class ParserService {
      * @param link link of site
      * @return page if able to crawl page
      */
-    public Optional<Page> getPage(String link) {
+    public Page getPage(String link) {
         try {
             Optional<Document> documentOptional = getDocument(link);
             if (!documentOptional.isPresent()) {
-                return Optional.empty();
+                throw new ParseLinkException("JSoup parse exception");
             }
             Document document = documentOptional.get();
             String pageContentWithoutTag = document.text().replace("\n", " ");
@@ -167,8 +168,7 @@ public class ParserService {
                 if (title.isEmpty()) {
                     title = link;
                 }
-                Page page = new Page(link, title, pageContentWithoutTag, anchors, metas, 1.0);
-                return Optional.of(page);
+                return new Page(link, title, pageContentWithoutTag, anchors, metas, 1.0);
             }
         } catch (MalformedURLException e) {
             appLogger.warn("Unable to reverse link: {}", link);
@@ -177,6 +177,6 @@ public class ParserService {
         } catch (Exception e) {
             appLogger.error(e.getMessage(), e);
         }
-        return Optional.empty();
+        throw new ParseLinkException();
     }
 }
