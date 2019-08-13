@@ -14,7 +14,8 @@ public class KafkaConfig {
     private Properties linkProducerProperties;
     private String linkTopic;
     private String pageTopic;
-    private int producerCount;
+    private int pageProducerCount;
+    private int linkProducerCount;
     private int localLinkQueueSize;
 
     public static KafkaConfig load() {
@@ -27,7 +28,8 @@ public class KafkaConfig {
             config.setPageProducerProperties(Config.loadProperties("kafka/page-producer.properties"));
             config.setLinkTopic(configuration.getString("link.topic.name"));
             config.setPageTopic(configuration.getString("page.topic.name"));
-            config.setProducerCount(configuration.getInt("producer.count"));
+            config.setPageProducerCount(configuration.getInt("page.producer.count"));
+            config.setLinkProducerCount(configuration.getInt("link.producer.count"));
             config.setLocalLinkQueueSize(configuration.getInt("local.queue.size"));
             return config;
         } catch (ConfigurationException e) {
@@ -83,12 +85,20 @@ public class KafkaConfig {
         this.pageTopic = pageTopic;
     }
 
-    public int getProducerCount() {
-        return producerCount;
+    public int getPageProducerCount() {
+        return pageProducerCount;
     }
 
-    public void setProducerCount(int producerCount) {
-        this.producerCount = producerCount;
+    public void setPageProducerCount(int pageProducerCount) {
+        this.pageProducerCount = pageProducerCount;
+    }
+
+    public int getLinkProducerCount() {
+        return linkProducerCount;
+    }
+
+    public void setLinkProducerCount(int linkProducerCount) {
+        this.linkProducerCount = linkProducerCount;
     }
 
     public int getLocalLinkQueueSize() {
