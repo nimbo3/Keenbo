@@ -17,6 +17,7 @@ public class KafkaConfig {
     private int pageProducerCount;
     private int linkProducerCount;
     private int localLinkQueueSize;
+    private int localPageQueueSize;
 
     public static KafkaConfig load() {
         KafkaConfig config = new KafkaConfig();
@@ -30,7 +31,8 @@ public class KafkaConfig {
             config.setPageTopic(configuration.getString("page.topic.name"));
             config.setPageProducerCount(configuration.getInt("page.producer.count"));
             config.setLinkProducerCount(configuration.getInt("link.producer.count"));
-            config.setLocalLinkQueueSize(configuration.getInt("local.queue.size"));
+            config.setLocalLinkQueueSize(configuration.getInt("local.link.queue.size"));
+            config.setLocalPageQueueSize(configuration.getInt("local.page.queue.size"));
             return config;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
@@ -107,5 +109,13 @@ public class KafkaConfig {
 
     public void setLocalLinkQueueSize(int localLinkQueueSize) {
         this.localLinkQueueSize = localLinkQueueSize;
+    }
+
+    public int getLocalPageQueueSize() {
+        return localPageQueueSize;
+    }
+
+    public void setLocalPageQueueSize(int localPageQueueSize) {
+        this.localPageQueueSize = localPageQueueSize;
     }
 }
