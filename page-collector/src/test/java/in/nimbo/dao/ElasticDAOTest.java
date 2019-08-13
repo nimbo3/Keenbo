@@ -2,11 +2,11 @@ package in.nimbo.dao;
 
 import in.nimbo.App;
 import in.nimbo.common.config.ElasticConfig;
+import in.nimbo.common.entity.Page;
 import in.nimbo.dao.elastic.ElasticBulkListener;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
-import in.nimbo.entity.Meta;
-import in.nimbo.entity.Page;
+import in.nimbo.common.entity.Meta;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.junit.AfterClass;

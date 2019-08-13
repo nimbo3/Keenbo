@@ -13,6 +13,7 @@
     <modules>
         <module>common</module>
         <module>crawler</module>
+        <module>page-collector</module>
         <module>search</module>
         <module>forward-extractor</module>
         <module>site-graph</module>
@@ -38,6 +39,7 @@
         <elasticsearch.version>6.6.2</elasticsearch.version>
         <http.httpcomponents.version>4.5.9</http.httpcomponents.version>
         <dropwizard-metrics.version>4.1.0</dropwizard-metrics.version>
+        <kafka.version>2.3.0</kafka.version>
     </properties>
 
     <dependencies>
@@ -46,6 +48,13 @@
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <!--Producer/Consumer API of Apache Kafka-->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>${kafka.version}</version>
         </dependency>
 
         <!--Embedded Elasticsearch for unit test        -->

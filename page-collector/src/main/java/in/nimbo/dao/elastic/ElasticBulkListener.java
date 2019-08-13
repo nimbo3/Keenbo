@@ -1,6 +1,6 @@
 package in.nimbo.dao.elastic;
 
-import in.nimbo.entity.Page;
+import in.nimbo.common.entity.Page;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.bulk.BulkRequest;

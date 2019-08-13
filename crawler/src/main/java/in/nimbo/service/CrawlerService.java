@@ -5,29 +5,21 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.github.benmanes.caffeine.cache.Cache;
-import in.nimbo.common.exception.HBaseException;
+import in.nimbo.common.entity.Page;
+import in.nimbo.common.exception.InvalidLinkException;
+import in.nimbo.common.exception.ParseLinkException;
 import in.nimbo.common.utility.LinkUtility;
-import in.nimbo.dao.elastic.ElasticDAO;
-import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.redis.RedisDAO;
-import in.nimbo.entity.Page;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 
 public class CrawlerService {
-    private final Counter crawledPages;
     private final Timer getPageTimer;
-    private final Timer hBaseContainTimer;
-    private final Timer elasticSaveTimer;
-    private final Timer hBaseAddTimer;
     private final Counter skippedCounter;
     private final Counter crawledCounter;
 
@@ -35,50 +27,47 @@ public class CrawlerService {
     private Logger parserLogger = LoggerFactory.getLogger("parser");
     private Cache<String, LocalDateTime> cache;
     private RedisDAO redisDAO;
-    private HBaseDAO hBaseDAO;
-    private ElasticDAO elasticDAO;
     private ParserService parserService;
 
     public CrawlerService(Cache<String, LocalDateTime> cache,
-                          RedisDAO redisDAO, HBaseDAO hBaseDAO, ElasticDAO elasticDAO,
+                          RedisDAO redisDAO,
                           ParserService parserService) {
         this.cache = cache;
-        this.hBaseDAO = hBaseDAO;
-        this.elasticDAO = elasticDAO;
         this.parserService = parserService;
         this.redisDAO = redisDAO;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
-        crawledPages = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledPages"));
         getPageTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "getPage"));
-        hBaseContainTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "hBaseContains"));
-        elasticSaveTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "elasticSave"));
-        hBaseAddTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "hBaseAdd"));
         skippedCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "skipCounter"));
         crawledCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledCounter"));
     }
 
-    public Set<String> crawl(String siteLink) {
-        Set<String> links = new HashSet<>();
+    /**
+     *
+     * @param siteLink url of crawling page
+     * @return crawler page otherwise Optional.empty if this domain was visited recently
+     * @throws InvalidLinkException if link is invalid
+     * @throws ParseLinkException if any exception happen in parser
+     */
+    public Optional<Page> crawl(String siteLink) {
         LocalDateTime start = LocalDateTime.now();
         boolean isLinkSkipped = true;
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
-                Timer.Context hBaseContainContext = hBaseContainTimer.time();
-                boolean contains = redisDAO.contains(siteLink);
-                hBaseContainContext.stop();
+                boolean contains = redisDAO.contains(siteLink); // TODO use metric
                 if (!contains) {
+                    redisDAO.add(siteLink);
+                    cache.put(siteDomain, LocalDateTime.now());
                     isLinkSkipped = false;
                     Timer.Context context = getPageTimer.time();
-                    Optional<Page> pageOptional = parserService.getPage(siteLink);
+                    Page page = parserService.getPage(siteLink);
                     context.stop();
-                    cache.put(siteDomain, LocalDateTime.now());
-                    if (pageOptional.isPresent()) {
-                        links = processPage(pageOptional.get());
-                    }
+                    return Optional.of(page);
+                } else {
+                    throw new InvalidLinkException("duplicated link: " + siteLink);
                 }
             } else {
-                links.add(siteLink);
+                return Optional.empty();
             }
         } catch (URISyntaxException e) {
             parserLogger.warn("Illegal URL format: " + siteLink, e);
@@ -93,33 +82,6 @@ public class CrawlerService {
                 crawledCounter.inc(duration);
             }
         }
-        return links;
-    }
-
-    private Set<String> processPage(Page page) {
-        try {
-            redisDAO.add(page.getLink());
-            Set<String> links = new HashSet<>();
-            page.getAnchors().forEach(anchor -> links.add(anchor.getHref()));
-            boolean isAddedToHBase;
-            if (page.getAnchors().isEmpty()) {
-                isAddedToHBase = true;
-            } else {
-                Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
-                isAddedToHBase = hBaseDAO.add(page);
-                hBaseAddTimerContext.stop();
-            }
-            if (isAddedToHBase) {
-                elasticSaveTimer.time(() -> elasticDAO.save(page));
-                crawledPages.inc();
-            } else {
-                appLogger.warn("Unable to add page with link {} to HBase", page.getLink());
-            }
-            return links;
-        } catch (HBaseException e) {
-            appLogger.error("Unable to establish HBase connection", e);
-            appLogger.info("Retry link {} again because of HBase exception", page.getLink());
-            return Collections.singleton(page.getLink());
-        }
+        throw new InvalidLinkException();
     }
 }

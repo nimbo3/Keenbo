@@ -1,12 +1,17 @@
 package in.nimbo.service.kafka;
 
+import in.nimbo.common.config.KafkaConfig;
+import in.nimbo.common.entity.Anchor;
+import in.nimbo.common.entity.Page;
+import in.nimbo.common.exception.InvalidLinkException;
+import in.nimbo.common.exception.ParseLinkException;
 import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -14,21 +19,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProducerServiceImpl implements ProducerService {
     private Logger logger = LoggerFactory.getLogger("app");
+    private KafkaConfig config;
     private BlockingQueue<String> messageQueue;
-    private Producer<String, String> producer;
-    private String topic;
+    private Producer<String, String> linkProducer;
+    private Producer<String, Page> pageProducer;
     private CrawlerService crawlerService;
-    private AtomicBoolean closed;
+    private AtomicBoolean closed = new AtomicBoolean(false);
     private CountDownLatch countDownLatch;
 
-    public ProducerServiceImpl(Producer<String, String> producer, String topic,
-                               BlockingQueue<String> messageQueue, CrawlerService crawlerService, CountDownLatch countDownLatch) {
-        this.producer = producer;
+    public ProducerServiceImpl(KafkaConfig config, BlockingQueue<String> messageQueue,
+                               Producer<String, String> linkProducer, Producer<String, Page> pageProducer,
+                               CrawlerService crawlerService, CountDownLatch countDownLatch) {
+        this.config = config;
         this.messageQueue = messageQueue;
-        this.topic = topic;
+        this.linkProducer = linkProducer;
+        this.pageProducer = pageProducer;
         this.crawlerService = crawlerService;
         this.countDownLatch = countDownLatch;
-        closed = new AtomicBoolean(false);
     }
 
     @Override
@@ -42,19 +49,36 @@ public class ProducerServiceImpl implements ProducerService {
             while (!closed.get()) {
                 String newLink = messageQueue.poll(100, TimeUnit.MILLISECONDS);
                 if (newLink != null) {
-                    Set<String> crawl = crawlerService.crawl(newLink);
-                    for (String link : crawl) {
-                        producer.send(new ProducerRecord<>(topic, link, link));
-                    }
+                    handleLink(newLink);
                 }
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         } finally {
-            if (producer != null)
-                producer.close();
-            logger.info("Producer service stopped");
+            if (pageProducer != null)
+                pageProducer.close();
+            if (linkProducer != null)
+                linkProducer.close();
+
+            logger.info("Producers stopped");
             countDownLatch.countDown();
+        }
+    }
+
+    private void handleLink(String link) {
+        try {
+            Optional<Page> optionalPage = crawlerService.crawl(link);
+            if (optionalPage.isPresent()) {
+                Page page = optionalPage.get();
+                for (Anchor anchor : page.getAnchors()) {
+                    linkProducer.send(new ProducerRecord<>(config.getLinkTopic(), anchor.getHref(), anchor.getHref()));
+                }
+                pageProducer.send(new ProducerRecord<>(config.getPageTopic(), page.getLink(), page));
+            } else {
+                linkProducer.send(new ProducerRecord<>(config.getLinkTopic(), link, link));
+            }
+        } catch (ParseLinkException | InvalidLinkException ignored) {
+            // Ignore link
         }
     }
 }

@@ -1,7 +1,7 @@
 package in.nimbo.dao.hbase;
 
 import in.nimbo.common.exception.HBaseException;
-import in.nimbo.entity.Page;
+import in.nimbo.common.entity.Page;
 
 import java.io.IOException;
 
