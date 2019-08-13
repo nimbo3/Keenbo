@@ -99,6 +99,8 @@ public class App {
         }
         int firstDot = linkWithoutProtocol.indexOf('.');
         int afterFirstDot = linkWithoutProtocol.substring(firstDot + 1).indexOf('.');
-        return afterFirstDot == -1 ? linkWithoutProtocol : linkWithoutProtocol.substring(0, afterFirstDot + firstDot + 1);
+        if (afterFirstDot != -1)
+            linkWithoutProtocol = linkWithoutProtocol.substring(0, afterFirstDot + firstDot + 1);
+        return linkWithoutProtocol.substring(firstDot + 1) + "." + linkWithoutProtocol.substring(0, firstDot);
     }
 }
