@@ -35,7 +35,6 @@ public class App {
 
         SparkSession spark = SparkSession.builder()
                 .appName(appConfig.getAppName())
-                .master(appConfig.getResourceManager())
                 .getOrCreate();
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
