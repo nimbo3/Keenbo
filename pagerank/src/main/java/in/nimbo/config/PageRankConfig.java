@@ -5,14 +5,12 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
 public class PageRankConfig {
-    private static final String CONFIG_NAME = "pagerank.properties";
-    private String resourceManager;
+    private static final String CONFIG_NAME = "page-rank.properties";
     private String appName;
     private double resetProbability;
     private int maxIter;
     private String esNodes;
     private String esWriteOperation;
-    private String esMappingId;
     private String esIndexAutoCreate;
     private String esIndex;
     private String esType;
@@ -21,7 +19,6 @@ public class PageRankConfig {
         PageRankConfig pageRankConfig = new PageRankConfig();
         try {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
-            pageRankConfig.setResourceManager(config.getString("resource.manager"));
             pageRankConfig.setAppName(config.getString("app.name"));
             pageRankConfig.setMaxIter(config.getInt("algorithm.max.iter"));
             pageRankConfig.setResetProbability(config.getDouble("algorithm.reset.probability"));
@@ -90,14 +87,6 @@ public class PageRankConfig {
 
     public void setMaxIter(int maxIter) {
         this.maxIter = maxIter;
-    }
-
-    public String getResourceManager() {
-        return resourceManager;
-    }
-
-    public void setResourceManager(String resourceManager) {
-        this.resourceManager = resourceManager;
     }
 
     public String getAppName() {
