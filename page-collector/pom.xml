@@ -8,7 +8,7 @@
         <artifactId>search-engine</artifactId>
         <version>1.0</version>
     </parent>
-    <artifactId>crawler</artifactId>
+    <artifactId>page-collector</artifactId>
     <version>1.0</version>
 
     <properties>
@@ -45,6 +45,12 @@
             <artifactId>common</artifactId>
             <version>1.0</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>in.nimbo</groupId>
+            <artifactId>forward-extractor</artifactId>
+            <version>1.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -83,7 +89,7 @@
                             <outputDirectory>target/${project.name}/conf</outputDirectory>
                             <resources>
                                 <resource>
-                                    <directory>../crawler/src/main/resources/</directory>
+                                    <directory>../page-collector/src/main/resources/</directory>
                                     <includes>
                                         <include>*.properties</include>
                                         <include>*.yaml</include>

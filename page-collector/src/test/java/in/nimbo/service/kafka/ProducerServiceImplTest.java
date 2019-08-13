@@ -3,7 +3,7 @@ package in.nimbo.service.kafka;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.serializer.PageSerializer;
-import in.nimbo.service.CrawlerService;
+import in.nimbo.service.CollectorService;
 import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
@@ -18,29 +18,25 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 public class ProducerServiceImplTest {
-    private BlockingQueue<String> messageQueue;
+    private MockProducer<String, Page> kafkaProducer;
+    private BlockingQueue<Page> messageQueue;
     private ProducerService producerService;
     private CountDownLatch countDownLatch;
-    private CrawlerService crawlerService;
-    private MockProducer<String, String> linkProducer;
-    private MockProducer<String, Page> pageProducer;// TODO
+    private CollectorService collectorService;
 
     @Before
     public void beforeEachTest() {
         messageQueue = spy(new LinkedBlockingQueue<>());
         countDownLatch = new CountDownLatch(1);
-        crawlerService = mock(CrawlerService.class);
+        collectorService = mock(CollectorService.class);
         KafkaConfig kafkaConfig = KafkaConfig.load();
-        linkProducer = new MockProducer<>(true, new StringSerializer(), new StringSerializer());
-        pageProducer = new MockProducer<>(true, new StringSerializer(), new PageSerializer());
+        kafkaProducer = new MockProducer<>(true, new StringSerializer(), new PageSerializer());
         producerService = new ProducerServiceImpl(kafkaConfig, messageQueue,
-                linkProducer, pageProducer,
-                crawlerService, countDownLatch);
+                kafkaProducer, collectorService, countDownLatch);
     }
 
     @Test
@@ -48,8 +44,6 @@ public class ProducerServiceImplTest {
         Set<String> crawledLinks = new HashSet<>();
         crawledLinks.add("https://stackoverflow.com");
         crawledLinks.add("https://google.com");
-        when(crawlerService.crawl(anyString())).thenReturn(null); // TODO
-        messageQueue.add("https://nimbo.in");
 
         new Thread(() -> {
             try {
@@ -59,11 +53,11 @@ public class ProducerServiceImplTest {
                 // ignored
             }
         }).start();
-        //producerService.run();
-        for (ProducerRecord<String, String> record : linkProducer.history()) {
-            assertEquals(record.key(), record.value());
-            assertTrue(crawledLinks.contains(record.value()));
+        producerService.run();
+        for (ProducerRecord<String, Page> record : kafkaProducer.history()) {
+            //          assertEquals(record.key(), record.value().getLink());
+//            assertTrue(crawledLinks.contains(record.value()));
         }
-        //assertEquals(0, countDownLatch.getCount());
+        assertEquals(0, countDownLatch.getCount());
     }
 }

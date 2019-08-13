@@ -7,65 +7,115 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 import java.util.Properties;
 
 public class KafkaConfig {
-    private static final String CONFIG_NAME = "kafka.properties";
-    private Properties consumerProperties;
-    private Properties producerProperties;
-    private String kafkaTopic;
-    private int producerCount;
-    private int localQueueSize;
+    private static final String CONFIG_NAME = "kafka/kafka.properties";
+    private Properties linkConsumerProperties;
+    private Properties pageConsumerProperties;
+    private Properties pageProducerProperties;
+    private Properties linkProducerProperties;
+    private String linkTopic;
+    private String pageTopic;
+    private int pageProducerCount;
+    private int linkProducerCount;
+    private int localLinkQueueSize;
+    private int localPageQueueSize;
 
     public static KafkaConfig load() {
         KafkaConfig config = new KafkaConfig();
         try {
             PropertiesConfiguration configuration = new PropertiesConfiguration(CONFIG_NAME);
-            config.setKafkaTopic(configuration.getString("topic.name"));
-            config.setProducerCount(configuration.getInt("producer.count"));
-            config.setLocalQueueSize(configuration.getInt("local.queue.size"));
-            config.setConsumerProperties(Config.loadProperties("kafka-consumer.properties"));
-            config.setProducerProperties(Config.loadProperties("kafka-producer.properties"));
+            config.setLinkConsumerProperties(Config.loadProperties("kafka/link-consumer.properties"));
+            config.setPageConsumerProperties(Config.loadProperties("kafka/page-consumer.properties"));
+            config.setLinkProducerProperties(Config.loadProperties("kafka/link-producer.properties"));
+            config.setPageProducerProperties(Config.loadProperties("kafka/page-producer.properties"));
+            config.setLinkTopic(configuration.getString("link.topic.name"));
+            config.setPageTopic(configuration.getString("page.topic.name"));
+            config.setPageProducerCount(configuration.getInt("page.producer.count"));
+            config.setLinkProducerCount(configuration.getInt("link.producer.count"));
+            config.setLocalLinkQueueSize(configuration.getInt("local.link.queue.size"));
+            config.setLocalPageQueueSize(configuration.getInt("local.page.queue.size"));
             return config;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
     }
 
-    public int getLocalQueueSize() {
-        return localQueueSize;
+    public Properties getLinkConsumerProperties() {
+        return linkConsumerProperties;
     }
 
-    public void setLocalQueueSize(int localQueueSize) {
-        this.localQueueSize = localQueueSize;
+    public void setLinkConsumerProperties(Properties linkConsumerProperties) {
+        this.linkConsumerProperties = linkConsumerProperties;
     }
 
-    public int getProducerCount() {
-        return producerCount;
+    public Properties getPageConsumerProperties() {
+        return pageConsumerProperties;
     }
 
-    public void setProducerCount(int producerCount) {
-        this.producerCount = producerCount;
+    public void setPageConsumerProperties(Properties pageConsumerProperties) {
+        this.pageConsumerProperties = pageConsumerProperties;
     }
 
-    public Properties getConsumerProperties() {
-        return consumerProperties;
+    public Properties getPageProducerProperties() {
+        return pageProducerProperties;
     }
 
-    public void setConsumerProperties(Properties consumerProperties) {
-        this.consumerProperties = consumerProperties;
+    public void setPageProducerProperties(Properties pageProducerProperties) {
+        this.pageProducerProperties = pageProducerProperties;
     }
 
-    public Properties getProducerProperties() {
-        return producerProperties;
+    public Properties getLinkProducerProperties() {
+        return linkProducerProperties;
     }
 
-    public void setProducerProperties(Properties producerProperties) {
-        this.producerProperties = producerProperties;
+    public void setLinkProducerProperties(Properties linkProducerProperties) {
+        this.linkProducerProperties = linkProducerProperties;
     }
 
-    public String getKafkaTopic() {
-        return kafkaTopic;
+    public String getLinkTopic() {
+        return linkTopic;
     }
 
-    public void setKafkaTopic(String kafkaTopic) {
-        this.kafkaTopic = kafkaTopic;
+    public void setLinkTopic(String linkTopic) {
+        this.linkTopic = linkTopic;
+    }
+
+    public String getPageTopic() {
+        return pageTopic;
+    }
+
+    public void setPageTopic(String pageTopic) {
+        this.pageTopic = pageTopic;
+    }
+
+    public int getPageProducerCount() {
+        return pageProducerCount;
+    }
+
+    public void setPageProducerCount(int pageProducerCount) {
+        this.pageProducerCount = pageProducerCount;
+    }
+
+    public int getLinkProducerCount() {
+        return linkProducerCount;
+    }
+
+    public void setLinkProducerCount(int linkProducerCount) {
+        this.linkProducerCount = linkProducerCount;
+    }
+
+    public int getLocalLinkQueueSize() {
+        return localLinkQueueSize;
+    }
+
+    public void setLocalLinkQueueSize(int localLinkQueueSize) {
+        this.localLinkQueueSize = localLinkQueueSize;
+    }
+
+    public int getLocalPageQueueSize() {
+        return localPageQueueSize;
+    }
+
+    public void setLocalPageQueueSize(int localPageQueueSize) {
+        this.localPageQueueSize = localPageQueueSize;
     }
 }

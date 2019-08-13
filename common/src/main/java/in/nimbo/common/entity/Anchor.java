@@ -1,4 +1,4 @@
-package in.nimbo.entity;
+package in.nimbo.common.entity;
 
 import java.util.Objects;
 

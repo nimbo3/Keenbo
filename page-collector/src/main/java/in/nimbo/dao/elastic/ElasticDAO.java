@@ -1,6 +1,7 @@
 package in.nimbo.dao.elastic;
 
-import in.nimbo.entity.Page;
+
+import in.nimbo.common.entity.Page;
 
 public interface ElasticDAO {
     void save(Page page);
