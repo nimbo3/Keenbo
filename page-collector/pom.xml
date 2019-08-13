@@ -12,6 +12,7 @@
     <version>1.0</version>
 
     <properties>
+        <main.basedir>${project.parent.basedir}</main.basedir>
         <jsoup.version>1.12.1</jsoup.version>
         <caffeine.version>2.7.0</caffeine.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
@@ -19,137 +20,16 @@
     </properties>
 
     <dependencies>
-        <!--Jsoup library for parse pages-->
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>${jsoup.version}</version>
-        </dependency>
-
-        <!--Caffeine Cache library-->
-        <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
-            <version>${caffeine.version}</version>
-        </dependency>
-
-        <!-- language detector -->
-        <dependency>
-            <groupId>com.cybozu.labs</groupId>
-            <artifactId>langdetect</artifactId>
-            <version>${langdetect.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>in.nimbo</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
             <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>in.nimbo</groupId>
-            <artifactId>forward-extractor</artifactId>
-            <version>1.0</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <id>copy-sh</id>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <phase>validate</phase>
-                        <configuration>
-                            <outputDirectory>target/${project.name}/bin/</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/resources/</directory>
-                                    <includes>
-                                        <include>*.sh</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-conf</id>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <phase>validate</phase>
-                        <configuration>
-                            <outputDirectory>target/${project.name}/conf</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>../page-collector/src/main/resources/</directory>
-                                    <includes>
-                                        <include>*.properties</include>
-                                        <include>*.yaml</include>
-                                        <include>*.xml</include>
-                                        <include>profiles/*</include>
-                                    </includes>
-                                </resource>
-                                <resource>
-                                    <directory>../common/src/main/resources/</directory>
-                                    <includes>
-                                        <include>*.properties</include>
-                                        <include>*.yaml</include>
-                                        <include>*.xml</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-jar</id>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <phase>validate</phase>
-                        <configuration>
-                            <outputDirectory>target/${project.name}/lib</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>../common/lib/</directory>
-                                    <includes>
-                                        <include>*.jar</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-                <configuration>
-                    <escapeString>\</escapeString>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>target/${project.name}/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>3.0.2</version>
