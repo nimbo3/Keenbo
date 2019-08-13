@@ -81,22 +81,24 @@ public class App {
     }
 
     private static String getMainDomain(String link) {
-        String linkWithoutProtocol = link.substring(link.indexOf('/') + 2);
-        int indexOfSlash = linkWithoutProtocol.indexOf('/');
-        if (indexOfSlash != -1) {
-            linkWithoutProtocol = linkWithoutProtocol.substring(0, indexOfSlash);
-        }
+//        String linkWithoutProtocol = link.substring(link.indexOf('/') + 2);
+//        int indexOfSlash = linkWithoutProtocol.indexOf('/');
+//        if (indexOfSlash != -1) {
+//            linkWithoutProtocol = linkWithoutProtocol.substring(0, indexOfSlash);
+//        }
+        String linkWithoutProtocol = link;
         int lastDot = linkWithoutProtocol.lastIndexOf('.');
         int beforeLastDot = linkWithoutProtocol.substring(0, lastDot).lastIndexOf('.');
         return beforeLastDot == -1 ? linkWithoutProtocol : linkWithoutProtocol.substring(beforeLastDot + 1);
     }
 
     private static String getMainDomainForReversed(String link) {
-        String linkWithoutProtocol = link.substring(link.indexOf('/') + 2);
-        int indexOfSlash = linkWithoutProtocol.indexOf('/');
-        if (indexOfSlash != -1) {
-            linkWithoutProtocol = linkWithoutProtocol.substring(0, indexOfSlash);
-        }
+//        String linkWithoutProtocol = link.substring(link.indexOf('/') + 2);
+//        int indexOfSlash = linkWithoutProtocol.indexOf('/');
+//        if (indexOfSlash != -1) {
+//            linkWithoutProtocol = linkWithoutProtocol.substring(0, indexOfSlash);
+//        }
+        String linkWithoutProtocol = link;
         int firstDot = linkWithoutProtocol.indexOf('.');
         int afterFirstDot = linkWithoutProtocol.substring(firstDot + 1).indexOf('.');
         if (afterFirstDot != -1)
