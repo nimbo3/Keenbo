@@ -43,9 +43,6 @@ public class ConsumerServiceImpl implements ConsumerService {
                     while (!isAdded && !closed.get()) {
                         isAdded = messageQueue.offer(record.value(), 100, TimeUnit.MILLISECONDS);
                     }
-                    if (closed.get()) {
-                        break;
-                    }
                 }
             }
         } catch (Exception e) {
