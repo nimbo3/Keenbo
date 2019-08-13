@@ -40,10 +40,10 @@ public class App {
                 .appName(appConfig.getAppName())
                 .master(appConfig.getResourceManager())
                 .getOrCreate();
-        spark.conf().set("es.nodes", appConfig.getNodesIP());
-        spark.conf().set("es.write.operation", "upsert");
-        spark.conf().set("es.mapping.id", "id");
-        spark.conf().set("es.index.auto.create", appConfig.getEsCreateIndex());
+        spark.sparkContext().conf().set("es.nodes", appConfig.getNodesIP());
+        spark.sparkContext().conf().set("es.write.operation", "upsert");
+        spark.sparkContext().conf().set("es.mapping.id", "id");
+        spark.sparkContext().conf().set("es.index.auto.create", appConfig.getEsCreateIndex());
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class

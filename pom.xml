@@ -13,15 +13,20 @@
     <modules>
         <module>common</module>
         <module>crawler</module>
+        <module>page-collector</module>
         <module>search</module>
         <module>forward-extractor</module>
         <module>site-graph</module>
+        <module>pagerank</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
+        <junit.version>4.11</junit.version>
+        <embedded.elasticsearch.version>2.7.0</embedded.elasticsearch.version>
+
         <slf4j.version>1.7.26</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
         <log4j.core.version>2.12.0</log4j.core.version>
@@ -29,18 +34,34 @@
         <apache.configuration.version>1.10</apache.configuration.version>
         <mockito.version>2.10.0</mockito.version>
         <jacoco.version>0.8.4</jacoco.version>
-        <hbase.version>1.4.10</hbase.version>
+        <hbase.version>1.2.4</hbase.version>
         <jedis.version>3.0.1</jedis.version>
         <elasticsearch.version>6.6.2</elasticsearch.version>
         <http.httpcomponents.version>4.5.9</http.httpcomponents.version>
         <dropwizard-metrics.version>4.1.0</dropwizard-metrics.version>
+        <kafka.version>2.3.0</kafka.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.11</version>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+
+        <!--Producer/Consumer API of Apache Kafka-->
+        <dependency>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>${kafka.version}</version>
+        </dependency>
+
+        <!--Embedded Elasticsearch for unit test        -->
+        <dependency>
+            <groupId>pl.allegro.tech</groupId>
+            <artifactId>embedded-elasticsearch</artifactId>
+            <version>${embedded.elasticsearch.version}</version>
             <scope>test</scope>
         </dependency>
 
@@ -128,6 +149,13 @@
         </dependency>
 
     </dependencies>
+
+    <repositories>
+        <repository>
+            <id>SparkPackagesRepo</id>
+            <url>http://dl.bintray.com/spark-packages/maven</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>

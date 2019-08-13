@@ -17,15 +17,32 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
-        <spark.version>2.2.0</spark.version>
+        <spark.version>2.3.3</spark.version>
         <hbase.version>1.4.10</hbase.version>
-        <elasticsearch.spark.version>6.6.2</elasticsearch.spark.version>
+        <elastic.version>6.6.2</elastic.version>
+        <graphframes.version>0.7.0-spark2.4-s_2.11</graphframes.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.11</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-graphx_2.11</artifactId>
+            <version>${spark.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>graphframes</groupId>
+            <artifactId>graphframes</artifactId>
+            <version>${graphframes.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-sql_2.11</artifactId>
             <version>${spark.version}</version>
         </dependency>
 
@@ -38,8 +55,9 @@
         <dependency>
             <groupId>org.elasticsearch</groupId>
             <artifactId>elasticsearch-spark-20_2.11</artifactId>
-            <version>${elasticsearch.spark.version}</version>
+            <version>${elastic.version}</version>
         </dependency>
+
         <dependency>
             <groupId>in.nimbo</groupId>
             <artifactId>common</artifactId>
@@ -47,35 +65,7 @@
             <scope>compile</scope>
         </dependency>
 
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.11</artifactId>
-            <version>2.3.3</version>
-        </dependency>
 
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-graphx_2.11</artifactId>
-            <version>2.3.3</version>
-        </dependency>
-
-        <dependency>
-            <groupId>graphframes</groupId>
-            <artifactId>graphframes</artifactId>
-            <version>0.7.0-spark2.4-s_2.11</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.11</artifactId>
-            <version>2.3.3</version>
-        </dependency>
-
-        <dependency>
-        <groupId>org.elasticsearch</groupId>
-        <artifactId>elasticsearch-spark-20_2.11</artifactId>
-        <version>6.6.2</version>
-        </dependency>
     </dependencies>
 
     <build>
@@ -115,11 +105,4 @@
             </plugin>
         </plugins>
     </build>
-
-    <repositories>
-        <repository>
-            <id>SparkPackagesRepo</id>
-            <url>http://dl.bintray.com/spark-packages/maven</url>
-        </repository>
-    </repositories>
 </project>

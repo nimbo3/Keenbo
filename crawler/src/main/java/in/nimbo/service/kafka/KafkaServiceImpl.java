@@ -1,6 +1,7 @@
 package in.nimbo.service.kafka;
 
 import in.nimbo.common.config.KafkaConfig;
+import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.KafkaServiceException;
 import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -27,7 +28,7 @@ public class KafkaServiceImpl implements KafkaService {
         this.crawlerService = crawlerService;
         this.kafkaConfig = kafkaConfig;
         producerServices = new ArrayList<>();
-        countDownLatch = new CountDownLatch(kafkaConfig.getProducerCount() + 1);
+        countDownLatch = new CountDownLatch(kafkaConfig.getLinkProducerCount() + 1);
     }
 
     /**
@@ -37,19 +38,24 @@ public class KafkaServiceImpl implements KafkaService {
      */
     @Override
     public void schedule() {
-        ExecutorService executorService = Executors.newFixedThreadPool(kafkaConfig.getProducerCount() + 1);
-        messageQueue = new ArrayBlockingQueue<>(kafkaConfig.getLocalQueueSize());
+        ExecutorService executorService = Executors.newFixedThreadPool(kafkaConfig.getLinkProducerCount() + 1);
+        messageQueue = new ArrayBlockingQueue<>(kafkaConfig.getLocalLinkQueueSize());
 
         // Prepare consumer
-        KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getConsumerProperties());
-        kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
+        KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getLinkConsumerProperties());
+        kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getLinkTopic()));
         consumerService = new ConsumerServiceImpl(kafkaConsumer, messageQueue, countDownLatch);
         executorService.submit(consumerService);
 
         // Prepare producer
-        for (int i = 0; i < kafkaConfig.getProducerCount(); i++) {
-            KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties());
-            ProducerService producerService = new ProducerServiceImpl(producer, kafkaConfig.getKafkaTopic(), messageQueue, crawlerService, countDownLatch);
+        for (int i = 0; i < kafkaConfig.getLinkProducerCount(); i++) {
+            KafkaProducer<String, String> linkProducer = new KafkaProducer<>(kafkaConfig.getLinkProducerProperties());
+            KafkaProducer<String, Page> pageProducer = new KafkaProducer<>(kafkaConfig.getPageProducerProperties());
+            ProducerService producerService =
+                    new ProducerServiceImpl(kafkaConfig, messageQueue,
+                            linkProducer, pageProducer,
+                            crawlerService,
+                            countDownLatch);
             producerServices.add(producerService);
             executorService.submit(producerService);
         }
@@ -71,9 +77,9 @@ public class KafkaServiceImpl implements KafkaService {
             countDownLatch.await();
             logger.info("All service stopped");
             logger.info("Start sending {} messages to kafka", messageQueue.size());
-            try (KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties())) {
+            try (KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getLinkProducerProperties())) {
                 for (String message : messageQueue) {
-                    producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), message, message));
+                    producer.send(new ProducerRecord<>(kafkaConfig.getLinkTopic(), message, message));
                 }
                 producer.flush();
             }
@@ -83,15 +89,10 @@ public class KafkaServiceImpl implements KafkaService {
         }
     }
 
-    /**
-     * send a message to kafka
-     *
-     * @param message message value
-     */
     @Override
     public void sendMessage(String message) {
-        try (KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getProducerProperties())) {
-            producer.send(new ProducerRecord<>(kafkaConfig.getKafkaTopic(), message, message));
+        try (KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getLinkProducerProperties())) {
+            producer.send(new ProducerRecord<>(kafkaConfig.getLinkTopic(), message, message));
             producer.flush();
         }
     }

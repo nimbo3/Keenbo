@@ -33,18 +33,18 @@ public class ConsumerServiceImplTest {
         BlockingQueue<String> queue = new LinkedBlockingQueue<>();
         CountDownLatch countDownLatch = new CountDownLatch(1);
         MockConsumer<String, String> kafkaConsumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
-        kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getKafkaTopic()));
+        kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getLinkTopic()));
         ConsumerService consumerService = new ConsumerServiceImpl(kafkaConsumer, queue, countDownLatch);
         
         kafkaConsumer.rebalance(
-                Collections.singleton(new TopicPartition(kafkaConfig.getKafkaTopic(), 0)));
-        kafkaConsumer.seek(new TopicPartition(kafkaConfig.getKafkaTopic(), 0), 0);
+                Collections.singleton(new TopicPartition(kafkaConfig.getLinkTopic(), 0)));
+        kafkaConsumer.seek(new TopicPartition(kafkaConfig.getLinkTopic(), 0), 0);
         List<String> crawledLinks = new ArrayList<>();
         crawledLinks.add("https://stackoverflow.com");
         crawledLinks.add("https://google.com");
         for (int i = 0; i < crawledLinks.size(); i++) {
             kafkaConsumer.addRecord(new ConsumerRecord<>(
-                    kafkaConfig.getKafkaTopic(), 0, i, "producer", crawledLinks.get(i)));
+                    kafkaConfig.getLinkTopic(), 0, i, "producer", crawledLinks.get(i)));
         }
 
         new Thread(() -> {
