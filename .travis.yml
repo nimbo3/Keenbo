@@ -13,12 +13,6 @@ install: true
 before_script:
   - .travis/hbase-init.sh
 
-addons:
-  sonarcloud:
-    organization: "nimbo3-1"
-    token:
-      secure: ${SONAR_TOKEN}
-
 script:
   - mvn clean compile > /dev/null 2>&1
   - mvn test
@@ -31,3 +25,9 @@ cache:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+addons:
+  sonarcloud:
+    organization: "nimbo3-1"
+    token:
+      secure: ${SONAR_TOKEN}
