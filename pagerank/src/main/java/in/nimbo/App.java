@@ -28,7 +28,7 @@ import scala.Tuple2;
 import java.io.IOException;
 
 public class App {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         HBaseConfig hBaseConfig = HBaseConfig.load();
         PageRankConfig pageRankConfig = PageRankConfig.load();
         String esIndex = pageRankConfig.getEsIndex();
@@ -43,6 +43,8 @@ public class App {
 
         SparkSession spark = SparkSession.builder()
                 .config("spark.hadoop.validateOutputSpecs", false)
+                .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+                .config("spark.kryoserializer.buffer", "1024k")
                 .appName(pageRankConfig.getAppName())
                 .getOrCreate();
         spark.sparkContext().conf().set("es.nodes", pageRankConfig.getEsNodes());
@@ -83,11 +85,16 @@ public class App {
                         LinkUtility.hashLink(LinkUtility.reverseLink(row.getString(0))),
                         row.getDouble(1)));
 
-        Job jobConf = Job.getInstance();
-        jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hBaseConfig.getLinksTable());
-        jobConf.setOutputFormatClass(TableOutputFormat.class);
-        jobConf.getConfiguration().set("mapreduce.output.fileoutputformat.outputdir", "/tmp");
-        javaPairRDD.saveAsNewAPIHadoopDataset(jobConf.getConfiguration());
+        try {
+            Job jobConf = Job.getInstance();
+            jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hBaseConfig.getLinksTable());
+            jobConf.setOutputFormatClass(TableOutputFormat.class);
+            jobConf.getConfiguration().set("mapreduce.output.fileoutputformat.outputdir", "/tmp");
+            javaPairRDD.saveAsNewAPIHadoopDataset(jobConf.getConfiguration());
+        } catch (IOException e) {
+            System.out.println("Unable to save to HBase");
+            e.printStackTrace(System.out);
+        }
 
         JavaEsSpark.saveToEs(esPageJavaRDD, esIndex + "/" + esType);
 
