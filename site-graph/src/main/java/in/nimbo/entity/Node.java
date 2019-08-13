@@ -1,5 +1,7 @@
 package in.nimbo.entity;
 
+import java.util.Objects;
+
 public class Node {
     private String id;
     private double rank;
@@ -35,5 +37,13 @@ public class Node {
 
     public void setNumOfPages(int numOfPages) {
         this.numOfPages = numOfPages;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Node node = (Node) o;
+        return Objects.equals(id, node.id);
     }
 }

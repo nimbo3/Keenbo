@@ -69,7 +69,9 @@ public class App {
         JavaRDD<Edge> edges = filteredMainDomains.map(link ->
                 new Edge(link._1, link._2));
 
-        Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);
+        Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class)
+                .groupBy("id")
+                .agg(functions.avg("rank"), functions.sum("numOfPages"));
         verDF.show(false);
 
         Dataset<Row> edgDF = spark.createDataFrame(edges, Edge.class);
