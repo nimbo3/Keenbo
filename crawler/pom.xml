@@ -12,7 +12,6 @@
     <version>1.0</version>
 
     <properties>
-        <kafka.version>2.3.0</kafka.version>
         <jsoup.version>1.12.1</jsoup.version>
         <caffeine.version>2.7.0</caffeine.version>
         <assembly-plugin.version>3.1.1</assembly-plugin.version>
@@ -20,13 +19,6 @@
     </properties>
 
     <dependencies>
-        <!--Producer/Consumer API of Apache Kafka-->
-        <dependency>
-            <groupId>org.apache.kafka</groupId>
-            <artifactId>kafka-clients</artifactId>
-            <version>${kafka.version}</version>
-        </dependency>
-
         <!--Jsoup library for parse pages-->
         <dependency>
             <groupId>org.jsoup</groupId>
