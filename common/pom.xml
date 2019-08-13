@@ -11,4 +11,8 @@
 
     <artifactId>common</artifactId>
     <version>1.0</version>
+
+    <properties>
+        <main.basedir>${project.parent.basedir}</main.basedir>
+    </properties>
 </project>

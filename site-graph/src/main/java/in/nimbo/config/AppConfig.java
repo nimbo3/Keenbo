@@ -5,7 +5,7 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
 public class AppConfig {
-    private static final String CONFIG_NAME = "forward-extractor.properties";
+    private static final String CONFIG_NAME = "site-graph.properties";
     private String resourceManager;
     private String appName;
     private String nodesIP;
