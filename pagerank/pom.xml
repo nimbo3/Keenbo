@@ -14,6 +14,7 @@
     <name>pagerank</name>
 
     <properties>
+        <main.basedir>${project.parent.basedir}</main.basedir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
@@ -62,10 +63,7 @@
             <groupId>in.nimbo</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
-            <scope>compile</scope>
         </dependency>
-
-
     </dependencies>
 
     <build>
@@ -81,7 +79,6 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-
                     <archive>
                         <manifest>
                             <mainClass>in.nimbo.App</mainClass>
@@ -91,7 +88,7 @@
                 <executions>
                     <execution>
                         <id>assemble-all</id>
-                        <phase>package</phase>
+                        <phase>prepare-package</phase>
                         <goals>
                             <goal>single</goal>
                         </goals>
