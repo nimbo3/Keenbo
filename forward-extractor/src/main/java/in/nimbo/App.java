@@ -40,10 +40,10 @@ public class App {
                 .appName(appConfig.getAppName())
                 .master(appConfig.getResourceManager())
                 .getOrCreate();
-        spark.conf().set("es.nodes", appConfig.getNodesIP());
-        spark.conf().set("es.write.operation", "upsert");
-        spark.conf().set("es.mapping.id", "id");
-        spark.conf().set("es.index.auto.create", appConfig.getEsCreateIndex());
+        spark.sparkContext().conf().set("es.nodes", appConfig.getNodesIP());
+        spark.sparkContext().conf().set("es.write.operation", "upsert");
+        spark.sparkContext().conf().set("es.mapping.id", "id");
+        spark.sparkContext().conf().set("es.index.auto.create", appConfig.getEsCreateIndex());
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
@@ -55,10 +55,16 @@ public class App {
 
         JavaRDD<Edge> edges = hBaseRDD
                 .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(
-                        entry -> new Edge(
-                                Bytes.toString(result.getRow()),
-                                LinkUtility.reverseLink(Bytes.toString(entry.getKey())),
-                                Bytes.toString(entry.getValue())))
+                        entry -> {
+                            String anchorLink = Bytes.toString(entry.getKey());
+                            int index = anchorLink.indexOf("#");
+                            if (index != -1)
+                                anchorLink = anchorLink.substring(0, index);
+                            return new Edge(
+                                    Bytes.toString(result.getRow()),
+                                    LinkUtility.reverseLink(anchorLink),
+                                    Bytes.toString(entry.getValue()));
+                        })
                         .iterator());
 
         Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);

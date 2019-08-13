@@ -46,7 +46,7 @@ public class ElasticDAOImpl implements ElasticDAO {
         return pages;
     }
 
-    public List<Page> search(String query) {
+    public List<Page> search(String query, String site) {
         try {
             SearchRequest request = new SearchRequest(config.getIndexName());
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -54,6 +54,10 @@ public class ElasticDAOImpl implements ElasticDAO {
             for (String word : violenceWords) {
                 MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(word);
                 boolQueryBuilder.mustNot(multiMatchQueryBuilder);
+            }
+            if (!site.equals("")) {
+                MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(site, "link");
+                boolQueryBuilder.must(multiMatchQueryBuilder);
             }
             MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(query, "title", "link", "content", "meta", "anchors");
             multiMatchQueryBuilder.field("title", 5);
