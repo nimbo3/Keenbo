@@ -1,7 +1,6 @@
 package in.nimbo;
 
 import in.nimbo.common.config.HBaseConfig;
-import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.AppConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
@@ -16,12 +15,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.functions;
-import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import org.graphframes.GraphFrame;
-
-import static org.apache.spark.sql.functions.collect_set;
-import static org.apache.spark.sql.functions.count;
-
 
 public class App {
     public static void main(String[] args) {
@@ -48,8 +42,13 @@ public class App {
                 .map(tuple -> tuple._2);
 
         JavaRDD<Node> nodes = hBaseRDD
-                .map(result -> new Node(getMainDomainForReversed(Bytes.toString(result.getRow())),
-                        Double.parseDouble(Bytes.toString(result.getValue(rankColumn, rankColumn)))));
+                .map(result -> {
+                    double rank = 0;
+                    String rankString = Bytes.toString(result.getValue(rankColumn, rankColumn));
+                    if (rankString != null)
+                        rank = Double.parseDouble(rankString);
+                    return new Node(getMainDomainForReversed(Bytes.toString(result.getRow())), rank);
+                });
 
         JavaRDD<Edge> edges = hBaseRDD
                 .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(

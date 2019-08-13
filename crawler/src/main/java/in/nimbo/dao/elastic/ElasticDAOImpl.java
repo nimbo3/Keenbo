@@ -33,19 +33,12 @@ public class ElasticDAOImpl implements ElasticDAO {
         this.client = client;
     }
 
-    /**
-     * save necessary page field in elastic search
-     *
-     * @param page page
-     * @throws ElasticException if any exception during indexing happen
-     */
     @Override
     public void save(Page page) {
         try {
             XContentBuilder builder = XContentFactory.jsonBuilder();
             builder.startObject();
             builder.field("link", page.getLink());
-            builder.field("link_length", page.getLink().length());
             builder.field("link_depth", page.getLinkDepth());
             builder.field("title", page.getTitle());
             builder.field("content", page.getContent());
