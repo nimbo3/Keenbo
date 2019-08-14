@@ -1,7 +1,5 @@
 # Keenbo [![Build Status](https://travis-ci.com/nimbo3/Keenbo.svg?branch=master)](https://travis-ci.com/nimbo3/Keenbo) [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=nimbo3_Keenbo&metric=alert_status)](https://sonarcloud.io/dashboard?id=nimbo3_Keenbo) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nimbo3_Keenbo&metric=coverage)](https://sonarcloud.io/dashboard?id=nimbo3_Keenbo) [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=nimbo3_Keenbo&metric=security_rating)](https://sonarcloud.io/dashboard?id=nimbo3_Keenbo) [![Lines of Code](https://sonarcloud.io/api/project_badges/measure?project=nimbo3_Keenbo&metric=ncloc)](https://sonarcloud.io/dashboard?id=nimbo3_Keenbo)
 
-[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=nimbo3_Keenbo)](https://sonarcloud.io/dashboard?id=nimbo3_Keenbo)
-
 A **simple to use** search engine for search data.
 
 
