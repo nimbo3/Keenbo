@@ -26,7 +26,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.*;
 
@@ -34,15 +33,16 @@ public class CrawlerServiceTest {
     private static RedisDAO redisDAO;
     private static ParserService parserService;
     private static Document document;
+    private static Document documentWithoutTitle;
     private static ProjectConfig projectConfig;
     private static Cache<String, LocalDateTime> cache;
     private static CrawlerService crawlerService;
     private static String link;
     private static String invalidLink;
-    private static Set<String> crawledLinks;
     private static Set<Anchor> anchors;
     private static List<Meta> metas;
     private static final String FILE_ADDRESS = "src/test/resources/html/sampleEnglish.html";
+    private static final String FILE_WITHOUT_TITLE_ADDRESS = "src/test/resources/html/sampleEnglishWithoutTitle.html";
     private String contentWithoutTag;
     private Page page;
 
@@ -65,11 +65,12 @@ public class CrawlerServiceTest {
         metas = new ArrayList<>();
         metas.add(new Meta("nimbo", "sahab"));
         metas.add(new Meta("google", "search"));
-        crawledLinks = anchors.stream().map(Anchor::getHref).collect(Collectors.toSet());
         page = new Page(link, title, contentWithoutTag, anchors, metas, 1.0);
         redisDAO = mock(RedisDAO.class);
         String input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
+        String inputWithoutTitle = TestUtility.getFileContent(Paths.get(FILE_WITHOUT_TITLE_ADDRESS));
         document = Jsoup.parse(input, "UTF-8");
+        documentWithoutTitle = Jsoup.parse(inputWithoutTitle, "UTF-8");
         when(parserService.getDocument(link)).thenReturn(Optional.of(document));
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
         cache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
@@ -127,6 +128,18 @@ public class CrawlerServiceTest {
         Assert.assertEquals(metas, returnedPage.getMetas());
     }
 
+    @Test
+    public void getPageWithoutTitleTest() {
+        when(parserService.getDocument(link)).thenReturn(Optional.of(documentWithoutTitle));
+        Page returnedPage = parserService.getPage(link);
+        Assert.assertEquals(link, returnedPage.getLink());
+        String contentWithoutTag = "Hi Header support@nimbo.in paragraph! another link";
+        Assert.assertEquals(contentWithoutTag, returnedPage.getContent());
+        Assert.assertEquals(link, returnedPage.getTitle());
+        Assert.assertEquals(anchors, returnedPage.getAnchors());
+        Assert.assertEquals(metas, returnedPage.getMetas());
+    }
+
     @Test (expected = ParseLinkException.class)
     public void getPageWithEmptyDocumentTest() {
         when(parserService.getDocument(link)).thenReturn(Optional.empty());
@@ -143,8 +156,8 @@ public class CrawlerServiceTest {
 
     @Test (expected = ParseLinkException.class)
     public void getPageLanguageDetectExceptionTest() {
-        doThrow(new LanguageDetectException(new Exception())).when(parserService).isEnglishLanguage(anyString());
-        Page returnedPage = parserService.getPage(invalidLink);
+        doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString());
+        Page returnedPage = parserService.getPage(link);
         Assert.fail();
     }
 }
