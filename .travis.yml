@@ -15,11 +15,18 @@ before_script:
 
 script:
   - mvn clean compile > /dev/null 2>&1
-  - mvn test
+  - mvn org.jacoco:jacoco-maven-plugin:prepare-agent test sonar:sonar -Dsonar.projectKey=nimbo3_Keenbo
 
 cache:
   directories:
     - $HOME/.m2
+    - '$HOME/.sonar/cache'
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+
+addons:
+  sonarcloud:
+    organization: "nimbo3-1"
+    token:
+      secure: ${SONAR_TOKEN}
