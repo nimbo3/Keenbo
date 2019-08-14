@@ -20,6 +20,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import org.graphframes.GraphFrame;
 import scala.Tuple2;
@@ -27,7 +28,7 @@ import scala.Tuple2;
 import java.io.IOException;
 
 public class App {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         HBaseConfig hBaseConfig = HBaseConfig.load();
         PageRankConfig pageRankConfig = PageRankConfig.load();
         String esIndex = pageRankConfig.getEsIndex();
@@ -42,17 +43,19 @@ public class App {
 
         SparkSession spark = SparkSession.builder()
                 .config("spark.hadoop.validateOutputSpecs", false)
+                .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
+                .config("spark.kryoserializer.buffer", "1024k")
                 .appName(pageRankConfig.getAppName())
-                .master(pageRankConfig.getResourceManager())
                 .getOrCreate();
         spark.sparkContext().conf().set("es.nodes", pageRankConfig.getEsNodes());
         spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
         spark.sparkContext().conf().set("es.mapping.id", "id");
         spark.sparkContext().conf().set("es.index.auto.create", pageRankConfig.getEsIndexAutoCreate());
+        spark.sparkContext().conf().registerKryoClasses(new Class[]{Edge.class, Node.class, Page.class});
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
-                .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
-                        , ImmutableBytesWritable.class, Result.class).toJavaRDD()
+                .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class,
+                        ImmutableBytesWritable.class, Result.class).toJavaRDD()
                 .map(tuple -> tuple._2);
 
         JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));
@@ -68,6 +71,7 @@ public class App {
 
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
+        pageRank.persist(StorageLevel.MEMORY_AND_DISK());
 
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
         JavaPairRDD<ImmutableBytesWritable, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
@@ -81,11 +85,16 @@ public class App {
                         LinkUtility.hashLink(LinkUtility.reverseLink(row.getString(0))),
                         row.getDouble(1)));
 
-        Job jobConf = Job.getInstance();
-        jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hBaseConfig.getLinksTable());
-        jobConf.setOutputFormatClass(TableOutputFormat.class);
-        jobConf.getConfiguration().set("mapreduce.output.fileoutputformat.outputdir", "/tmp");
-        javaPairRDD.saveAsNewAPIHadoopDataset(jobConf.getConfiguration());
+        try {
+            Job jobConf = Job.getInstance();
+            jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hBaseConfig.getLinksTable());
+            jobConf.setOutputFormatClass(TableOutputFormat.class);
+            jobConf.getConfiguration().set("mapreduce.output.fileoutputformat.outputdir", "/tmp");
+            javaPairRDD.saveAsNewAPIHadoopDataset(jobConf.getConfiguration());
+        } catch (IOException e) {
+            System.out.println("Unable to save to HBase");
+            e.printStackTrace(System.out);
+        }
 
         JavaEsSpark.saveToEs(esPageJavaRDD, esIndex + "/" + esType);
 
