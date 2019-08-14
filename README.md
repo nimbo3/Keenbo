@@ -1,4 +1,4 @@
-# Keenbo [![Build Status](https://travis-ci.com/nimbo3/Keenbo.svg?branch=master)](https://travis-ci.com/nimbo3/Keenbo) [![codecov.io](https://codecov.io/github/nimbo3/Keenbo/coverage.svg?branch=master)](https://codecov.io/github/nimbo3/Keenbo?branch=master) [![Coverage](https://sonarcloud.io/api/badges/measure?key=nimbo3_Keenbo&metric=coverage)](https://sonarcloud.io/component_measures?id=nimbo3_Keenbo&metric=coverage)
+# Keenbo [![Build Status](https://travis-ci.com/nimbo3/Keenbo.svg?branch=master)](https://travis-ci.com/nimbo3/Keenbo) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=nimbo3_Keenbo&metric=coverage)](https://sonarcloud.io/dashboard?id=nimbo3_Keenbo)
 
 A **simple to use** search engine for search data.
 
