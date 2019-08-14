@@ -112,7 +112,6 @@ public class CrawlerServiceTest {
 
     @Test (expected = InvalidLinkException.class)
     public void crawlInvalidLink() {
-        when(redisDAO.contains(link)).thenReturn(true);
         Optional<Page> returnedPage = crawlerService.crawl("http://");
         Assert.fail();
     }
