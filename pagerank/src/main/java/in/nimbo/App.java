@@ -51,6 +51,7 @@ public class App {
         spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
         spark.sparkContext().conf().set("es.mapping.id", "id");
         spark.sparkContext().conf().set("es.index.auto.create", pageRankConfig.getEsIndexAutoCreate());
+        spark.sparkContext().conf().set("spark.kryo.registrationRequired", "true");
         spark.sparkContext().conf().registerKryoClasses(new Class[]{Edge.class, Node.class, Page.class});
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
