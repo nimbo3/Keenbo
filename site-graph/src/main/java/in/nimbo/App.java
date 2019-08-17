@@ -39,6 +39,9 @@ public class App {
         SparkSession spark = SparkSession.builder()
                 .appName(appConfig.getAppName())
                 .getOrCreate();
+        spark.sparkContext().conf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+        spark.sparkContext().conf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+        spark.sparkContext().conf().set("spark.kryo.registrationRequired", "true");
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
