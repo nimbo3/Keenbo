@@ -7,7 +7,7 @@ import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -55,17 +55,18 @@ public class App {
                 .map(result -> new Node(Bytes.toString(result.getRow())));
 
         JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
-                .filter(cell -> cell.getFamilyArray() == anchorColumnFamily)
+                .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
                 .map(cell -> {
-                    String rowKey = Bytes.toString(cell.getRowArray());
-                    String anchorLink = Bytes.toString(cell.getQualifierArray());
+                    String rowKey = Bytes.toString(CellUtil.cloneRow(cell));
+                    String anchorLink = Bytes.toString(CellUtil.cloneQualifier(cell));
                     int index = anchorLink.indexOf('#');
                     if (index != -1) {
                         anchorLink = anchorLink.substring(0, index);
                     }
-                    String value = Bytes.toString(cell.getValueArray());
+                    String value = Bytes.toString(CellUtil.cloneValue(cell));
                     return new Edge(rowKey, LinkUtility.reverseLink(anchorLink), value);
                 });
+
 
         Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);
 
@@ -74,6 +75,7 @@ public class App {
         GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
         Dataset<Row> anchors = graphFrame.triplets().groupBy("dst")
                 .agg(collect_set("edge.anchor").alias("anchors"), count("edge.anchor").alias("count"));
+
 
         JavaRDD<Page> anchorsRDD = anchors.toJavaRDD()
                 .map(row -> new Page(
