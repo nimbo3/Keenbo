@@ -14,5 +14,26 @@
 
     <properties>
         <main.basedir>${project.parent.basedir}</main.basedir>
+        <jackson.version>2.10.0.pr1</jackson.version>
     </properties>
+
+    <dependencies>
+        <!-- jackson for create json -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+    </dependencies>
 </project>
