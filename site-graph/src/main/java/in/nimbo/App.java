@@ -5,6 +5,7 @@ import in.nimbo.config.AppConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -18,6 +19,8 @@ import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.functions;
 import org.graphframes.GraphFrame;
 import scala.Tuple2;
+
+import java.util.Arrays;
 
 public class App {
     public static void main(String[] args) {
@@ -50,23 +53,20 @@ public class App {
                         rank = Double.parseDouble(rankString);
                     return new Node(getMainDomainForReversed(Bytes.toString(result.getRow())), rank);
                 });
+        JavaPairRDD<String, String> links = hBaseRDD.flatMap(result -> result.listCells().iterator()).
+                filter(cell -> Arrays.equals(CellUtil.cloneFamily(cell), anchorColumnFamily)).
+                mapToPair(cell -> {
+                    String destination = Bytes.toString(CellUtil.cloneQualifier(cell));
+                    int index = destination.indexOf("#");
+                    if (index != -1)
+                        destination = destination.substring(0, index);
+                    return new Tuple2<>(Bytes.toString(CellUtil.cloneRow(cell)), destination);
+                });
 
-        JavaPairRDD<String, String> links = hBaseRDD
-                .flatMapToPair(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(
-                        entry -> {
-                            String anchorLink = Bytes.toString(entry.getKey());
-                            int index = anchorLink.indexOf("#");
-                            if (index != -1)
-                                anchorLink = anchorLink.substring(0, index);
-                            return new Tuple2<>(Bytes.toString(result.getRow()), anchorLink);
-                        }).iterator());
-        JavaPairRDD<String, String> mainDomains = links.mapToPair(link ->
-                new Tuple2<>(getMainDomainForReversed(link._1), getMainDomain(link._2)));
-
-        JavaPairRDD<String, String> filteredMainDomains = mainDomains.filter(domain -> !domain._1.equals(domain._2));
-
-        JavaRDD<Edge> edges = filteredMainDomains.map(link ->
-                new Edge(link._1, link._2));
+        JavaRDD<Edge> edges = links.
+                mapToPair(link -> new Tuple2<>(getMainDomainForReversed(link._1), getMainDomain(link._2))).
+                filter(domain -> !domain._1.equals(domain._2)).
+                map(link -> new Edge(link._1, link._2));
 
         Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class)
                 .groupBy("id")
