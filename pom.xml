@@ -18,7 +18,6 @@
         <module>forward-extractor</module>
         <module>site-graph</module>
         <module>pagerank</module>
-        <module>hbase-count</module>
     </modules>
 
     <properties>
