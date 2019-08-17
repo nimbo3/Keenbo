@@ -2,13 +2,11 @@ package in.nimbo.common.entity;
 
 import in.nimbo.common.utility.LinkUtility;
 
-import java.io.Serializable;
 import java.net.MalformedURLException;
 import java.util.List;
 import java.util.Set;
 
-public class Page implements Serializable {
-    private static final long serialVersionUID = 1000L;
+public class Page {
     private String link;
     private String title;
     private String content;

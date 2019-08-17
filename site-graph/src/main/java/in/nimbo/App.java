@@ -1,7 +1,7 @@
 package in.nimbo;
 
 import in.nimbo.common.config.HBaseConfig;
-import in.nimbo.config.AppConfig;
+import in.nimbo.config.SiteGraphConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
 import org.apache.hadoop.conf.Configuration;
@@ -21,7 +21,7 @@ import scala.Tuple2;
 
 public class App {
     public static void main(String[] args) {
-        AppConfig appConfig = AppConfig.load();
+        SiteGraphConfig siteGraphConfig = SiteGraphConfig.load();
         HBaseConfig hBaseConfig = HBaseConfig.load();
 
         byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
@@ -31,10 +31,10 @@ public class App {
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
         hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBaseConfig.getLinksTable());
-        hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, appConfig.getScanBatchSize());
+        hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, siteGraphConfig.getScanBatchSize());
 
         SparkSession spark = SparkSession.builder()
-                .appName(appConfig.getAppName())
+                .appName(siteGraphConfig.getAppName())
                 .getOrCreate();
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
@@ -55,7 +55,7 @@ public class App {
                 .flatMapToPair(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(
                         entry -> {
                             String anchorLink = Bytes.toString(entry.getKey());
-                            int index = anchorLink.indexOf("#");
+                            int index = anchorLink.indexOf('#');
                             if (index != -1)
                                 anchorLink = anchorLink.substring(0, index);
                             return new Tuple2<>(Bytes.toString(result.getRow()), anchorLink);
@@ -104,7 +104,7 @@ public class App {
             linkWithoutProtocol = linkWithoutProtocol.substring(0, indexOfSlash);
         }
         int firstDot = linkWithoutProtocol.indexOf('.');
-        int afterFirstDot = linkWithoutProtocol.substring(firstDot + 1).indexOf('.');
+        int afterFirstDot = linkWithoutProtocol.indexOf('.', firstDot + 1);
         if (afterFirstDot != -1)
             linkWithoutProtocol = linkWithoutProtocol.substring(0, afterFirstDot + firstDot + 1);
         return linkWithoutProtocol.substring(firstDot + 1) + "." + linkWithoutProtocol.substring(0, firstDot);
