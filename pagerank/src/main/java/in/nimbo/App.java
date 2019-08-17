@@ -59,12 +59,12 @@ public class App {
                 .map(tuple -> tuple._2);
 
         JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));
-        JavaRDD<Edge> edges = hBaseRDD
-                .flatMap(result -> result.getFamilyMap(anchorColumnFamily).keySet().stream().map(
-                        entry -> new Edge(
-                                Bytes.toString(result.getRow()),
-                                LinkUtility.reverseLink(Bytes.toString(entry))
-                        )).iterator());
+        JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
+                .filter(cell -> cell.getFamilyArray() == anchorColumnFamily)
+                .map(cell -> new Edge(
+                        Bytes.toString(cell.getRowArray()),
+                        LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray()))
+                ));
 
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
