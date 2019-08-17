@@ -6,6 +6,8 @@ public class Anchor {
     private String href;
     private String content;
 
+    public Anchor(){}
+
     public Anchor(String href, String content) {
         this.href = href;
         this.content = content;
