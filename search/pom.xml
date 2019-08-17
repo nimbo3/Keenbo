@@ -14,6 +14,7 @@
     <name>search</name>
 
     <properties>
+        <main.basedir>${project.parent.basedir}</main.basedir>
         <sparkjava.version>2.8.0</sparkjava.version>
         <jackson.version>2.10.0.pr1</jackson.version>
     </properties>

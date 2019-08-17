@@ -57,7 +57,7 @@ public class App {
                 .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(
                         entry -> {
                             String anchorLink = Bytes.toString(entry.getKey());
-                            int index = anchorLink.indexOf("#");
+                            int index = anchorLink.indexOf('#');
                             if (index != -1)
                                 anchorLink = anchorLink.substring(0, index);
                             return new Edge(
