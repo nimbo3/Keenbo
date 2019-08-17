@@ -7,6 +7,7 @@ import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
@@ -53,19 +54,18 @@ public class App {
         JavaRDD<Node> nodes = hBaseRDD
                 .map(result -> new Node(Bytes.toString(result.getRow())));
 
-        JavaRDD<Edge> edges = hBaseRDD
-                .flatMap(result -> result.getFamilyMap(anchorColumnFamily).entrySet().stream().map(
-                        entry -> {
-                            String anchorLink = Bytes.toString(entry.getKey());
-                            int index = anchorLink.indexOf('#');
-                            if (index != -1)
-                                anchorLink = anchorLink.substring(0, index);
-                            return new Edge(
-                                    Bytes.toString(result.getRow()),
-                                    LinkUtility.reverseLink(anchorLink),
-                                    Bytes.toString(entry.getValue()));
-                        })
-                        .iterator());
+        JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
+                .filter(cell -> cell.getFamilyArray() == anchorColumnFamily)
+                .map(cell -> {
+                    String rowKey = Bytes.toString(cell.getRowArray());
+                    String anchorLink = Bytes.toString(cell.getQualifierArray());
+                    int index = anchorLink.indexOf('#');
+                    if (index != -1) {
+                        anchorLink = anchorLink.substring(0, index);
+                    }
+                    String value = Bytes.toString(cell.getValueArray());
+                    return new Edge(rowKey, LinkUtility.reverseLink(anchorLink), value);
+                });
 
         Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);
 
