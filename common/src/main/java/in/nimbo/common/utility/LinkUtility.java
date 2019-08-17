@@ -23,28 +23,33 @@ public class LinkUtility {
      * @return reversed link (only domain)
      */
     public static String reverseLink(String link) {
-        try {
-            URL url = new URL(link);
-            String host = url.getHost();
-            String[] hostParts = host.split("\\.");
-            Collections.reverse(Arrays.asList(hostParts));
-            String newHost = String.join(".", hostParts);
-            String protocol = url.getProtocol();
-            int port = url.getPort();
-            String uri = url.getPath();
-            String query = url.getQuery();
-            String answer = protocol + "://" + newHost + (port != -1 ? ":" + port : "");
-            if (uri != null) {
-                answer += uri;
-            }
-            if (query != null) {
-                answer += "?";
-                answer += query;
-            }
-            return answer;
-        } catch (MalformedURLException e) {
-            throw new ReverseLinkException(e);
+        int length = link.length();
+        int i, j;
+        i = link.indexOf('/') + 1;
+        j = link.indexOf('/', i + 1);
+        if (j < 0) {
+            j = length;
         }
+        String protocol = link.substring(0, i - 1);
+        String domain = link.substring(i + 1, j);
+        String port = null;
+        int colonIndex = domain.indexOf(':');
+        if (colonIndex > -1) {
+            port = domain.substring(colonIndex);
+            domain = domain.substring(0, colonIndex);
+        }
+        String uri = j < length ? link.substring(j) : "";
+        StringBuilder newDomain = new StringBuilder();
+        int dotIndex = domain.lastIndexOf('.');
+        while (dotIndex > -1) {
+            String part = domain.substring(dotIndex + 1);
+            newDomain.append(part);
+            newDomain.append(".");
+            domain = domain.substring(0, dotIndex);
+            dotIndex = domain.lastIndexOf('.');
+        }
+        newDomain.append(domain);
+        return protocol + "//" + newDomain + (port != null ? port : "") + uri;
     }
 
     /**
