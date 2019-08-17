@@ -20,9 +20,13 @@ public class App {
         hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBaseConfig.getLinksTable());
         hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, hBaseCountConfig.getScanBatchSize());
 
+
         SparkSession spark = SparkSession.builder()
                 .appName(hBaseCountConfig.getAppName())
                 .getOrCreate();
+
+        spark.sparkContext().conf().set("spark.driver.extraClassPath", "local:/var/local/target/lib/*");
+        spark.sparkContext().conf().set("spark.executor.extraClassPath", "local:/var/local/target/lib/*");
 
         long hBaseRDDCount = spark.sparkContext()
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
