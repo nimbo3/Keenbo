@@ -22,6 +22,7 @@ public class CrawlerService {
     private final Timer getPageTimer;
     private final Counter skippedCounter;
     private final Counter crawledCounter;
+    private final Timer redisContainTimer;
 
     private Logger appLogger = LoggerFactory.getLogger("app");
     private Logger parserLogger = LoggerFactory.getLogger("parser");
@@ -39,6 +40,7 @@ public class CrawlerService {
         getPageTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "getPage"));
         skippedCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "skipCounter"));
         crawledCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledCounter"));
+        redisContainTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisContain"));
     }
 
     /**
@@ -54,7 +56,9 @@ public class CrawlerService {
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
-                boolean contains = redisDAO.contains(siteLink); // TODO use metric
+                Timer.Context redisContainTimerContext = redisContainTimer.time();
+                boolean contains = redisDAO.contains(siteLink);
+                redisContainTimerContext.stop();
                 if (!contains) {
                     redisDAO.add(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());

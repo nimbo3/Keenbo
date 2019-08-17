@@ -4,7 +4,7 @@ import in.nimbo.common.exception.LoadConfigurationException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
-public class AppConfig {
+public class SiteGraphConfig {
     private static final String CONFIG_NAME = "site-graph.properties";
     private String resourceManager;
     private String appName;
@@ -14,18 +14,18 @@ public class AppConfig {
     private String esType;
     private String scanBatchSize;
 
-    public static AppConfig load() {
-        AppConfig appConfig = new AppConfig();
+    public static SiteGraphConfig load() {
+        SiteGraphConfig siteGraphConfig = new SiteGraphConfig();
         try {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
-            appConfig.setResourceManager(config.getString("resource.manager"));
-            appConfig.setAppName(config.getString("app.name"));
-            appConfig.setNodesIP(config.getString("nodes.ip"));
-            appConfig.setEsCreateIndex(config.getString("es.index.auto.create"));
-            appConfig.setEsIndexName(config.getString("es.index"));
-            appConfig.setEsType(config.getString("es.type"));
-            appConfig.setScanBatchSize(config.getString("hbase.scan.batch.size"));
-            return appConfig;
+            siteGraphConfig.setResourceManager(config.getString("resource.manager"));
+            siteGraphConfig.setAppName(config.getString("app.name"));
+            siteGraphConfig.setNodesIP(config.getString("nodes.ip"));
+            siteGraphConfig.setEsCreateIndex(config.getString("es.index.auto.create"));
+            siteGraphConfig.setEsIndexName(config.getString("es.index"));
+            siteGraphConfig.setEsType(config.getString("es.type"));
+            siteGraphConfig.setScanBatchSize(config.getString("hbase.scan.batch.size"));
+            return siteGraphConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }

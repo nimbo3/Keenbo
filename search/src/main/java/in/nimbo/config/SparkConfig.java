@@ -8,9 +8,6 @@ public class SparkConfig {
     private static final String CONFIG_NAME = "spark.properties";
     private int port;
 
-    public SparkConfig() {
-    }
-
     public static SparkConfig load() {
         SparkConfig sparkConfig = new SparkConfig();
         try {

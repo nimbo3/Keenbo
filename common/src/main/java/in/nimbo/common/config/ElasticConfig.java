@@ -20,9 +20,6 @@ public class ElasticConfig {
     private int socketTimeout;
     private int maxRetryTimeoutMillis;
 
-    public ElasticConfig() {
-    }
-
     public static ElasticConfig load() {
         ElasticConfig elasticConfig = new ElasticConfig();
         try {
