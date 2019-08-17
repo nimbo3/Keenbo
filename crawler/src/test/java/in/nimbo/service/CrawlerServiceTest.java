@@ -8,8 +8,9 @@ import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
-import in.nimbo.common.exception.HBaseException;
+import in.nimbo.common.exception.InvalidLinkException;
 import in.nimbo.common.exception.LanguageDetectException;
+import in.nimbo.common.exception.ParseLinkException;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.redis.RedisDAO;
 import org.jsoup.Jsoup;
@@ -25,7 +26,6 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.mockito.Mockito.*;
 
@@ -33,16 +33,18 @@ public class CrawlerServiceTest {
     private static RedisDAO redisDAO;
     private static ParserService parserService;
     private static Document document;
+    private static Document documentWithoutTitle;
     private static ProjectConfig projectConfig;
     private static Cache<String, LocalDateTime> cache;
     private static CrawlerService crawlerService;
     private static String link;
     private static String invalidLink;
-    private static Set<String> crawledLinks;
     private static Set<Anchor> anchors;
     private static List<Meta> metas;
     private static final String FILE_ADDRESS = "src/test/resources/html/sampleEnglish.html";
+    private static final String FILE_WITHOUT_TITLE_ADDRESS = "src/test/resources/html/sampleEnglishWithoutTitle.html";
     private String contentWithoutTag;
+    private Page page;
 
     @BeforeClass
     public static void init() {
@@ -63,11 +65,12 @@ public class CrawlerServiceTest {
         metas = new ArrayList<>();
         metas.add(new Meta("nimbo", "sahab"));
         metas.add(new Meta("google", "search"));
-        crawledLinks = anchors.stream().map(Anchor::getHref).collect(Collectors.toSet());
-        Page page = new Page(link, title, contentWithoutTag, anchors, new ArrayList<>(), 1);
+        page = new Page(link, title, contentWithoutTag, anchors, metas, 1.0);
         redisDAO = mock(RedisDAO.class);
         String input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
+        String inputWithoutTitle = TestUtility.getFileContent(Paths.get(FILE_WITHOUT_TITLE_ADDRESS));
         document = Jsoup.parse(input, "UTF-8");
+        documentWithoutTitle = Jsoup.parse(inputWithoutTitle, "UTF-8");
         when(parserService.getDocument(link)).thenReturn(Optional.of(document));
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
         cache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
@@ -78,8 +81,14 @@ public class CrawlerServiceTest {
     @Test
     public void crawlTest() {
         when(redisDAO.contains(link)).thenReturn(false);
-        //Page page = crawlerService.crawl(link).get();
-        //Assert.assertEquals(answer, crawledLinks);
+        Page returnedPage = crawlerService.crawl(link).get();
+        Assert.assertEquals(page.getLink(), returnedPage.getLink());
+        Assert.assertEquals(page.getAnchors(), returnedPage.getAnchors());
+        Assert.assertEquals(page.getMetas(), returnedPage.getMetas());
+        Assert.assertEquals(page.getContent(), returnedPage.getContent());
+        Assert.assertEquals(page.getTitle(), returnedPage.getTitle());
+        Assert.assertEquals(page.getLinkDepth(), returnedPage.getLinkDepth());
+        Assert.assertEquals(page.getReversedLink(), returnedPage.getReversedLink());
     }
 
     @Test
@@ -90,60 +99,64 @@ public class CrawlerServiceTest {
         } catch (URISyntaxException e) {
             Assert.fail();
         }
-        Set<String> actualResult = new HashSet<>();
-        actualResult.add(link);
-        //  Set<String> answer = crawlerService.crawl(link);
-        //  Assert.assertEquals(answer, actualResult);
+        Optional<Page> returnedPage = crawlerService.crawl(link);
+        Assert.assertFalse(returnedPage.isPresent());
     }
 
-    @Test
+    @Test (expected = InvalidLinkException.class)
     public void crawlRepeatedLinkTest() {
         when(redisDAO.contains(anyString())).thenReturn(true);
-        //Set<String> actualResult = new HashSet<>();
-        //Set<String> answer = crawlerService.crawl(link);
-        //Assert.assertEquals(actualResult, answer);
+        Optional<Page> returnedPage = crawlerService.crawl(link);
+        Assert.fail();
     }
 
-    @Test
+    @Test (expected = InvalidLinkException.class)
     public void crawlInvalidLink() {
-        when(redisDAO.contains(link)).thenReturn(true);
-        //when(hBaseDAO.contains(link)).thenReturn(true);
-        //Set<String> answer = crawlerService.crawl("http://");
-        //Set<String> actualResult = new HashSet<>();
-        //Assert.assertEquals(answer, actualResult);
+        Optional<Page> returnedPage = crawlerService.crawl("http://");
+        Assert.fail();
     }
 
     @Test
     public void getPageTest() {
-//        Optional<Page> optionalPage = parserService.getPage(link);
-//        Assert.assertTrue(optionalPage.isPresent());
-//        Page returnPage = optionalPage.get();
-//        Assert.assertEquals(link, returnPage.getLink());
-//        Assert.assertEquals(contentWithoutTag, returnPage.getContent());
-//        String title = "nimbo";
-//        Assert.assertEquals(title, returnPage.getTitle());
-//        Assert.assertEquals(anchors, returnPage.getAnchors());
-//        Assert.assertEquals(metas, returnPage.getMetas());
+        Page returnedPage = parserService.getPage(link);
+        Assert.assertEquals(link, returnedPage.getLink());
+        Assert.assertEquals(contentWithoutTag, returnedPage.getContent());
+        String title = "nimbo";
+        Assert.assertEquals(title, returnedPage.getTitle());
+        Assert.assertEquals(anchors, returnedPage.getAnchors());
+        Assert.assertEquals(metas, returnedPage.getMetas());
     }
 
     @Test
+    public void getPageWithoutTitleTest() {
+        when(parserService.getDocument(link)).thenReturn(Optional.of(documentWithoutTitle));
+        Page returnedPage = parserService.getPage(link);
+        Assert.assertEquals(link, returnedPage.getLink());
+        String contentWithoutTag = "Hi Header support@nimbo.in paragraph! another link";
+        Assert.assertEquals(contentWithoutTag, returnedPage.getContent());
+        Assert.assertEquals(link, returnedPage.getTitle());
+        Assert.assertEquals(anchors, returnedPage.getAnchors());
+        Assert.assertEquals(metas, returnedPage.getMetas());
+    }
+
+    @Test (expected = ParseLinkException.class)
     public void getPageWithEmptyDocumentTest() {
-//        when(parserService.getDocument(link)).thenReturn(Optional.empty());
-//        Optional<Page> optionalPage = parserService.getPage(link);
-//        Assert.assertFalse(optionalPage.isPresent());
+        when(parserService.getDocument(link)).thenReturn(Optional.empty());
+        Page returnedPage = parserService.getPage(link);
+        Assert.fail();
     }
 
-    @Test
+    @Test (expected = ParseLinkException.class)
     public void getPageMalformedURLExceptionTest() {
-//        when(parserService.getDocument(invalidLink)).thenReturn(Optional.of(document));
-//        Optional<Page> optionalPage = parserService.getPage(invalidLink);
-//        Assert.assertFalse(optionalPage.isPresent());
+        when(parserService.getDocument(invalidLink)).thenThrow(MalformedURLException.class);
+        Page returnedPage = parserService.getPage(invalidLink);
+        Assert.fail();
     }
 
-    @Test
+    @Test (expected = ParseLinkException.class)
     public void getPageLanguageDetectExceptionTest() {
-//        doThrow(new LanguageDetectException(new Exception())).when(parserService).isEnglishLanguage(anyString());
-//        Optional<Page> optionalPage = parserService.getPage(invalidLink);
-//        Assert.assertFalse(optionalPage.isPresent());
+        doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString());
+        Page returnedPage = parserService.getPage(link);
+        Assert.fail();
     }
 }
