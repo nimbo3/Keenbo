@@ -7,7 +7,6 @@ import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
@@ -28,7 +27,6 @@ import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 public class App {
     public static void main(String[] args) {
@@ -48,9 +46,9 @@ public class App {
                 .config("spark.hadoop.validateOutputSpecs", false)
                 .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
                 .config("spark.kryoserializer.buffer", "1024k")
-                .master("local")
                 .appName(pageRankConfig.getAppName())
                 .getOrCreate();
+        
         spark.sparkContext().conf().set("es.nodes", pageRankConfig.getEsNodes());
         spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
         spark.sparkContext().conf().set("es.mapping.id", "id");
