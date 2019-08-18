@@ -34,7 +34,7 @@ public class LinkUtilityTest {
         assertEquals("http://com.stackoverflow.blog.www:8080/uri", reverseLink);
     }
 
-    @Test(expected = StringIndexOutOfBoundsException.class)
+    @Test(expected = ReverseLinkException.class)
     public void testReverseLinkWithoutProtocol() {
         LinkUtility.reverseLink("www.google.com");
     }
