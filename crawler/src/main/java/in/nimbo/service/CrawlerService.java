@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.Optional;
 
 public class CrawlerService {
@@ -40,8 +39,8 @@ public class CrawlerService {
         this.redisDAO = redisDAO;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
         getPageTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "getPage"));
-        skippedLinksCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "skipCounter"));
-        crawledLinksCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledCounter"));
+        skippedLinksCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "skippedLinksCounter"));
+        crawledLinksCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledLinksCounter"));
         cacheMissCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "cacheMissCounter"));
         cacheHitCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "cacheHitCounter"));
         redisContainTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisContain"));

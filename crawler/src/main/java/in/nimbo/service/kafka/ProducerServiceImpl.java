@@ -41,7 +41,7 @@ public class ProducerServiceImpl implements ProducerService {
         this.crawlerService = crawlerService;
         this.countDownLatch = countDownLatch;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
-        allLinksCounter = metricRegistry.counter(MetricRegistry.name(ProducerService.class, "crawledLinksCounter"));
+        allLinksCounter = metricRegistry.counter(MetricRegistry.name(ProducerService.class, "allLinksCounter"));
     }
 
     @Override
