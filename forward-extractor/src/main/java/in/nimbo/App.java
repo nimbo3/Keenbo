@@ -57,16 +57,15 @@ public class App {
         JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
                 .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
                 .map(cell -> {
-                    String rowKey = Bytes.toString(CellUtil.cloneRow(cell));
-                    String anchorLink = Bytes.toString(CellUtil.cloneQualifier(cell));
+                    String rowKey = Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
+                    String anchorLink = Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength());
                     int index = anchorLink.indexOf('#');
                     if (index != -1) {
                         anchorLink = anchorLink.substring(0, index);
                     }
-                    String value = Bytes.toString(CellUtil.cloneValue(cell));
+                    String value = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
                     return new Edge(rowKey, LinkUtility.reverseLink(anchorLink), value);
                 });
-
 
         Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);
 
@@ -75,7 +74,6 @@ public class App {
         GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
         Dataset<Row> anchors = graphFrame.triplets().groupBy("dst")
                 .agg(collect_set("edge.anchor").alias("anchors"), count("edge.anchor").alias("count"));
-
 
         JavaRDD<Page> anchorsRDD = anchors.toJavaRDD()
                 .map(row -> new Page(
