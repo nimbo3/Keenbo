@@ -1,5 +1,7 @@
 package in.nimbo;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,6 +15,12 @@ import java.nio.file.Path;
  */
 public class TestUtility {
     private static Logger logger = LoggerFactory.getLogger(TestUtility.class);
+
+    public static void setMetric() {
+        if( SharedMetricRegistries.tryGetDefault() == null) {
+            SharedMetricRegistries.setDefault("kafkaTest");
+        }
+    }
 
     /**
      * get content a file as string

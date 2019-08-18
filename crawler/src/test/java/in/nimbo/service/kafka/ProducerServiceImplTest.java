@@ -2,6 +2,7 @@ package in.nimbo.service.kafka;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
+import in.nimbo.TestUtility;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Page;
@@ -39,7 +40,7 @@ public class ProducerServiceImplTest {
 
     @BeforeClass
     public static void init() {
-        MetricRegistry metricRegistry = SharedMetricRegistries.setDefault("kafkaTest");
+        TestUtility.setMetric();
     }
 
     @Before
