@@ -6,6 +6,8 @@ public class Meta {
     private String key;
     private String content;
 
+    public Meta(){}
+
     public Meta(String key, String content) {
         this.key = key;
         this.content = content;
