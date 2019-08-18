@@ -71,9 +71,7 @@ public class App {
                         LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()))
                 ));
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
-        vertexDF.show();
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
-        edgeDF.show();
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
         pageRank.persist(StorageLevel.MEMORY_AND_DISK());
