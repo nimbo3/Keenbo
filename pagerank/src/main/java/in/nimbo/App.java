@@ -7,6 +7,8 @@ import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -26,6 +28,7 @@ import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
 import java.io.IOException;
+import java.util.Arrays;
 
 public class App {
     public static void main(String[] args) {
@@ -45,6 +48,7 @@ public class App {
                 .config("spark.hadoop.validateOutputSpecs", false)
                 .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
                 .config("spark.kryoserializer.buffer", "1024k")
+                .master("local")
                 .appName(pageRankConfig.getAppName())
                 .getOrCreate();
         spark.sparkContext().conf().set("es.nodes", pageRankConfig.getEsNodes());
@@ -61,15 +65,13 @@ public class App {
 
         JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));
         JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
-                .filter(cell -> cell.getFamilyArray() == anchorColumnFamily)
+                .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
                 .map(cell -> new Edge(
-                        Bytes.toString(cell.getRowArray()),
-                        LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray()))
+                        Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
+                        LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()))
                 ));
-
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
-
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
         pageRank.persist(StorageLevel.MEMORY_AND_DISK());
