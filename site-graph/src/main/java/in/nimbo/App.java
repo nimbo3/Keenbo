@@ -21,6 +21,7 @@ import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
 import java.util.Arrays;
+import java.util.Date;
 
 public class App {
     public static void main(String[] args) {
@@ -85,7 +86,7 @@ public class App {
                 .groupBy("src", "dst")
                 .agg(functions.sum("edge.numOfAnchors"));
         edgesWithWeight.show(false);
-
+        edgesWithWeight.toJavaRDD().saveAsTextFile(appConfig.getResultDirectory() + new Date().getTime());
         spark.stop();
     }
 
