@@ -20,8 +20,10 @@ import java.util.Optional;
 
 public class CrawlerService {
     private final Timer getPageTimer;
-    private final Counter skippedCounter;
-    private final Counter crawledCounter;
+    private final Counter skippedLinksCounter;
+    private final Counter crawledLinksCounter;
+    private final Counter cacheMissCounter;
+    private final Counter cacheHitCounter;
     private final Timer redisContainTimer;
 
     private Logger appLogger = LoggerFactory.getLogger("app");
@@ -38,8 +40,10 @@ public class CrawlerService {
         this.redisDAO = redisDAO;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
         getPageTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "getPage"));
-        skippedCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "skipCounter"));
-        crawledCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledCounter"));
+        skippedLinksCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "skipCounter"));
+        crawledLinksCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "crawledCounter"));
+        cacheMissCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "cacheMissCounter"));
+        cacheHitCounter = metricRegistry.counter(MetricRegistry.name(CrawlerService.class, "cacheHitCounter"));
         redisContainTimer = metricRegistry.timer(MetricRegistry.name(CrawlerService.class, "redisContain"));
     }
 
@@ -52,39 +56,33 @@ public class CrawlerService {
      */
     public Optional<Page> crawl(String siteLink) {
         LocalDateTime start = LocalDateTime.now();
-        boolean isLinkSkipped = true;
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
+                cacheMissCounter.inc();
                 Timer.Context redisContainTimerContext = redisContainTimer.time();
                 boolean contains = redisDAO.contains(siteLink);
                 redisContainTimerContext.stop();
                 if (!contains) {
+                    crawledLinksCounter.inc();
                     redisDAO.add(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
-                    isLinkSkipped = false;
                     Timer.Context context = getPageTimer.time();
                     Page page = parserService.getPage(siteLink);
                     context.stop();
                     return Optional.of(page);
                 } else {
+                    skippedLinksCounter.inc();
                     throw new InvalidLinkException("duplicated link: " + siteLink);
                 }
             } else {
+                cacheHitCounter.inc();
                 return Optional.empty();
             }
         } catch (URISyntaxException e) {
             parserLogger.warn("Illegal URL format: " + siteLink, e);
         } catch (Exception e) {
             appLogger.error(e.getMessage(), e);
-        } finally {
-            LocalDateTime end = LocalDateTime.now();
-            long duration = start.until(end, ChronoUnit.MILLIS);
-            if (isLinkSkipped) {
-                skippedCounter.inc(duration);
-            } else {
-                crawledCounter.inc(duration);
-            }
         }
         throw new InvalidLinkException();
     }
