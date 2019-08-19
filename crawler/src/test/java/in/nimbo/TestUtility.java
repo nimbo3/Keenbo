@@ -16,8 +16,8 @@ import java.nio.file.Path;
 public class TestUtility {
     private static Logger logger = LoggerFactory.getLogger(TestUtility.class);
 
-    public static void setMetric() {
-        if( SharedMetricRegistries.tryGetDefault() == null) {
+    public static void setMetricRegistry() {
+        if (SharedMetricRegistries.tryGetDefault() == null) {
             SharedMetricRegistries.setDefault("kafkaTest");
         }
     }

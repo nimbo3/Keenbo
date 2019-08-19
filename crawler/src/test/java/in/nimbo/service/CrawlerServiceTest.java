@@ -50,7 +50,7 @@ public class CrawlerServiceTest {
     public static void init() {
         parserService = spy(new ParserService(new ProjectConfig()));
         projectConfig = ProjectConfig.load();
-        TestUtility.setMetric();
+        TestUtility.setMetricRegistry();
     }
 
     @Before

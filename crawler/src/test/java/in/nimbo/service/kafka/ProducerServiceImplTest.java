@@ -40,7 +40,7 @@ public class ProducerServiceImplTest {
 
     @BeforeClass
     public static void init() {
-        TestUtility.setMetric();
+        TestUtility.setMetricRegistry();
     }
 
     @Before
