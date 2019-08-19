@@ -1,5 +1,6 @@
 package in.nimbo.service.kafka;
 
+import in.nimbo.TestUtility;
 import in.nimbo.common.config.KafkaConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.MockConsumer;
@@ -26,6 +27,7 @@ public class ConsumerServiceImplTest {
     @BeforeClass
     public static void init() {
         kafkaConfig = KafkaConfig.load();
+        TestUtility.setMetricRegistry();
     }
 
     @Test

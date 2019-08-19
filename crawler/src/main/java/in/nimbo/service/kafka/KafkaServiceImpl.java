@@ -3,6 +3,7 @@ package in.nimbo.service.kafka;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.KafkaServiceException;
+import in.nimbo.monitoring.ThreadsMonitor;
 import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -23,6 +24,7 @@ public class KafkaServiceImpl implements KafkaService {
     private ConsumerService consumerService;
     private List<ProducerService> producerServices;
     private CountDownLatch countDownLatch;
+    private ThreadsMonitor threadsMonitor;
 
     public KafkaServiceImpl(CrawlerService crawlerService, KafkaConfig kafkaConfig) {
         this.crawlerService = crawlerService;
@@ -38,9 +40,13 @@ public class KafkaServiceImpl implements KafkaService {
      */
     @Override
     public void schedule() {
-        ExecutorService executorService = Executors.newFixedThreadPool(kafkaConfig.getLinkProducerCount() + 1);
-        messageQueue = new ArrayBlockingQueue<>(kafkaConfig.getLocalLinkQueueSize());
+        final ThreadGroup threadGroup = new ThreadGroup("workers");
+        int numberOfThreads = kafkaConfig.getLinkProducerCount() + 1;
+        ThreadPoolExecutor executorService = new ThreadPoolExecutor(numberOfThreads, numberOfThreads, 0L, TimeUnit.MILLISECONDS,
+                new LinkedBlockingQueue<>(), r -> new Thread(threadGroup, r));
+        startThreadsMonitoring(executorService, threadGroup);
 
+        messageQueue = new ArrayBlockingQueue<>(kafkaConfig.getLocalLinkQueueSize());
         // Prepare consumer
         KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getLinkConsumerProperties());
         kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getLinkTopic()));
@@ -95,5 +101,12 @@ public class KafkaServiceImpl implements KafkaService {
             producer.send(new ProducerRecord<>(kafkaConfig.getLinkTopic(), message, message));
             producer.flush();
         }
+    }
+
+    private void startThreadsMonitoring(ThreadPoolExecutor threadPoolExecutor, ThreadGroup threadGroup) {
+        threadsMonitor = new ThreadsMonitor(threadPoolExecutor, threadGroup);
+        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
+        scheduledExecutorService.scheduleAtFixedRate(threadsMonitor, 0, 15, TimeUnit.SECONDS);
+        scheduledExecutorService.shutdown();
     }
 }
