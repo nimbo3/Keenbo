@@ -1,5 +1,8 @@
 package in.nimbo.service.kafka;
 
+import com.codahale.metrics.Counter;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Page;
@@ -26,6 +29,7 @@ public class ProducerServiceImpl implements ProducerService {
     private CrawlerService crawlerService;
     private AtomicBoolean closed = new AtomicBoolean(false);
     private CountDownLatch countDownLatch;
+    private Counter allLinksCounter;
 
     public ProducerServiceImpl(KafkaConfig config, BlockingQueue<String> messageQueue,
                                Producer<String, String> linkProducer, Producer<String, Page> pageProducer,
@@ -36,6 +40,8 @@ public class ProducerServiceImpl implements ProducerService {
         this.pageProducer = pageProducer;
         this.crawlerService = crawlerService;
         this.countDownLatch = countDownLatch;
+        MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
+        allLinksCounter = metricRegistry.counter(MetricRegistry.name(ProducerService.class, "allLinksCounter"));
     }
 
     @Override
@@ -50,6 +56,7 @@ public class ProducerServiceImpl implements ProducerService {
                 String newLink = messageQueue.poll(100, TimeUnit.MILLISECONDS);
                 if (newLink != null) {
                     handleLink(newLink);
+                    allLinksCounter.inc();
                 }
             }
         } catch (InterruptedException e) {
