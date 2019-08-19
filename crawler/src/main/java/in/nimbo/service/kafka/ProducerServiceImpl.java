@@ -29,7 +29,7 @@ public class ProducerServiceImpl implements ProducerService {
     private CrawlerService crawlerService;
     private AtomicBoolean closed = new AtomicBoolean(false);
     private CountDownLatch countDownLatch;
-    private final Counter allLinksCounter;
+    private Counter allLinksCounter;
 
     public ProducerServiceImpl(KafkaConfig config, BlockingQueue<String> messageQueue,
                                Producer<String, String> linkProducer, Producer<String, Page> pageProducer,

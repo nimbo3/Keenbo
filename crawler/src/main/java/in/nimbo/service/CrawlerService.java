@@ -18,12 +18,12 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public class CrawlerService {
-    private final Timer getPageTimer;
-    private final Counter skippedLinksCounter;
-    private final Counter crawledLinksCounter;
-    private final Counter cacheMissCounter;
-    private final Counter cacheHitCounter;
-    private final Timer redisContainTimer;
+    private Timer getPageTimer;
+    private Counter skippedLinksCounter;
+    private Counter crawledLinksCounter;
+    private Counter cacheMissCounter;
+    private Counter cacheHitCounter;
+    private Timer redisContainTimer;
 
     private Logger appLogger = LoggerFactory.getLogger("app");
     private Logger parserLogger = LoggerFactory.getLogger("parser");
