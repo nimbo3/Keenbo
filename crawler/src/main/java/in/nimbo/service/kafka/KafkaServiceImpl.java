@@ -48,6 +48,7 @@ public class KafkaServiceImpl implements KafkaService {
                 return new Thread(threadGroup, r);
             }
         });
+        startThreadsMonitoring(executorService, threadGroup);
 
         messageQueue = new ArrayBlockingQueue<>(kafkaConfig.getLocalLinkQueueSize());
         // Prepare consumer

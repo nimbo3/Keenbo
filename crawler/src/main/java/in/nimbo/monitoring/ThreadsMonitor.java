@@ -23,17 +23,21 @@ public class ThreadsMonitor implements Runnable {
 
     @Override
     public void run() {
-        activeThreadsHistogram.update(threadPoolExecutor.getActiveCount());
         int waitingThreads = 0;
+        int activeThreads = 0;
         Set<Thread> threadSet = Thread.getAllStackTraces().keySet();
         for (Thread t : threadSet) {
             if (t.getThreadGroup().equals(threadGroup)) {
                 Thread.State state = t.getState();
-                if (state.equals(Thread.State.BLOCKED) || state.equals(Thread.State.TIMED_WAITING) || state.equals(Thread.State.WAITING)){
+                if (state.equals(Thread.State.RUNNABLE)) {
+                    activeThreads++;
+                }
+                else if (state.equals(Thread.State.BLOCKED) || state.equals(Thread.State.TIMED_WAITING) || state.equals(Thread.State.WAITING)){
                     waitingThreads++;
                 }
             }
         }
         waitingThreadsHistogram.update(waitingThreads);
+        activeThreadsHistogram.update(activeThreads);
     }
 }
