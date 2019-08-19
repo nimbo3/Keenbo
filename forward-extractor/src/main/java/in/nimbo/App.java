@@ -39,7 +39,6 @@ public class App {
 
         SparkSession spark = SparkSession.builder()
                 .appName(appConfig.getAppName())
-                .master(appConfig.getResourceManager())
                 .getOrCreate();
         spark.sparkContext().conf().set("es.nodes", appConfig.getNodesIP());
         spark.sparkContext().conf().set("es.write.operation", "upsert");

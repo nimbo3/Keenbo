@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Spark;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -74,6 +75,10 @@ public class App {
                 response.type("application/json");
                 return result;
             }), transformer);
+            Spark.get("/site-graph", (request, response) -> {
+                response.type("application/json");
+                return searchController.siteGraph();
+            }, transformer);
             Spark.after("/*", (request, response) -> {
                 response.header("Access-Control-Allow-Origin", "*");
                 backendLogger.info("Response sent successfully: {}", request.uri());
