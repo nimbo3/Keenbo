@@ -86,7 +86,7 @@ public class App {
                 .groupBy("src", "dst")
                 .agg(functions.sum("edge.numOfAnchors"));
         edgesWithWeight.show(false);
-        edgesWithWeight.toJavaRDD().saveAsTextFile(appConfig.getResultDirectory() + new Date().getTime());
+        edgesWithWeight.toJavaRDD().repartition(1).saveAsTextFile(appConfig.getResultDirectory() + new Date().getTime());
         spark.stop();
     }
 
