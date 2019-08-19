@@ -19,11 +19,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCluster;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.ThreadMXBean;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.Scanner;
-import java.util.concurrent.TimeUnit;
+import java.util.Set;
+import java.util.concurrent.*;
 
 public class App {
     private static Logger appLogger = LoggerFactory.getLogger("app");
@@ -34,7 +37,7 @@ public class App {
         this.kafkaService = kafkaService;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         loadLanguageDetector();
 
         ProjectConfig projectConfig = ProjectConfig.load();
@@ -59,7 +62,9 @@ public class App {
 
         appLogger.info("Application started");
         App app = new App(kafkaService);
-        Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
+        Runtime.getRuntime().
+
+                addShutdownHook(new Thread(app::stopApp));
 
         app.startApp();
     }
