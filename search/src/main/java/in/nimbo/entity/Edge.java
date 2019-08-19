@@ -1,8 +1,13 @@
 package in.nimbo.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Edge {
+    @JsonProperty("from")
     private String src;
+    @JsonProperty("to")
     private String dst;
+    @JsonProperty("width")
     private int weight;
 
     public Edge(String src, String dst, int weight) {

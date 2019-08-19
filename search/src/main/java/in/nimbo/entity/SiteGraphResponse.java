@@ -1,9 +1,13 @@
 package in.nimbo.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public class SiteGraphResponse {
+    @JsonProperty("nodes")
     private List<Node> nodes;
+    @JsonProperty("edges")
     private List<Edge> edges;
 
     public SiteGraphResponse(){}

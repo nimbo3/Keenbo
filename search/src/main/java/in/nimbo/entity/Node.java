@@ -1,8 +1,14 @@
 package in.nimbo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class Node {
+    @JsonProperty("id")
     private String domain;
+    @JsonProperty("font")
     private double rank;
+    @JsonIgnore
     private int pageCount;
 
     public Node(){}
