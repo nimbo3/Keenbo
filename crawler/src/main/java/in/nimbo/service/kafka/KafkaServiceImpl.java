@@ -43,11 +43,7 @@ public class KafkaServiceImpl implements KafkaService {
         final ThreadGroup threadGroup = new ThreadGroup("workers");
         int numberOfThreads = kafkaConfig.getLinkProducerCount() + 1;
         ThreadPoolExecutor executorService = new ThreadPoolExecutor(numberOfThreads, numberOfThreads, 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(), new ThreadFactory() {
-            public Thread newThread(Runnable r) {
-                return new Thread(threadGroup, r);
-            }
-        });
+                new LinkedBlockingQueue<>(), r -> new Thread(threadGroup, r));
         startThreadsMonitoring(executorService, threadGroup);
 
         messageQueue = new ArrayBlockingQueue<>(kafkaConfig.getLocalLinkQueueSize());
