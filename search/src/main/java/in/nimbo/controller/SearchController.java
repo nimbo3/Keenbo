@@ -7,6 +7,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class SearchController {
     private ElasticDAO elasticDAO;
@@ -63,7 +64,10 @@ public class SearchController {
         List<Node> nodeList = new ArrayList<>(nodes);
         double min = getMin(nodeList);
         normalize(nodeList, min);
-        return new SiteGraphResponse(nodeList, edges);
+        List<Edge> collect = edges.stream().filter(edge -> edge.getWeight() > 30).collect(Collectors.toList());
+        OptionalInt minEdge = collect.stream().mapToInt(Edge::getWeight).min();
+        collect.forEach(edge -> edge.setWeight(edge.getWeight() / minEdge.getAsInt()));
+        return new SiteGraphResponse(nodeList, collect);
     }
 
     private void normalize(List<Node> nodeList, double min) {
