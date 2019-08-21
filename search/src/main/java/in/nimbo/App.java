@@ -78,6 +78,10 @@ public class App {
                 response.type("application/json");
                 return searchController.siteGraph();
             }, transformer);
+            Spark.exception(Exception.class, (e, request, response) -> {
+                backendLogger.error(e.getMessage(), e);
+                response.type("text/html");
+            });
             Spark.after("/*", (request, response) -> {
                 response.header("Access-Control-Allow-Origin", "*");
                 backendLogger.info("Response sent successfully: {}", request.uri());
