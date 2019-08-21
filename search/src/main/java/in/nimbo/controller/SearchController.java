@@ -76,7 +76,7 @@ public class SearchController {
         List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWeight() > config.getFilterEdge()).collect(Collectors.toList());
         OptionalInt minEdge = filteredEdges.stream().mapToInt(Edge::getWeight).min();
         OptionalInt maxEdge = filteredEdges.stream().mapToInt(Edge::getWeight).max();
-        filteredEdges.forEach(edge -> edge.setWeight((edge.getWeight() - minEdge.getAsInt()) / (maxEdge.getAsInt() - minEdge.getAsInt()) * (config.getMaxEdge() - config.getMinEdge()) + config.getMinEdge()));
+        filteredEdges.forEach(edge -> edge.setWeight((int)((double)edge.getWeight() - minEdge.getAsInt()) / (maxEdge.getAsInt() - minEdge.getAsInt()) * (config.getMaxEdge() - config.getMinEdge()) + config.getMinEdge()));
         return new SiteGraphResponse(filteredNodes, filteredEdges);
     }
 
