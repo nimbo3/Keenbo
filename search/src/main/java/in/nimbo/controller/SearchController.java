@@ -1,5 +1,6 @@
 package in.nimbo.controller;
 
+import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.*;
 
@@ -8,12 +9,16 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
+import java.util.stream.IntStream;
 
 public class SearchController {
     private ElasticDAO elasticDAO;
+    private SparkConfig config;
 
-    public SearchController(ElasticDAO elasticDAO) {
+    public SearchController(ElasticDAO elasticDAO, SparkConfig config) {
         this.elasticDAO = elasticDAO;
+        this.config = config;
     }
 
     public List<Page> search(String query, String site) {
@@ -62,12 +67,19 @@ public class SearchController {
             edges.add(edge);
         }
         List<Node> nodeList = new ArrayList<>(nodes);
-        double min = getMin(nodeList);
-        normalize(nodeList, min);
-        List<Edge> collect = edges.stream().filter(edge -> edge.getWeight() > 30).collect(Collectors.toList());
-        OptionalInt minEdge = collect.stream().mapToInt(Edge::getWeight).min();
-        collect.forEach(edge -> edge.setWeight(edge.getWeight() / minEdge.getAsInt()));
-        return new SiteGraphResponse(nodeList, collect);
+        List<Node> filteredNodes = nodeList.stream().filter(node -> node.getFont().getSize() > config.getFilterNode()).collect(Collectors.toList());
+        DoubleStream nodesStream = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize());
+        OptionalDouble minNode = nodesStream.min();
+        OptionalDouble maxNode = nodesStream.max();
+        filteredNodes.forEach(node -> node.getFont().setSize((node.getFont().getSize() - minNode.getAsDouble()) / (maxNode.getAsDouble() - minNode.getAsDouble()) * (config.getMaxNode() - config.getMinNode()) + config.getMinNode()));
+        double min = getMin(filteredNodes);
+        normalize(filteredNodes, min);
+        List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWeight() > config.getFilterEdge()).collect(Collectors.toList());
+        IntStream edgesStream = filteredEdges.stream().mapToInt(Edge::getWeight);
+        OptionalInt minEdge = edgesStream.min();
+        OptionalInt maxEdge = edgesStream.max();
+        filteredEdges.forEach(edge -> edge.setWeight((edge.getWeight() - minEdge.getAsInt()) / (maxEdge.getAsInt() - minEdge.getAsInt()) * (config.getMaxEdge() - config.getMinEdge()) + config.getMinEdge()));
+        return new SiteGraphResponse(filteredNodes, filteredEdges);
     }
 
     private void normalize(List<Node> nodeList, double min) {

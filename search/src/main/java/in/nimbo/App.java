@@ -55,7 +55,7 @@ public class App {
 
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig, violenceWords);
-        SearchController searchController = new SearchController(elasticDAO);
+        SearchController searchController = new SearchController(elasticDAO, sparkConfig);
 
         App app = new App(searchController, sparkConfig, transformer, restHighLevelClient);
 
