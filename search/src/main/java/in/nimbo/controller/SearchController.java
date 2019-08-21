@@ -68,16 +68,14 @@ public class SearchController {
         }
         List<Node> nodeList = new ArrayList<>(nodes);
         List<Node> filteredNodes = nodeList.stream().filter(node -> node.getFont().getSize() > config.getFilterNode()).collect(Collectors.toList());
-        DoubleStream nodesStream = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize());
-        OptionalDouble minNode = nodesStream.min();
-        OptionalDouble maxNode = nodesStream.max();
+        OptionalDouble minNode = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize()).min();
+        OptionalDouble maxNode = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize()).max();
         filteredNodes.forEach(node -> node.getFont().setSize((node.getFont().getSize() - minNode.getAsDouble()) / (maxNode.getAsDouble() - minNode.getAsDouble()) * (config.getMaxNode() - config.getMinNode()) + config.getMinNode()));
         double min = getMin(filteredNodes);
         normalize(filteredNodes, min);
         List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWeight() > config.getFilterEdge()).collect(Collectors.toList());
-        IntStream edgesStream = filteredEdges.stream().mapToInt(Edge::getWeight);
-        OptionalInt minEdge = edgesStream.min();
-        OptionalInt maxEdge = edgesStream.max();
+        OptionalInt minEdge = filteredEdges.stream().mapToInt(Edge::getWeight).min();
+        OptionalInt maxEdge = filteredEdges.stream().mapToInt(Edge::getWeight).max();
         filteredEdges.forEach(edge -> edge.setWeight((edge.getWeight() - minEdge.getAsInt()) / (maxEdge.getAsInt() - minEdge.getAsInt()) * (config.getMaxEdge() - config.getMinEdge()) + config.getMinEdge()));
         return new SiteGraphResponse(filteredNodes, filteredEdges);
     }
