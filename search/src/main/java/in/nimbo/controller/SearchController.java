@@ -61,6 +61,24 @@ public class SearchController {
             edges.add(edge);
         }
         List<Node> nodeList = new ArrayList<>(nodes);
+        double min = getMin(nodeList);
+        normalize(nodeList, min);
         return new SiteGraphResponse(nodeList, edges);
+    }
+
+    private void normalize(List<Node> nodeList, double min) {
+        for (Node node : nodeList) {
+            node.getFont().setSize(node.getFont().getSize() / min);
+        }
+    }
+
+    private double getMin(List<Node> nodes) {
+        double min = Double.MAX_VALUE;
+        for (Node node : nodes) {
+            if (min > node.getFont().getSize()) {
+                min = node.getFont().getSize();
+            }
+        }
+        return min;
     }
 }

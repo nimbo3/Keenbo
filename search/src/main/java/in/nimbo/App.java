@@ -17,7 +17,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import spark.Spark;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -44,7 +43,7 @@ public class App {
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer = mapper.writer();
         JsonTransformer transformer = new JsonTransformer(writer);
-        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("violence-words.txt");
+        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("violence-words");
         Scanner scanner = new Scanner(inputStream);
         List<String> violenceWords = new ArrayList<>();
         while (scanner.hasNextLine()) {

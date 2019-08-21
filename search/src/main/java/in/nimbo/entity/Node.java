@@ -27,11 +27,11 @@ public class Node {
         this.domain = domain;
     }
 
-    public Font getRank() {
+    public Font getFont() {
         return font;
     }
 
-    public void setRank(Font font) {
+    public void setFont(Font font) {
         this.font = font;
     }
 
