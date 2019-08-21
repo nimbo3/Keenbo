@@ -1,10 +1,7 @@
 package in.nimbo.controller;
 
 import in.nimbo.dao.elastic.ElasticDAO;
-import in.nimbo.entity.Edge;
-import in.nimbo.entity.Node;
-import in.nimbo.entity.Page;
-import in.nimbo.entity.SiteGraphResponse;
+import in.nimbo.entity.*;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -39,7 +36,8 @@ public class SearchController {
             int closeIndex = line.indexOf("]");
             String countString = line.substring(0, closeIndex);
             int count = Integer.valueOf(countString);
-            Node node = new Node(domain, rank, count);
+            Font font = new Font(rank);
+            Node node = new Node(domain, font, count);
             nodes.add(node);
             line = line.substring(closeIndex + 3);
             commaIndex = line.indexOf(",");
@@ -52,7 +50,8 @@ public class SearchController {
             closeIndex = line.indexOf("]");
             countString = line.substring(0, closeIndex);
             count = Integer.valueOf(countString);
-            Node node2 = new Node(domain, rank, count);
+            font = new Font(rank);
+            Node node2 = new Node(domain, font, count);
             nodes.add(node2);
             line = line.substring(closeIndex + 1);
             closeIndex = line.indexOf("]");

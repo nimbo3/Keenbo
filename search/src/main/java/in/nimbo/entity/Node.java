@@ -7,15 +7,15 @@ public class Node {
     @JsonProperty("id")
     private String domain;
     @JsonProperty("font")
-    private double rank;
+    private Font font;
     @JsonIgnore
     private int pageCount;
 
     public Node(){}
 
-    public Node(String domain, double rank, int pageCount) {
+    public Node(String domain, Font font, int pageCount) {
         this.domain = domain;
-        this.rank = rank;
+        this.font = font;
         this.pageCount = pageCount;
     }
 
@@ -27,12 +27,12 @@ public class Node {
         this.domain = domain;
     }
 
-    public double getRank() {
-        return rank;
+    public Font getRank() {
+        return font;
     }
 
-    public void setRank(double rank) {
-        this.rank = rank;
+    public void setRank(Font font) {
+        this.font = font;
     }
 
     public int getPageCount() {
@@ -56,14 +56,5 @@ public class Node {
     @Override
     public int hashCode() {
         return domain != null ? domain.hashCode() : 0;
-    }
-
-    @Override
-    public String toString() {
-        return "Node{" +
-                "domain='" + domain + '\'' +
-                ", rank=" + rank +
-                ", pageCount=" + pageCount +
-                '}';
     }
 }

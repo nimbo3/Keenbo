@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 ssh -p 3031 root@master '
 export JAVA_HOME=/var/local/jdk;
 cd /root/project/ehsan;
