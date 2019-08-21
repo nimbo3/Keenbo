@@ -4,14 +4,14 @@ import in.nimbo.common.exception.LoadConfigurationException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
-public class AppConfig {
+public class SiteGraphConfig {
     private static final String CONFIG_NAME = "site-graph.properties";
     private String appName;
     private String scanBatchSize;
     private String resultDirectory;
 
-    public static AppConfig load() {
-        AppConfig appConfig = new AppConfig();
+    public static SiteGraphConfig load() {
+        SiteGraphConfig appConfig = new SiteGraphConfig();
         try {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
             appConfig.setAppName(config.getString("app.name"));

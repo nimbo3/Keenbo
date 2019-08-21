@@ -1,5 +1,8 @@
 package in.nimbo.service.kafka;
 
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
+import in.nimbo.TestUtility;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Page;
@@ -9,6 +12,7 @@ import org.apache.kafka.clients.producer.MockProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
@@ -33,6 +37,11 @@ public class ProducerServiceImplTest {
     private CrawlerService crawlerService;
     private MockProducer<String, String> linkProducer;
     private MockProducer<String, Page> pageProducer;
+
+    @BeforeClass
+    public static void init() {
+        TestUtility.setMetricRegistry();
+    }
 
     @Before
     public void beforeEachTest() {

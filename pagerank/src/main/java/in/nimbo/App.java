@@ -7,6 +7,7 @@ import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -47,6 +48,7 @@ public class App {
                 .config("spark.kryoserializer.buffer", "1024k")
                 .appName(pageRankConfig.getAppName())
                 .getOrCreate();
+        
         spark.sparkContext().conf().set("es.nodes", pageRankConfig.getEsNodes());
         spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
         spark.sparkContext().conf().set("es.mapping.id", "id");
@@ -60,16 +62,14 @@ public class App {
                 .map(tuple -> tuple._2);
 
         JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));
-        JavaRDD<Edge> edges = hBaseRDD
-                .flatMap(result -> result.getFamilyMap(anchorColumnFamily).keySet().stream().map(
-                        entry -> new Edge(
-                                Bytes.toString(result.getRow()),
-                                LinkUtility.reverseLink(Bytes.toString(entry))
-                        )).iterator());
-
+        JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
+                .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
+                .map(cell -> new Edge(
+                        Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
+                        LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()))
+                ));
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
-
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
         pageRank.persist(StorageLevel.MEMORY_AND_DISK());

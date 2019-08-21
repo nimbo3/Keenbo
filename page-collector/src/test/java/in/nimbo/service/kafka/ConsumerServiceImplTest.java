@@ -1,18 +1,20 @@
 package in.nimbo.service.kafka;
 
 import in.nimbo.common.config.KafkaConfig;
+import in.nimbo.common.entity.Anchor;
+import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.net.MalformedURLException;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -41,6 +43,19 @@ public class ConsumerServiceImplTest {
                 Collections.singleton(new TopicPartition(kafkaConfig.getPageTopic(), 0)));
         kafkaConsumer.seek(new TopicPartition(kafkaConfig.getPageTopic(), 0), 0);
         List<Page> crawledLinks = new ArrayList<>();
+        Set<Anchor> nimboAnchors = new HashSet<>();
+        nimboAnchors.add(new Anchor("http://google.com", "google"));
+        nimboAnchors.add(new Anchor("http://stackoverflow.com", "stackoverflow"));
+        Set<Anchor> sahabAnchors = new HashSet<>();
+        sahabAnchors.add(new Anchor("http://google.com", "google"));
+        sahabAnchors.add(new Anchor("http://stackoverflow.com", "stackoverflow"));
+        sahabAnchors.add(new Anchor("http://nimbo.in", "nimbo"));
+        try {
+            crawledLinks.add(new Page("http://nimbo.in", "nimbo", "sahab internship", nimboAnchors, new ArrayList<>(), 1.2));
+            crawledLinks.add(new Page("http://sahab.ir", "sahab", "sahab", sahabAnchors, new ArrayList<>(), 1.5));
+        } catch (MalformedURLException e){
+            Assert.fail();
+        }
         for (int i = 0; i < crawledLinks.size(); i++) {
             kafkaConsumer.addRecord(new ConsumerRecord<>(
                     kafkaConfig.getPageTopic(), 0, i, "producer", crawledLinks.get(i)));
@@ -55,11 +70,18 @@ public class ConsumerServiceImplTest {
             }
         }).start();
         consumerService.run();
-        //assertEquals(2, queue.size());
+        assertEquals(2, queue.size());
         for (Page page : crawledLinks) {
-            Page page1 = queue.poll(1, TimeUnit.MILLISECONDS);
-            assertNotNull(page1);
-            Assert.assertEquals(page.getLink(), page1.getLink());// TODO
+            Page returnedPage = queue.poll(1, TimeUnit.MILLISECONDS);
+            assertNotNull(returnedPage);
+            Assert.assertEquals(page.getLink(), returnedPage.getLink());
+            Assert.assertEquals(page.getReversedLink(), returnedPage.getReversedLink());
+            Assert.assertEquals(page.getLinkDepth(), returnedPage.getLinkDepth());
+            Assert.assertEquals(page.getTitle(), returnedPage.getTitle());
+            Assert.assertEquals(page.getContent(), returnedPage.getContent());
+            Assert.assertEquals(page.getMetas(), returnedPage.getMetas());
+            Assert.assertEquals(page.getAnchors(), returnedPage.getAnchors());
+            Assert.assertEquals(String.valueOf(page.getRank()), String.valueOf(returnedPage.getRank()));
         }
         Assert.assertEquals(0, queue.size());
         Assert.assertEquals(0, countDownLatch.getCount());

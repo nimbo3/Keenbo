@@ -46,4 +46,9 @@ public class Node {
         Node node = (Node) o;
         return Objects.equals(id, node.id);
     }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 }

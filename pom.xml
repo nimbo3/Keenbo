@@ -36,6 +36,7 @@
         <mockito.version>2.10.0</mockito.version>
         <jacoco.version>0.8.4</jacoco.version>
         <hbase.version>1.2.4</hbase.version>
+        <hbase.server.version>1.2.4</hbase.server.version>
         <jedis.version>3.0.1</jedis.version>
         <elasticsearch.version>6.6.2</elasticsearch.version>
         <http.httpcomponents.version>4.5.9</http.httpcomponents.version>
@@ -115,6 +116,11 @@
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>
             <version>${hbase.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hbase</groupId>
+            <artifactId>hbase-server</artifactId>
+            <version>${hbase.server.version}</version>
         </dependency>
 
         <!-- redis clients: jedis -->

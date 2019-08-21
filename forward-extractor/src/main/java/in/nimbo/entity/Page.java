@@ -1,17 +1,17 @@
 package in.nimbo.entity;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.util.List;
 
 public class Page implements Serializable {
     private String id;
-    private Iterable<String> anchors;
+    private List<String> anchors;
     private long anchorsSize;
 
     public Page() {
     }
 
-    public Page(String id, Iterable<String> anchors, long anchorsSize) {
+    public Page(String id, List<String> anchors, long anchorsSize) {
         this.id = id;
         this.anchors = anchors;
         this.anchorsSize = anchorsSize;
@@ -25,16 +25,12 @@ public class Page implements Serializable {
         this.id = id;
     }
 
-    public Iterable<String> getAnchors() {
+    public List<String> getAnchors() {
         return anchors;
     }
 
-    public void setAnchors(Iterable<String> anchors) {
+    public void setAnchors(List<String> anchors) {
         this.anchors = anchors;
-    }
-
-    public long getLength() {
-        return anchorsSize;
     }
 
     public void setLength(int anchorsLength) {
