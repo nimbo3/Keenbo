@@ -72,8 +72,8 @@ public class SearchController {
         OptionalDouble maxNode = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize()).max();
         filteredNodes.forEach(node -> node.getFont().setSize((node.getFont().getSize() - minNode.getAsDouble()) / (maxNode.getAsDouble() - minNode.getAsDouble()) * (config.getMaxNode() - config.getMinNode()) + config.getMinNode()));
         List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWeight() > config.getFilterEdge()).collect(Collectors.toList());
-        filteredEdges = filteredEdges.stream().filter(edge -> nodes.stream().anyMatch(dst -> dst.getDomain().equals(edge.getDst()) &&
-                nodes.stream().anyMatch(src -> src.getDomain().equals(edge.getSrc()) && (!dst.getDomain().equals(src.getDomain()))))).collect(Collectors.toList());
+        filteredEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getDomain().equals(edge.getDst()) &&
+                filteredNodes.stream().anyMatch(src -> src.getDomain().equals(edge.getSrc()) && (!dst.getDomain().equals(src.getDomain()))))).collect(Collectors.toList());
         OptionalInt minEdge = filteredEdges.stream().mapToInt(Edge::getWeight).min();
         OptionalInt maxEdge = filteredEdges.stream().mapToInt(Edge::getWeight).max();
         filteredEdges.forEach(edge -> edge.setWeight((int) (((double) edge.getWeight() - minEdge.getAsInt()) * (config.getMaxEdge() - config.getMinEdge()) / (maxEdge.getAsInt() - minEdge.getAsInt()) + config.getMinEdge())));
