@@ -9,26 +9,26 @@ import static org.junit.Assert.*;
 
 public class LinkUtilityTest {
     @Test
-    public void testReverseLink() throws MalformedURLException {
+    public void testReverseLink() {
         assertEquals("http://com.stackoverflow.blog.www/uri?query=1&string=2",
                 LinkUtility.reverseLink("http://www.blog.stackoverflow.com/uri?query=1&string=2"));
     }
 
     @Test
-    public void testReverseLinkWithoutQuery() throws MalformedURLException {
+    public void testReverseLinkWithoutQuery() {
         assertEquals("http://com.stackoverflow.blog.www/uri",
                 LinkUtility.reverseLink("http://www.blog.stackoverflow.com/uri"));
     }
 
     @Test
-    public void testReverseLinkWithoutURI() throws MalformedURLException {
+    public void testReverseLinkWithoutURI() {
         String site = "http://www.blog.stackoverflow.com";
         String reverseLink = LinkUtility.reverseLink(site);
         assertEquals("http://com.stackoverflow.blog.www", reverseLink);
     }
 
     @Test
-    public void testReverseLinkWithPort() throws MalformedURLException {
+    public void testReverseLinkWithPort() {
         String site = "http://www.blog.stackoverflow.com:8080/uri";
         String reverseLink = LinkUtility.reverseLink(site);
         assertEquals("http://com.stackoverflow.blog.www:8080/uri", reverseLink);
@@ -39,18 +39,18 @@ public class LinkUtilityTest {
         LinkUtility.reverseLink("www.google.com");
     }
 
-    @Test(expected = URISyntaxException.class)
-    public void testGetMainDomainInvalidUrl() throws URISyntaxException {
+    @Test(expected = MalformedURLException.class)
+    public void testGetMainDomainInvalidUrl() throws MalformedURLException {
         LinkUtility.getMainDomain("invalid");
     }
 
-    @Test(expected = URISyntaxException.class)
-    public void testGetMainDomainNullUrl() throws URISyntaxException {
+    @Test(expected = MalformedURLException.class)
+    public void testGetMainDomainNullUrl() throws MalformedURLException {
         LinkUtility.getMainDomain("https://salam");
     }
 
     @Test
-    public void testIsValidUrl() throws URISyntaxException {
+    public void testIsValidUrl() {
         assertFalse(LinkUtility.isValidUrl(null));
         assertFalse(LinkUtility.isValidUrl("invalid"));
         assertFalse(LinkUtility.isValidUrl("https://salam"));
