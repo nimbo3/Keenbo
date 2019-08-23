@@ -1,6 +1,5 @@
 package in.nimbo.service;
 
-import com.codahale.metrics.SharedMetricRegistries;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.TestUtility;
@@ -96,21 +95,21 @@ public class CrawlerServiceTest {
         when(redisDAO.contains(link)).thenReturn(false);
         try {
             cache.put(LinkUtility.getMainDomain(link), LocalDateTime.now());
-        } catch (URISyntaxException e) {
+        } catch (MalformedURLException e) {
             Assert.fail();
         }
         Optional<Page> returnedPage = crawlerService.crawl(link);
         Assert.assertFalse(returnedPage.isPresent());
     }
 
-    @Test (expected = InvalidLinkException.class)
+    @Test(expected = InvalidLinkException.class)
     public void crawlRepeatedLinkTest() {
         when(redisDAO.contains(anyString())).thenReturn(true);
         Optional<Page> returnedPage = crawlerService.crawl(link);
         Assert.fail();
     }
 
-    @Test (expected = InvalidLinkException.class)
+    @Test(expected = InvalidLinkException.class)
     public void crawlInvalidLink() {
         Optional<Page> returnedPage = crawlerService.crawl("http://");
         Assert.fail();
@@ -139,21 +138,21 @@ public class CrawlerServiceTest {
         Assert.assertEquals(metas, returnedPage.getMetas());
     }
 
-    @Test (expected = ParseLinkException.class)
+    @Test(expected = ParseLinkException.class)
     public void getPageWithEmptyDocumentTest() {
         when(parserService.getDocument(link)).thenReturn(Optional.empty());
         Page returnedPage = parserService.getPage(link);
         Assert.fail();
     }
 
-    @Test (expected = ParseLinkException.class)
+    @Test(expected = ParseLinkException.class)
     public void getPageMalformedURLExceptionTest() {
         when(parserService.getDocument(invalidLink)).thenThrow(MalformedURLException.class);
         Page returnedPage = parserService.getPage(invalidLink);
         Assert.fail();
     }
 
-    @Test (expected = ParseLinkException.class)
+    @Test(expected = ParseLinkException.class)
     public void getPageLanguageDetectExceptionTest() {
         doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString());
         Page returnedPage = parserService.getPage(link);

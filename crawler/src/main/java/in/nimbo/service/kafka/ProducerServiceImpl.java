@@ -80,7 +80,7 @@ public class ProducerServiceImpl implements ProducerService {
                         shufflerProducer.send(new ProducerRecord<>(config.getShufflerTopic(), anchorHref));
                     }
                 }
-                pageProducer.send(new ProducerRecord<>(config.getPageTopic(), page.getLink(), page));
+                pageProducer.send(new ProducerRecord<>(config.getPageTopic(), page));
             } else {
                 shufflerProducer.send(new ProducerRecord<>(config.getShufflerTopic(), link));
             }

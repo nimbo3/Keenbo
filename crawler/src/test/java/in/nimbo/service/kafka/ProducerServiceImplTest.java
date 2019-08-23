@@ -1,7 +1,5 @@
 package in.nimbo.service.kafka;
 
-import com.codahale.metrics.MetricRegistry;
-import com.codahale.metrics.SharedMetricRegistries;
 import in.nimbo.TestUtility;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Anchor;
@@ -35,7 +33,7 @@ public class ProducerServiceImplTest {
     private ProducerService producerService;
     private CountDownLatch countDownLatch;
     private CrawlerService crawlerService;
-    private MockProducer<String, String> linkProducer;
+    private MockProducer<String, String> shufflerProducer;
     private MockProducer<String, Page> pageProducer;
 
     @BeforeClass
@@ -49,15 +47,15 @@ public class ProducerServiceImplTest {
         countDownLatch = new CountDownLatch(1);
         crawlerService = mock(CrawlerService.class);
         KafkaConfig kafkaConfig = KafkaConfig.load();
-        linkProducer = new MockProducer<>(true, new StringSerializer(), new StringSerializer());
+        shufflerProducer = new MockProducer<>(true, new StringSerializer(), new StringSerializer());
         pageProducer = new MockProducer<>(true, new StringSerializer(), new PageSerializer());
         producerService = new ProducerServiceImpl(kafkaConfig, messageQueue,
-                linkProducer, pageProducer,
+                pageProducer, shufflerProducer,
                 crawlerService, countDownLatch);
     }
 
     @Test
-    public void producerTest() throws MalformedURLException {
+    public void producerTest() throws MalformedURLException, InterruptedException {
         Set<String> crawledLinks = new HashSet<>();
         crawledLinks.add("https://stackoverflow.com");
         crawledLinks.add("https://google.com");
@@ -68,18 +66,24 @@ public class ProducerServiceImplTest {
         when(crawlerService.crawl(anyString())).thenReturn(Optional.of(page));
         messageQueue.add("https://nimbo.in");
 
+
+        Thread producerServiceThread = new Thread(producerService);
+        producerServiceThread.start();
         new Thread(() -> {
             try {
                 TimeUnit.SECONDS.sleep(2);
                 producerService.close();
+                producerServiceThread.interrupt();
             } catch (InterruptedException e) {
                 // ignored
             }
         }).start();
-        producerService.run();
-        for (ProducerRecord<String, String> record : linkProducer.history()) {
-            assertEquals(record.key(), record.value());
+        producerServiceThread.join();
+        for (ProducerRecord<String, String> record : shufflerProducer.history()) {
             assertTrue(crawledLinks.contains(record.value()));
+        }
+        for (ProducerRecord<String, Page> record : pageProducer.history()) {
+            assertEquals("https://nimbo.in", record.value().getLink());
         }
         assertEquals(0, countDownLatch.getCount());
     }

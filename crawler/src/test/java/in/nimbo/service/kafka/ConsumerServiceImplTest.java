@@ -36,7 +36,7 @@ public class ConsumerServiceImplTest {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         MockConsumer<String, String> kafkaConsumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
         kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getLinkTopic()));
-        ConsumerService consumerService = new ConsumerServiceImpl(kafkaConsumer, queue, countDownLatch);
+        ConsumerService consumerService = new ConsumerServiceImpl(kafkaConfig, kafkaConsumer, queue, countDownLatch);
         
         kafkaConsumer.rebalance(
                 Collections.singleton(new TopicPartition(kafkaConfig.getLinkTopic(), 0)));
