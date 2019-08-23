@@ -1,5 +1,6 @@
 package in.nimbo.service;
 
+import in.nimbo.TestUtility;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.ElasticException;
@@ -28,6 +29,7 @@ public class CollectorServiceTest {
 
     @BeforeClass
     public static void init() throws MalformedURLException {
+        TestUtility.setMetricRegistry();
         Set<Anchor> anchors = new HashSet<>();
         anchors.add(new Anchor("http://google.com", "google"));
         anchors.add(new Anchor("http://sahab.ir", "sahab"));

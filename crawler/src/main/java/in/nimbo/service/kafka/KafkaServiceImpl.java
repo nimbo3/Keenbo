@@ -39,7 +39,7 @@ public class KafkaServiceImpl implements KafkaService {
         countDownLatch = new CountDownLatch(kafkaConfig.getLinkProducerCount() + 1);
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
         metricRegistry.register(MetricRegistry.name(KafkaServiceImpl.class, "localMessageQueueSize"),
-                new CachedGauge<Integer>(3, TimeUnit.SECONDS) {
+                new CachedGauge<Integer>(15, TimeUnit.SECONDS) {
                     @Override
                     protected Integer loadValue() {
                         return messageQueue.size();
