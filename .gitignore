@@ -195,7 +195,7 @@ buildNumber.properties
 .pydevproject
 .scala_dependencies
 .settings
-/lib/
+/common/lib/
 R-unit-tests.log
 R/unit-tests.out
 R/cran-check.out
@@ -272,5 +272,7 @@ spark-warehouse/
 
 # Logs
 *.txt
+
+!common/lib/jmx_prometheus.jar
 
 # End of https://www.gitignore.io/api/java,spark,maven,intellij,intellij+all
