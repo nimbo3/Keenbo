@@ -15,7 +15,7 @@
         <module>crawler</module>
         <module>page-collector</module>
         <module>search</module>
-        <module>forward-extractor</module>
+        <module>backward-extractor</module>
         <module>site-graph</module>
         <module>pagerank</module>
     </modules>

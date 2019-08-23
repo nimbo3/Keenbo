@@ -2,7 +2,7 @@ package in.nimbo;
 
 import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.LinkUtility;
-import in.nimbo.config.AppConfig;
+import in.nimbo.config.BackwardExtractorConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
@@ -26,7 +26,7 @@ import static org.apache.spark.sql.functions.count;
 
 public class App {
     public static void main(String[] args) {
-        AppConfig appConfig = AppConfig.load();
+        BackwardExtractorConfig backwardExtractorConfig = BackwardExtractorConfig.load();
         HBaseConfig hBaseConfig = HBaseConfig.load();
 
         byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
@@ -35,16 +35,15 @@ public class App {
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
         hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBaseConfig.getLinksTable());
-        hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, appConfig.getScanBatchSize());
+        hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, backwardExtractorConfig.getScanBatchSize());
 
         SparkSession spark = SparkSession.builder()
-                .appName(appConfig.getAppName())
-                .master(appConfig.getResourceManager())
+                .appName(backwardExtractorConfig.getAppName())
                 .getOrCreate();
-        spark.sparkContext().conf().set("es.nodes", appConfig.getNodesIP());
+        spark.sparkContext().conf().set("es.nodes", backwardExtractorConfig.getNodesIP());
         spark.sparkContext().conf().set("es.write.operation", "upsert");
         spark.sparkContext().conf().set("es.mapping.id", "id");
-        spark.sparkContext().conf().set("es.index.auto.create", appConfig.getEsCreateIndex());
+        spark.sparkContext().conf().set("es.index.auto.create", backwardExtractorConfig.getEsCreateIndex());
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
@@ -80,7 +79,7 @@ public class App {
                         LinkUtility.hashLink(LinkUtility.reverseLink(row.getStruct(0).getString(0))),
                         row.getList(1), row.getLong(2)));
 
-        JavaEsSpark.saveToEs(anchorsRDD, appConfig.getEsIndexName() + "/" + appConfig.getEsType());
+        JavaEsSpark.saveToEs(anchorsRDD, backwardExtractorConfig.getEsIndexName() + "/" + backwardExtractorConfig.getEsType());
 
         spark.stop();
     }

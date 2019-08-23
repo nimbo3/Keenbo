@@ -4,9 +4,8 @@ import in.nimbo.common.exception.LoadConfigurationException;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
-public class AppConfig {
-    private static final String CONFIG_NAME = "forward-extractor.properties";
-    private String resourceManager;
+public class BackwardExtractorConfig {
+    private static final String CONFIG_NAME = "backward-extractor.properties";
     private String appName;
     private String nodesIP;
     private String esCreateIndex;
@@ -14,29 +13,20 @@ public class AppConfig {
     private String esType;
     private String scanBatchSize;
 
-    public static AppConfig load() {
-        AppConfig appConfig = new AppConfig();
+    public static BackwardExtractorConfig load() {
+        BackwardExtractorConfig backwardExtractorConfig = new BackwardExtractorConfig();
         try {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
-            appConfig.setResourceManager(config.getString("resource.manager"));
-            appConfig.setAppName(config.getString("app.name"));
-            appConfig.setNodesIP(config.getString("nodes.ip"));
-            appConfig.setEsCreateIndex(config.getString("es.index.auto.create"));
-            appConfig.setEsIndexName(config.getString("es.index"));
-            appConfig.setEsType(config.getString("es.type"));
-            appConfig.setScanBatchSize(config.getString("hbase.scan.batch.size"));
-            return appConfig;
+            backwardExtractorConfig.setAppName(config.getString("app.name"));
+            backwardExtractorConfig.setNodesIP(config.getString("nodes.ip"));
+            backwardExtractorConfig.setEsCreateIndex(config.getString("es.index.auto.create"));
+            backwardExtractorConfig.setEsIndexName(config.getString("es.index"));
+            backwardExtractorConfig.setEsType(config.getString("es.type"));
+            backwardExtractorConfig.setScanBatchSize(config.getString("hbase.scan.batch.size"));
+            return backwardExtractorConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
-    }
-
-    public String getResourceManager() {
-        return resourceManager;
-    }
-
-    public void setResourceManager(String resourceManager) {
-        this.resourceManager = resourceManager;
     }
 
     public String getAppName() {
