@@ -18,6 +18,7 @@
         <module>backward-extractor</module>
         <module>site-graph</module>
         <module>pagerank</module>
+        <module>shuffler</module>
     </modules>
 
     <properties>
