@@ -34,7 +34,7 @@ public class App {
         PageRankConfig pageRankConfig = PageRankConfig.load();
         String esIndex = pageRankConfig.getEsIndex();
         String esType = pageRankConfig.getEsType();
-        byte[] rankColumn = hBaseConfig.getRankColumnFamily();
+        byte[] rankColumn = hBaseConfig.getDataColumnFamily();
         byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();
