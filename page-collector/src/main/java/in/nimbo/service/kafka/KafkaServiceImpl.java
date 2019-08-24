@@ -1,8 +1,10 @@
 package in.nimbo.service.kafka;
 
+import com.codahale.metrics.CachedGauge;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Page;
-import in.nimbo.common.exception.KafkaServiceException;
 import in.nimbo.service.CollectorService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -16,50 +18,52 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class KafkaServiceImpl implements KafkaService {
-    private Logger logger = LoggerFactory.getLogger("app");
+    private Logger logger = LoggerFactory.getLogger("collector");
     private KafkaConfig config;
     private CollectorService collectorService;
 
     private BlockingQueue<Page> messageQueue;
     private ConsumerService consumerService;
+
     private List<ProducerService> producerServices;
+    private List<Thread> kafkaServices;
     private CountDownLatch countDownLatch;
 
     public KafkaServiceImpl(KafkaConfig kafkaConfig, CollectorService collectorService) {
         this.config = kafkaConfig;
-        producerServices = new ArrayList<>();
-        countDownLatch = new CountDownLatch(kafkaConfig.getPageProducerCount() + 1);
         this.collectorService = collectorService;
+        producerServices = new ArrayList<>();
+        kafkaServices = new ArrayList<>();
+        messageQueue = new ArrayBlockingQueue<>(config.getLocalPageQueueSize());
+        countDownLatch = new CountDownLatch(kafkaConfig.getPageProducerCount() + 1);
+        MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
+        metricRegistry.register(MetricRegistry.name(KafkaServiceImpl.class, "localPageQueueSize"),
+                new CachedGauge<Integer>(15, TimeUnit.SECONDS) {
+                    @Override
+                    protected Integer loadValue() {
+                        return messageQueue.size();
+                    }
+                });
     }
 
-    /**
-     * prepare kafka producer and consumer services and start threads to send/receive messages
-     *
-     * @throws KafkaServiceException if unable to prepare services
-     */
     @Override
     public void schedule() {
-        ExecutorService executorService = Executors.newFixedThreadPool(config.getPageProducerCount() + 1);
-        messageQueue = new ArrayBlockingQueue<>(config.getLocalPageQueueSize());
-
-        // Prepare consumer
         KafkaConsumer<String, Page> kafkaConsumer = new KafkaConsumer<>(config.getPageConsumerProperties());
         kafkaConsumer.subscribe(Collections.singletonList(config.getPageTopic()));
-        consumerService = new ConsumerServiceImpl(kafkaConsumer, messageQueue, countDownLatch);
-        executorService.submit(consumerService);
+        consumerService = new ConsumerServiceImpl(config, kafkaConsumer, messageQueue, countDownLatch);
+        Thread consumerThread = new Thread(consumerService, config.getServiceName());
+        kafkaServices.add(consumerThread);
+        consumerThread.start();
 
-        // Prepare producer
         for (int i = 0; i < config.getPageProducerCount(); i++) {
             KafkaProducer<String, Page> producer = new KafkaProducer<>(config.getPageProducerProperties());
             ProducerService producerService =
-                    new ProducerServiceImpl(config,
-                            messageQueue, producer,
-                            collectorService,
-                            countDownLatch);
+                    new ProducerServiceImpl(config, messageQueue, producer, collectorService, countDownLatch);
+            Thread pageProducerThread = new Thread(producerService, config.getServiceName());
+            kafkaServices.add(pageProducerThread);
             producerServices.add(producerService);
-            executorService.submit(producerService);
+            pageProducerThread.start();
         }
-        executorService.shutdown();
     }
 
     /**
@@ -68,18 +72,20 @@ public class KafkaServiceImpl implements KafkaService {
     @Override
     public void stopSchedule() {
         logger.info("Stop schedule service");
-
         consumerService.close();
         for (ProducerService producerService : producerServices) {
             producerService.close();
         }
+        for (Thread service : kafkaServices) {
+            service.interrupt();
+        }
         try {
             countDownLatch.await();
             logger.info("All service stopped");
-            logger.info("Start sending {} messages to kafka", messageQueue.size());
             try (KafkaProducer<String, Page> producer = new KafkaProducer<>(config.getPageProducerProperties())) {
+                logger.info("Start sending {} messages from local page queue to kafka", messageQueue.size());
                 for (Page page : messageQueue) {
-                    producer.send(new ProducerRecord<>(config.getPageTopic(), page.getLink(), page));
+                    producer.send(new ProducerRecord<>(config.getPageTopic(), page));
                 }
                 producer.flush();
             }

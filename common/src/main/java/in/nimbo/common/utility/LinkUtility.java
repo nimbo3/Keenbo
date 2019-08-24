@@ -10,8 +10,6 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Collections;
 
 public class LinkUtility {
 
@@ -62,16 +60,16 @@ public class LinkUtility {
      *
      * @param link link
      * @return domain of url without it's subdomains
-     * @throws URISyntaxException if link is not a illegal url
+     * @throws MalformedURLException if link is not a illegal url
      */
-    public static String getMainDomain(String link) throws URISyntaxException {
+    public static String getMainDomain(String link) throws MalformedURLException {
         try {
             URI uri = new URI(link);
             String host = uri.getHost();
             String[] hostParts = host.split("\\.");
             return hostParts[hostParts.length - 2] + "." + hostParts[hostParts.length - 1];
-        } catch (IndexOutOfBoundsException | NullPointerException e) {
-            throw new URISyntaxException(link, "unable to detect host of url");
+        } catch (IndexOutOfBoundsException | NullPointerException | URISyntaxException e) {
+            throw new MalformedURLException("unable to detect host of url");
         }
     }
 

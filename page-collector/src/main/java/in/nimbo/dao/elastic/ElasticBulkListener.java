@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 
 public class ElasticBulkListener implements BulkProcessor.Listener {
-    private Logger logger = LoggerFactory.getLogger("app");
+    private Logger logger = LoggerFactory.getLogger("collector");
     private ElasticDAO elasticDAO;
     private List<Page> backupPages;
 

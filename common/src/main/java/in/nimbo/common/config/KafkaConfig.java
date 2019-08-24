@@ -10,12 +10,18 @@ public class KafkaConfig {
     private static final String CONFIG_NAME = "kafka/kafka.properties";
     private Properties linkConsumerProperties;
     private Properties pageConsumerProperties;
+    private Properties shufflerConsumerProperties;
     private Properties pageProducerProperties;
     private Properties linkProducerProperties;
+    private Properties shufflerProducerProperties;
+    private String serviceName;
     private String linkTopic;
     private String pageTopic;
+    private String shufflerTopic;
+    private int maxPollDuration;
     private int pageProducerCount;
     private int linkProducerCount;
+    private int shufflerProducerCount;
     private int localLinkQueueSize;
     private int localPageQueueSize;
 
@@ -27,16 +33,62 @@ public class KafkaConfig {
             config.setPageConsumerProperties(Config.loadProperties("kafka/page-consumer.properties"));
             config.setLinkProducerProperties(Config.loadProperties("kafka/link-producer.properties"));
             config.setPageProducerProperties(Config.loadProperties("kafka/page-producer.properties"));
+            config.setShufflerConsumerProperties(Config.loadProperties("kafka/shuffler-consumer.properties"));
+            config.setShufflerProducerProperties(Config.loadProperties("kafka/shuffler-producer.properties"));
+            config.setServiceName(configuration.getString("service.name"));
             config.setLinkTopic(configuration.getString("link.topic.name"));
             config.setPageTopic(configuration.getString("page.topic.name"));
+            config.setShufflerTopic(configuration.getString("shuffler.topic.name"));
+            config.setMaxPollDuration(configuration.getInt("max.poll.duration.milliseconds"));
             config.setPageProducerCount(configuration.getInt("page.producer.count"));
             config.setLinkProducerCount(configuration.getInt("link.producer.count"));
+            config.setShufflerProducerCount(configuration.getInt("shuffler.producer.count"));
             config.setLocalLinkQueueSize(configuration.getInt("local.link.queue.size"));
             config.setLocalPageQueueSize(configuration.getInt("local.page.queue.size"));
             return config;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public int getMaxPollDuration() {
+        return maxPollDuration;
+    }
+
+    public void setMaxPollDuration(int maxPollDuration) {
+        this.maxPollDuration = maxPollDuration;
+    }
+
+    public Properties getShufflerConsumerProperties() {
+        return shufflerConsumerProperties;
+    }
+
+    public void setShufflerConsumerProperties(Properties shufflerConsumerProperties) {
+        this.shufflerConsumerProperties = shufflerConsumerProperties;
+    }
+
+    public Properties getShufflerProducerProperties() {
+        return shufflerProducerProperties;
+    }
+
+    public void setShufflerProducerProperties(Properties shufflerProducerProperties) {
+        this.shufflerProducerProperties = shufflerProducerProperties;
+    }
+
+    public String getShufflerTopic() {
+        return shufflerTopic;
+    }
+
+    public void setShufflerTopic(String shufflerTopic) {
+        this.shufflerTopic = shufflerTopic;
+    }
+
+    public int getShufflerProducerCount() {
+        return shufflerProducerCount;
+    }
+
+    public void setShufflerProducerCount(int shufflerProducerCount) {
+        this.shufflerProducerCount = shufflerProducerCount;
     }
 
     public Properties getLinkConsumerProperties() {
@@ -118,4 +170,13 @@ public class KafkaConfig {
     public void setLocalPageQueueSize(int localPageQueueSize) {
         this.localPageQueueSize = localPageQueueSize;
     }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public void setServiceName(String serviceName) {
+        this.serviceName = serviceName;
+    }
+
 }
