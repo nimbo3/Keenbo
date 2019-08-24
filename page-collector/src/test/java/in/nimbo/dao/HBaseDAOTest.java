@@ -38,7 +38,6 @@ public class HBaseDAOTest {
         TableName tableName = TableName.valueOf(hBaseConfig.getLinksTable());
         HTableDescriptor descriptor = new HTableDescriptor(tableName);
         descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getAnchorColumnFamily()));
-        descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getMetaColumnFamily()));
         descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getDataColumnFamily()));
         connection.getAdmin().createTable(descriptor);
         hBaseDAO = new HBaseDAOImpl(connection, hBaseConfig);
