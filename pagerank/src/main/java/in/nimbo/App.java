@@ -68,11 +68,11 @@ public class App {
                         Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
                         LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()))
                 ));
-        edges.repartition(32);
         hBaseRDD.unpersist();
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
-
+        vertexDF.repartition(32);
+        edgeDF.repartition(32);
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
