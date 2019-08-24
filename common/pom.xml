@@ -54,13 +54,6 @@
                             <Class-Path>../conf/*</Class-Path>
                         </manifestEntries>
                     </archive>
-                    <excludes>
-                        <exclude>*.properties</exclude>
-                        <exclude>*.xml</exclude>
-                        <exclude>*.sh</exclude>
-                        <exclude>*.yaml</exclude>
-                        <exclude>kafka/*</exclude>
-                    </excludes>
                 </configuration>
             </plugin>
         </plugins>
