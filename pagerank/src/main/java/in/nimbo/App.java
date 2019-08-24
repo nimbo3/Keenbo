@@ -70,9 +70,9 @@ public class App {
                 ));
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
+        edgeDF.repartition(32);
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
-        pageRank.persist(StorageLevel.MEMORY_AND_DISK());
 
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
         JavaPairRDD<ImmutableBytesWritable, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
