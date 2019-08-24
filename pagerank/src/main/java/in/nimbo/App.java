@@ -26,7 +26,12 @@ import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarInputStream;
 
 public class App {
     public static void main(String[] args) {
@@ -48,13 +53,25 @@ public class App {
                 .config("spark.kryoserializer.buffer", "1024k")
                 .appName(pageRankConfig.getAppName())
                 .getOrCreate();
-        
+
+        spark.sparkContext().conf().registerKryoClasses(new Class[]{
+                in.nimbo.common.utility.LinkUtility.class, in.nimbo.common.exception.ParseLinkException.class, in.nimbo.common.entity.Anchor.class,
+                in.nimbo.common.config.Config.class, in.nimbo.common.config.HBaseConfig.class, in.nimbo.common.utility.CloseUtility.class,
+                in.nimbo.common.config.RedisConfig.class, in.nimbo.common.config.ElasticConfig.class, in.nimbo.common.entity.Page.class,
+                in.nimbo.common.exception.ElasticException.class, in.nimbo.common.serializer.PageDeserializer.class,
+                in.nimbo.common.exception.InvalidLinkException.class, in.nimbo.common.serializer.PageSerializer.class,
+                in.nimbo.common.entity.Meta.class, in.nimbo.common.exception.LoadConfigurationException.class,
+                in.nimbo.common.exception.LanguageDetectException.class, in.nimbo.common.exception.ReverseLinkException.class,
+                in.nimbo.common.exception.HBaseException.class, in.nimbo.common.exception.HashException.class,
+                in.nimbo.common.config.KafkaConfig.class, in.nimbo.common.config.ProjectConfig.class, in.nimbo.entity.Edge.class,
+                in.nimbo.entity.Page.class, in.nimbo.entity.Node.class, in.nimbo.App.class, in.nimbo.config.PageRankConfig.class
+        });
+
         spark.sparkContext().conf().set("es.nodes", pageRankConfig.getEsNodes());
         spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
         spark.sparkContext().conf().set("es.mapping.id", "id");
         spark.sparkContext().conf().set("es.index.auto.create", pageRankConfig.getEsIndexAutoCreate());
         spark.sparkContext().conf().set("spark.kryo.registrationRequired", "true");
-        spark.sparkContext().conf().registerKryoClasses(new Class[]{Edge.class, Node.class, Page.class});
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class,
@@ -71,8 +88,8 @@ public class App {
         hBaseRDD.unpersist();
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
-        vertexDF.repartition(32);
-        edgeDF.repartition(32);
+        vertexDF.repartition(8000);
+        edgeDF.repartition(8000);
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
