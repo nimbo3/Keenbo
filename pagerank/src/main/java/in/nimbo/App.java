@@ -21,6 +21,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import org.graphframes.GraphFrame;
 import scala.Tuple2;
@@ -59,7 +60,7 @@ public class App {
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class,
                         ImmutableBytesWritable.class, Result.class).toJavaRDD()
                 .map(tuple -> tuple._2);
-
+        hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
         JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));
         JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
                 .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
@@ -68,12 +69,15 @@ public class App {
                         LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()))
                 ));
         edges.repartition(32);
+        hBaseRDD.unpersist();
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
+
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
-
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
+        pageRankRdd.persist(StorageLevel.MEMORY_AND_DISK());
+
         JavaPairRDD<ImmutableBytesWritable, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
             Put put = new Put(Bytes.toBytes(row.getString(0)));
             put.addColumn(rankColumn, rankColumn, Bytes.toBytes(String.valueOf(row.getDouble(1))));
@@ -84,6 +88,8 @@ public class App {
                 .map(row -> new Page(
                         LinkUtility.hashLink(LinkUtility.reverseLink(row.getString(0))),
                         row.getDouble(1)));
+
+        pageRankRdd.unpersist();
 
         try {
             Job jobConf = Job.getInstance();
