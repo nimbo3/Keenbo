@@ -60,15 +60,20 @@ public class ElasticDAOTest {
         backupPages = new ArrayList<>();
         client = App.initializeElasticSearchClient(elasticConfig);
         ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
-        BulkProcessor.Builder builder = BulkProcessor.builder(
-                (request, bulkListener) -> client.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
-                elasticBulkListener);
-        builder.setBulkActions(elasticConfig.getBulkActions());
-        builder.setBulkSize(new ByteSizeValue(elasticConfig.getBulkSize(), ByteSizeUnit.valueOf(elasticConfig.getBulkSizeUnit())));
-        builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
-        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
-                elasticConfig.getBackoffMaxRetry()));
-        bulkProcessor = builder.build();
+        try {
+            BulkProcessor.Builder builder = BulkProcessor.builder(
+                    (request, bulkListener) -> client.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
+                    elasticBulkListener);
+            builder.setBulkActions(elasticConfig.getBulkActions());
+            builder.setBulkSize(new ByteSizeValue(elasticConfig.getBulkSize(), ByteSizeUnit.valueOf(elasticConfig.getBulkSizeUnit())));
+            builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
+            builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
+                    elasticConfig.getBackoffMaxRetry()));
+            bulkProcessor = builder.build();
+        } catch (Throwable e) {
+            System.out.println(client);
+            e.printStackTrace();
+        }
         elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, client);
         elasticBulkListener.setElasticDAO(elasticDAO);
     }
