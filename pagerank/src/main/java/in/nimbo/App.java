@@ -1,6 +1,6 @@
 package in.nimbo;
 
-import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.PageRankConfig;
 import in.nimbo.entity.Edge;
@@ -26,26 +26,21 @@ import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 
 public class App {
     public static void main(String[] args) {
-        HBaseConfig hBaseConfig = HBaseConfig.load();
+        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
         PageRankConfig pageRankConfig = PageRankConfig.load();
         String esIndex = pageRankConfig.getEsIndex();
         String esType = pageRankConfig.getEsType();
-        byte[] rankColumn = hBaseConfig.getRankColumnFamily();
-        byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
+        byte[] rankColumn = hBasePageConfig.getRankColumnFamily();
+        byte[] anchorColumnFamily = hBasePageConfig.getAnchorColumnFamily();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBaseConfig.getLinksTable());
+        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBasePageConfig.getPageTable());
 
         SparkSession spark = SparkSession.builder()
                 .config("spark.hadoop.validateOutputSpecs", false)
@@ -56,7 +51,7 @@ public class App {
 
         spark.sparkContext().conf().registerKryoClasses(new Class[]{
                 in.nimbo.common.utility.LinkUtility.class, in.nimbo.common.exception.ParseLinkException.class, in.nimbo.common.entity.Anchor.class,
-                in.nimbo.common.config.Config.class, in.nimbo.common.config.HBaseConfig.class, in.nimbo.common.utility.CloseUtility.class,
+                in.nimbo.common.config.Config.class, HBasePageConfig.class, in.nimbo.common.utility.CloseUtility.class,
                 in.nimbo.common.config.RedisConfig.class, in.nimbo.common.config.ElasticConfig.class, in.nimbo.common.entity.Page.class,
                 in.nimbo.common.exception.ElasticException.class, in.nimbo.common.serializer.PageDeserializer.class,
                 in.nimbo.common.exception.InvalidLinkException.class, in.nimbo.common.serializer.PageSerializer.class,
@@ -70,17 +65,18 @@ public class App {
         spark.sparkContext().conf().set("spark.speculation", "false");
         spark.sparkContext().conf().set("spark.hadoop.mapreduce.map.speculative", "false");
         spark.sparkContext().conf().set("spark.hadoop.mapreduce.reduce.speculative", "false");
+        spark.sparkContext().conf().set("spark.kryo.registrationRequired", "true");
         spark.sparkContext().conf().set("es.nodes", pageRankConfig.getEsNodes());
         spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
         spark.sparkContext().conf().set("es.mapping.id", "id");
         spark.sparkContext().conf().set("es.index.auto.create", pageRankConfig.getEsIndexAutoCreate());
-        spark.sparkContext().conf().set("spark.kryo.registrationRequired", "true");
 
         JavaRDD<Result> hBaseRDD = spark.sparkContext()
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class,
                         ImmutableBytesWritable.class, Result.class).toJavaRDD()
                 .map(tuple -> tuple._2);
         hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
+
         JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));
         JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
                 .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
@@ -90,7 +86,6 @@ public class App {
                 ));
         hBaseRDD.unpersist();
 
-        hBaseRDD.intersection(hBaseRDD);
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
         edgeDF.repartition(32);
@@ -114,7 +109,7 @@ public class App {
 
         try {
             Job jobConf = Job.getInstance();
-            jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hBaseConfig.getLinksTable());
+            jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hBasePageConfig.getPageTable());
             jobConf.setOutputFormatClass(TableOutputFormat.class);
             jobConf.getConfiguration().set("mapreduce.output.fileoutputformat.outputdir", "/tmp");
             javaPairRDD.saveAsNewAPIHadoopDataset(jobConf.getConfiguration());
