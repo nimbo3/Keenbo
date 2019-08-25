@@ -30,7 +30,8 @@ public class App {
         HBaseConfig hBaseConfig = HBaseConfig.load();
 
         byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
-        byte[] rankColumn = hBaseConfig.getDataColumnFamily();
+        byte[] dataColumnFamily = hBaseConfig.getDataColumnFamily();
+        byte[] rankColumn = hBaseConfig.getRankColumn();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
@@ -54,7 +55,7 @@ public class App {
         JavaRDD<Node> nodes = hBaseRDD
                 .map(result -> {
                     double rank = 0;
-                    String rankString = Bytes.toString(result.getValue(rankColumn, rankColumn));
+                    String rankString = Bytes.toString(result.getValue(dataColumnFamily, rankColumn));
                     if (rankString != null)
                         rank = Double.parseDouble(rankString);
                     return new Node(getMainDomainForReversed(Bytes.toString(result.getRow())), rank);
