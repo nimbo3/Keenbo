@@ -49,6 +49,7 @@ public class ElasticDAOTest {
         embeddedElastic = EmbeddedElastic.builder()
                 .withElasticVersion("6.6.2")
                 .withDownloadDirectory(new File(System.getenv("$HOME") + "/Downloads"))
+                .withInstallationDirectory(new File(System.getenv("$git HOME") + "/es"))
                 .withSetting(PopularProperties.TRANSPORT_TCP_PORT, 9350)
                 .withSetting(PopularProperties.CLUSTER_NAME, "cluster")
                 .withEsJavaOpts("-Xms128m -Xmx512m")
