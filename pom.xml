@@ -155,6 +155,14 @@
             <artifactId>metrics-jmx</artifactId>
             <version>${dropwizard-metrics.version}</version>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/org.apache.lucene/lucene-core -->
+        <dependency>
+            <groupId>org.apache.lucene</groupId>
+            <artifactId>lucene-core</artifactId>
+            <version>${elasticsearch.version}</version>
+        </dependency>
+
     </dependencies>
 
     <repositories>
