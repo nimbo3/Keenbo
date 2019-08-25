@@ -7,8 +7,13 @@ import in.nimbo.dao.elastic.ElasticBulkListener;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
 import in.nimbo.common.entity.Meta;
+import org.elasticsearch.action.bulk.BackoffPolicy;
 import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.unit.ByteSizeUnit;
+import org.elasticsearch.common.unit.ByteSizeValue;
+import org.elasticsearch.common.unit.TimeValue;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -55,7 +60,15 @@ public class ElasticDAOTest {
         backupPages = new ArrayList<>();
         client = App.initializeElasticSearchClient(elasticConfig);
         ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
-        bulkProcessor = App.initializeElasticSearchBulk(elasticConfig, client, elasticBulkListener);
+        BulkProcessor.Builder builder = BulkProcessor.builder(
+                (request, bulkListener) -> client.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
+                elasticBulkListener);
+        builder.setBulkActions(elasticConfig.getBulkActions());
+        builder.setBulkSize(new ByteSizeValue(elasticConfig.getBulkSize(), ByteSizeUnit.valueOf(elasticConfig.getBulkSizeUnit())));
+        builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
+        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
+                elasticConfig.getBackoffMaxRetry()));
+        bulkProcessor = builder.build();
         elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, client);
         elasticBulkListener.setElasticDAO(elasticDAO);
     }
