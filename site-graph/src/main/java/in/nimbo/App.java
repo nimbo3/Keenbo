@@ -81,10 +81,14 @@ public class App {
         JavaRDD<Node> nodes = hBaseRDD
                 .map(result -> result.getColumnLatestCell(rankColumnFamily, pageRankColumn))
                 .map(cell -> {
-                    String rank = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
+                    String rankStr = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
+                    double rank = 0;
+                    if (rankStr != null) {
+                        rank = Double.parseDouble(rankStr);
+                    }
                     return new Node(
                             getMainDomainForReversed(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())),
-                            Double.parseDouble(rank)
+                            rank
                     );
                 });
 
