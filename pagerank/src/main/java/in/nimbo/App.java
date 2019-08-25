@@ -26,12 +26,7 @@ import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 
 public class App {
     public static void main(String[] args) {
@@ -39,7 +34,7 @@ public class App {
         PageRankConfig pageRankConfig = PageRankConfig.load();
         String esIndex = pageRankConfig.getEsIndex();
         String esType = pageRankConfig.getEsType();
-        byte[] rankColumn = hBaseConfig.getRankColumnFamily();
+        byte[] rankColumn = hBaseConfig.getDataColumnFamily();
         byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();

@@ -75,7 +75,7 @@ public class CollectorServiceTest {
     @Test
     public void handleWithElasticException() {
         when(hBaseDAO.add(page)).thenReturn(true);
-        doThrow(ElasticsearchException.class).when(elasticDAO).save(page);
+        doThrow(ElasticException.class).when(elasticDAO).save(page);
         Assert.assertFalse(collectorService.handle(page));
     }
 }

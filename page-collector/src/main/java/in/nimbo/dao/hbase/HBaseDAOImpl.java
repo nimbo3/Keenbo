@@ -5,11 +5,13 @@ import in.nimbo.common.exception.HBaseException;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
+import in.nimbo.service.KeywordExtractorService;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class HBaseDAOImpl implements HBaseDAO {
     private HBaseConfig config;
@@ -34,12 +36,15 @@ public class HBaseDAOImpl implements HBaseDAO {
                         Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getContent()));
             }
 
-            for (Meta meta : page.getMetas()) {
-                put.addColumn(config.getMetaColumnFamily(),
-                        Bytes.toBytes(meta.getKey()), Bytes.toBytes(meta.getContent()));
+            put.addColumn(config.getDataColumnFamily(), config.getRankColumn(), Bytes.toBytes("1"));
+
+            Map<String, Integer> keywords = KeywordExtractorService.extractKeywords(page.getContent());
+            for (Map.Entry<String, Integer> keyword : keywords.entrySet()) {
+                put.addColumn(config.getDataColumnFamily(),
+                        Bytes.toBytes(keyword.getKey()), Bytes.toBytes(Integer.toString(keyword.getValue())));
             }
 
-            put.addColumn(config.getRankColumnFamily(), config.getRankColumn(), Bytes.toBytes("1"));
+            put.addColumn(config.getDataColumnFamily(), config.getRankColumn(), Bytes.toBytes("1"));
 
             table.put(put);
             return true;

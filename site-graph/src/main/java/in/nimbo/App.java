@@ -30,7 +30,7 @@ public class App {
         HBaseConfig hBaseConfig = HBaseConfig.load();
 
         byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
-        byte[] rankColumn = hBaseConfig.getRankColumnFamily();
+        byte[] rankColumn = hBaseConfig.getDataColumnFamily();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
