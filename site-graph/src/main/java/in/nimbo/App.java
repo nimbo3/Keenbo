@@ -17,6 +17,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.functions;
+import org.apache.spark.storage.StorageLevel;
 import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
@@ -48,6 +49,7 @@ public class App {
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                         , ImmutableBytesWritable.class, Result.class).toJavaRDD()
                 .map(tuple -> tuple._2);
+        hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
 
         JavaRDD<Node> nodes = hBaseRDD
                 .map(result -> {
