@@ -67,6 +67,9 @@ public class App {
                 in.nimbo.entity.Page.class, in.nimbo.entity.Node.class, in.nimbo.App.class, in.nimbo.config.PageRankConfig.class
         });
 
+        spark.sparkContext().conf().set("spark.speculation", "false");
+        spark.sparkContext().conf().set("spark.hadoop.mapreduce.map.speculative", "false");
+        spark.sparkContext().conf().set("spark.hadoop.mapreduce.reduce.speculative", "false");
         spark.sparkContext().conf().set("es.nodes", pageRankConfig.getEsNodes());
         spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
         spark.sparkContext().conf().set("es.mapping.id", "id");
@@ -86,10 +89,11 @@ public class App {
                         LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()))
                 ));
         hBaseRDD.unpersist();
+
+        hBaseRDD.intersection(hBaseRDD);
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
-        vertexDF.repartition(8000);
-        edgeDF.repartition(8000);
+        edgeDF.repartition(32);
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
