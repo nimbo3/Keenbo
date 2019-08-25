@@ -13,6 +13,7 @@
 
     <properties>
         <main.basedir>${project.parent.basedir}</main.basedir>
+        <edu.stanford.npl.version>3.9.2</edu.stanford.npl.version>
     </properties>
 
     <dependencies>
@@ -25,24 +26,24 @@
         <dependency>
             <groupId>edu.stanford.nlp</groupId>
             <artifactId>stanford-corenlp</artifactId>
-            <version>3.8.0</version>
+            <version>${edu.stanford.npl.version}</version>
         </dependency>
         <dependency>
             <groupId>edu.stanford.nlp</groupId>
             <artifactId>stanford-corenlp</artifactId>
-            <version>3.8.0</version>
+            <version>${edu.stanford.npl.version}</version>
             <classifier>models</classifier>
         </dependency>
         <dependency>
             <groupId>edu.stanford.nlp</groupId>
             <artifactId>stanford-corenlp</artifactId>
-            <version>3.8.0</version>
+            <version>${edu.stanford.npl.version}</version>
             <classifier>models-english</classifier>
         </dependency>
         <dependency>
             <groupId>edu.stanford.nlp</groupId>
             <artifactId>stanford-corenlp</artifactId>
-            <version>3.8.0</version>
+            <version>${edu.stanford.npl.version}</version>
             <classifier>models-english-kbp</classifier>
         </dependency>
     </dependencies>
