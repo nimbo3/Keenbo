@@ -12,7 +12,6 @@ public class HBaseSiteConfig {
     private byte[] domainColumnFamily;
     private byte[] rankColumn;
     private byte[] countColumn;
-    private byte[] sccColumn;
 
     public static HBaseSiteConfig load() {
         HBaseSiteConfig config = new HBaseSiteConfig();
@@ -22,7 +21,6 @@ public class HBaseSiteConfig {
             config.setInfoColumnFamily(Bytes.toBytes(configuration.getString("column.family.info")));
             config.setRankColumn(Bytes.toBytes(configuration.getString("column.rank")));
             config.setCountColumn(Bytes.toBytes(configuration.getString("column.count")));
-            config.setSccColumn(Bytes.toBytes(configuration.getString("column.scc")));
             config.setDomainColumnFamily(Bytes.toBytes(configuration.getString("column.family.domain")));
             return config;
         } catch (ConfigurationException e) {
@@ -68,13 +66,5 @@ public class HBaseSiteConfig {
 
     public void setCountColumn(byte[] countColumn) {
         this.countColumn = countColumn;
-    }
-
-    public byte[] getSccColumn() {
-        return sccColumn;
-    }
-
-    public void setSccColumn(byte[] sccColumn) {
-        this.sccColumn = sccColumn;
     }
 }

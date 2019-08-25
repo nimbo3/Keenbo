@@ -26,7 +26,6 @@ import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
 import java.io.IOException;
-import java.util.Date;
 
 public class App {
     public static void main(String[] args) {
@@ -39,7 +38,6 @@ public class App {
         byte[] domainColumnFamily = hBaseSiteConfig.getDomainColumnFamily();
         byte[] countColumn = hBaseSiteConfig.getCountColumn();
         byte[] siteRankColumn = hBaseSiteConfig.getRankColumn();
-        byte[] sccColumn = hBaseSiteConfig.getSccColumn();
 
         byte[] rankColumnFamily = hBasePageConfig.getRankColumnFamily();
         byte[] pageRankColumn = hBasePageConfig.getRankColumn();
@@ -83,7 +81,7 @@ public class App {
         JavaRDD<Node> nodes = hBaseRDD
                 .map(result -> result.getColumnLatestCell(rankColumnFamily, pageRankColumn))
                 .map(cell -> {
-                    String rank = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength();
+                    String rank = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
                     return new Node(
                             getMainDomainForReversed(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())),
                             Double.parseDouble(rank)
@@ -116,16 +114,14 @@ public class App {
         verticesRDD.persist(StorageLevel.MEMORY_AND_DISK());
 
         GraphFrame graphFrame = new GraphFrame(vertexDF.select("id"), edgeDF);
-        Dataset<Row> sccGraph = graphFrame.stronglyConnectedComponents().maxIter(1).run();
         Dataset<Row> edgesWithWeight = graphFrame
                 .triplets()
                 .groupBy("src", "dst")
                 .agg(functions.count(functions.lit(1)).alias("weight"));
         edgesWithWeight.repartition(32);
 
-        Dataset<Row> edgesSCCWidth = edgesWithWeight.join(sccGraph, edgesWithWeight.col("src.id").equalTo(sccGraph.col("id")));
-        JavaRDD<Row> edgesSCCWidthRdd = edgesSCCWidth.toJavaRDD();
-        edgesSCCWidthRdd.persist(StorageLevel.MEMORY_AND_DISK());
+        JavaRDD<Row> edgesWithWeightRdd = edgesWithWeight.toJavaRDD();
+        edgesWithWeightRdd.persist(StorageLevel.MEMORY_AND_DISK());
 
         JavaPairRDD<ImmutableBytesWritable, Put> verticesPut = verticesRDD.mapToPair(row -> {
             Put put = new Put(Bytes.toBytes(row.getString(0)));
@@ -134,7 +130,7 @@ public class App {
             return new Tuple2<>(new ImmutableBytesWritable(), put);
         });
 
-        JavaPairRDD<ImmutableBytesWritable, Put> edgesSCCPut = edgesSCCWidthRdd.mapToPair(row -> {
+        JavaPairRDD<ImmutableBytesWritable, Put> edgesSCCPut = edgesWithWeightRdd.mapToPair(row -> {
             Put put = new Put(Bytes.toBytes(row.getStruct(0).getString(0)));
             put.addColumn(domainColumnFamily, Bytes.toBytes(row.getStruct(1).getString(0)),
                     Bytes.toBytes(String.valueOf(row.getLong(3))));
