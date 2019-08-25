@@ -7,8 +7,12 @@ import in.nimbo.dao.elastic.ElasticBulkListener;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
 import in.nimbo.common.entity.Meta;
+import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
+import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.settings.Settings;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -41,16 +45,19 @@ public class ElasticDAOTest {
         elasticConfig.setBulkSize(1);
         elasticConfig.setIndexName("test-index");
 
-        embeddedElastic = EmbeddedElastic.builder()
-                .withElasticVersion("6.6.2")
-                .withDownloadDirectory(new File(System.getenv("$HOME") + "/Downloads"))
-                .withSetting(PopularProperties.TRANSPORT_TCP_PORT, 9350)
-                .withSetting(PopularProperties.CLUSTER_NAME, "cluster")
-                .withEsJavaOpts("-Xms128m -Xmx512m")
-                .withIndex(elasticConfig.getIndexName())
-                .withStartTimeout(3, TimeUnit.MINUTES)
-                .build()
-                .start();
+        CreateIndexRequest request = new CreateIndexRequest(elasticConfig.getIndexName());
+        CreateIndexResponse createIndexResponse = client.indices().create(request, RequestOptions.DEFAULT);
+
+//        embeddedElastic = EmbeddedElastic.builder()
+//                .withElasticVersion("6.6.2")
+//                .withDownloadDirectory(new File(System.getenv("$HOME") + "/Downloads"))
+//                .withSetting(PopularProperties.TRANSPORT_TCP_PORT, 9350)
+//                .withSetting(PopularProperties.CLUSTER_NAME, "cluster")
+//                .withEsJavaOpts("-Xms128m -Xmx512m")
+//                .withIndex(elasticConfig.getIndexName())
+//                .withStartTimeout(3, TimeUnit.MINUTES)
+//                .build()
+//                .start();
 
         backupPages = new ArrayList<>();
         client = App.initializeElasticSearchClient(elasticConfig);
