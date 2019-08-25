@@ -34,6 +34,7 @@ public class HBaseDAOTest {
     @BeforeClass
     public static void init() throws IOException {
         hBaseConfig = HBaseConfig.load();
+        hBaseConfig.setLinksTable("test_page");
         connection = ConnectionFactory.createConnection();
         TableName tableName = TableName.valueOf(hBaseConfig.getLinksTable());
         HTableDescriptor descriptor = new HTableDescriptor(tableName);
