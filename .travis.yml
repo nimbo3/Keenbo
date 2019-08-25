@@ -5,12 +5,19 @@ jdk:
 git:
   quiet: true
 
+services:
+  - elasticsearch
+
 before_install:
+  - curl -O https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-6.6.2.deb
+  - sudo dpkg -i --force-confnew elasticsearch-6.6.2.deb
+  - sudo service elasticsearch restart
   - sudo chmod 777 .travis/hbase-init.sh
 
 install: true
 
 before_script:
+  - sleep 10
   - .travis/hbase-init.sh
 
 script:
