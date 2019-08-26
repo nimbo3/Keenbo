@@ -85,8 +85,7 @@ public class App {
                 .map(cell -> {
                     String rankStr = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
                     return new Node(
-                            getMainDomainForReversed(
-                                    getDomain(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()))
+                            getMainDomainForReversed(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())
                             ),
                             Double.parseDouble(rankStr)
                     );
@@ -100,8 +99,8 @@ public class App {
                     if (index != -1)
                         destination = destination.substring(0, index);
                     return new Tuple2<>(
-                            getDomain(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())),
-                            getDomain(destination));
+                            Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
+                            destination);
                 }).mapToPair(link -> new Tuple2<>(getMainDomainForReversed(link._1), getMainDomain(link._2))).
                 filter(domain -> !domain._1.equals(domain._2)).
                 map(link -> new Edge(link._1, link._2));
@@ -161,8 +160,9 @@ public class App {
         spark.stop();
     }
 
-    private static String getMainDomain(String domain) {
+    private static String getMainDomain(String link) {
         try {
+            String domain = getDomain(link);
             int lastDot = domain.lastIndexOf('.');
             int beforeLastDot = domain.substring(0, lastDot).lastIndexOf('.');
             return beforeLastDot == -1 ? domain : domain.substring(beforeLastDot + 1);
@@ -172,11 +172,15 @@ public class App {
         }
     }
 
-    private static String getMainDomainForReversed(String domain) {
+    private static String getMainDomainForReversed(String link) {
         try {
+            String domain = getDomain(link);
             int firstDot = domain.indexOf('.');
             int afterFirstDot = domain.indexOf('.', firstDot + 1);
-            return afterFirstDot == -1 ? domain : domain.substring(0, afterFirstDot);
+            if (afterFirstDot != -1) {
+                domain = domain.substring(0, afterFirstDot);
+            }
+            return domain.substring(firstDot + 1) + "." + domain.substring(0, firstDot);
         } catch (Throwable e) {
             e.printStackTrace();
             return "@@@";
