@@ -52,7 +52,6 @@ public class GraphExtractor {
 
         List<Result> bestNodes = hBaseRDD
                 .filter(result -> result.getColumnLatestCell(infoColumnFamily, siteRankColumn) != null)
-                .map()
                 .sortBy(result -> {
                     Cell rankCell = result.getColumnLatestCell(infoColumnFamily, siteRankColumn);
                     String rank = Bytes.toString(rankCell.getValueArray(), rankCell.getValueOffset(), rankCell.getValueLength());
