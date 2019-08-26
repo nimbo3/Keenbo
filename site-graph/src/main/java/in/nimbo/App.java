@@ -30,9 +30,6 @@ import java.util.Objects;
 
 public class App {
     public static void main(String[] args) {
-        System.out.println(getMainDomainForReversed("https://a.b.stackoverflow.com"));
-
-        System.exit(0);
         SiteGraphConfig siteGraphConfig = SiteGraphConfig.load();
         HBaseSiteConfig hBaseSiteConfig = HBaseSiteConfig.load();
         HBasePageConfig hBasePageConfig = HBasePageConfig.load();
