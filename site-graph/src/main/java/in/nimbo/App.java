@@ -26,6 +26,7 @@ import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
 import java.io.IOException;
+import java.util.Objects;
 
 public class App {
     public static void main(String[] args) {
@@ -80,15 +81,14 @@ public class App {
 
         JavaRDD<Node> nodes = hBaseRDD
                 .map(result -> result.getColumnLatestCell(rankColumnFamily, pageRankColumn))
+                .filter(Objects::nonNull)
                 .map(cell -> {
                     String rankStr = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
-                    double rank = 0;
-                    if (rankStr != null) {
-                        rank = Double.parseDouble(rankStr);
-                    }
                     return new Node(
-                            getMainDomainForReversed(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())),
-                            rank
+                            getMainDomainForReversed(
+                                    getDomain(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()))
+                            ),
+                            Double.parseDouble(rankStr)
                     );
                 });
 
@@ -100,8 +100,8 @@ public class App {
                     if (index != -1)
                         destination = destination.substring(0, index);
                     return new Tuple2<>(
-                            Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
-                            destination);
+                            getDomain(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())),
+                            getDomain(destination));
                 }).mapToPair(link -> new Tuple2<>(getMainDomainForReversed(link._1), getMainDomain(link._2))).
                 filter(domain -> !domain._1.equals(domain._2)).
                 map(link -> new Edge(link._1, link._2));
@@ -137,7 +137,7 @@ public class App {
         JavaPairRDD<ImmutableBytesWritable, Put> edgesSCCPut = edgesWithWeightRdd.mapToPair(row -> {
             Put put = new Put(Bytes.toBytes(row.getStruct(0).getString(0)));
             put.addColumn(domainColumnFamily, Bytes.toBytes(row.getStruct(1).getString(0)),
-                    Bytes.toBytes(String.valueOf(row.getLong(3))));
+                    Bytes.toBytes(String.valueOf(row.getLong(2))));
             return new Tuple2<>(new ImmutableBytesWritable(), put);
         });
 
@@ -161,27 +161,44 @@ public class App {
         spark.stop();
     }
 
-    private static String getMainDomain(String link) {
-        String linkWithoutProtocol = link.substring(link.indexOf('/') + 2);
-        int indexOfSlash = linkWithoutProtocol.indexOf('/');
-        if (indexOfSlash != -1) {
-            linkWithoutProtocol = linkWithoutProtocol.substring(0, indexOfSlash);
+    private static String getMainDomain(String domain) {
+        try {
+            int lastDot = domain.lastIndexOf('.');
+            int beforeLastDot = domain.substring(0, lastDot).lastIndexOf('.');
+            return beforeLastDot == -1 ? domain : domain.substring(beforeLastDot + 1);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return "@@@";
         }
-        int lastDot = linkWithoutProtocol.lastIndexOf('.');
-        int beforeLastDot = linkWithoutProtocol.substring(0, lastDot).lastIndexOf('.');
-        return beforeLastDot == -1 ? linkWithoutProtocol : linkWithoutProtocol.substring(beforeLastDot + 1);
     }
 
-    private static String getMainDomainForReversed(String link) {
-        String linkWithoutProtocol = link.substring(link.indexOf('/') + 2);
-        int indexOfSlash = linkWithoutProtocol.indexOf('/');
-        if (indexOfSlash != -1) {
-            linkWithoutProtocol = linkWithoutProtocol.substring(0, indexOfSlash);
+    private static String getMainDomainForReversed(String domain) {
+        try {
+            int firstDot = domain.indexOf('.');
+            int afterFirstDot = domain.indexOf('.', firstDot + 1);
+            return afterFirstDot == -1 ? domain : domain.substring(0, afterFirstDot);
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return "@@@";
         }
-        int firstDot = linkWithoutProtocol.indexOf('.');
-        int afterFirstDot = linkWithoutProtocol.indexOf('.', firstDot + 1);
-        if (afterFirstDot != -1)
-            linkWithoutProtocol = linkWithoutProtocol.substring(0, afterFirstDot + firstDot + 1);
-        return linkWithoutProtocol.substring(firstDot + 1) + "." + linkWithoutProtocol.substring(0, firstDot);
+    }
+
+    private static String getDomain(String link) {
+        try {
+            int indexOfProtocol = link.indexOf('/') + 1;
+            int indexOfEndDomain = link.indexOf('/', indexOfProtocol + 1);
+            if (indexOfEndDomain < 0) {
+                indexOfEndDomain = link.length();
+            }
+            String domain = link.substring(indexOfProtocol + 1, indexOfEndDomain);
+            int colonIndex = domain.indexOf(':');
+            if (colonIndex > -1) {
+                domain = domain.substring(0, colonIndex);
+            }
+            return domain;
+        } catch (Throwable e) {
+            e.printStackTrace();
+            return "@@@";
+        }
     }
 }
