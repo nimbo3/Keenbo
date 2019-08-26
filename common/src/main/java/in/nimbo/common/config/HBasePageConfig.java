@@ -9,8 +9,7 @@ public class HBasePageConfig {
     private static final String CONFIG_NAME = "hbase-page.properties";
     private String pageTable;
     private byte[] anchorColumnFamily;
-    private byte[] metaColumnFamily;
-    private byte[] rankColumnFamily;
+    private byte[] dataColumnFamily;
     private byte[] rankColumn;
 
     public static HBasePageConfig load() {
@@ -19,8 +18,7 @@ public class HBasePageConfig {
             PropertiesConfiguration configuration = new PropertiesConfiguration(CONFIG_NAME);
             config.setPageTable(configuration.getString("table"));
             config.setAnchorColumnFamily(Bytes.toBytes(configuration.getString("column.family.anchor")));
-            config.setMetaColumnFamily(Bytes.toBytes(configuration.getString("column.family.meta")));
-            config.setRankColumnFamily(Bytes.toBytes(configuration.getString("column.family.rank")));
+            config.setDataColumnFamily(Bytes.toBytes(configuration.getString("column.family.data")));
             config.setRankColumn(Bytes.toBytes(configuration.getString("column.rank")));
             return config;
         } catch (ConfigurationException e) {
@@ -28,12 +26,12 @@ public class HBasePageConfig {
         }
     }
 
-    public byte[] getRankColumnFamily() {
-        return rankColumnFamily;
+    public byte[] getDataColumnFamily() {
+        return dataColumnFamily;
     }
 
-    public void setRankColumnFamily(byte[] rankColumnFamily) {
-        this.rankColumnFamily = rankColumnFamily;
+    public void setDataColumnFamily(byte[] dataColumnFamily) {
+        this.dataColumnFamily = dataColumnFamily;
     }
 
     public byte[] getRankColumn() {
@@ -58,13 +56,5 @@ public class HBasePageConfig {
 
     public void setAnchorColumnFamily(byte[] anchorColumnFamily) {
         this.anchorColumnFamily = anchorColumnFamily;
-    }
-
-    public byte[] getMetaColumnFamily() {
-        return metaColumnFamily;
-    }
-
-    public void setMetaColumnFamily(byte[] metaColumnFamily) {
-        this.metaColumnFamily = metaColumnFamily;
     }
 }

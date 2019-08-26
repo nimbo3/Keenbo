@@ -38,8 +38,7 @@ public class HBaseDAOTest {
         TableName tableName = TableName.valueOf(hBasePageConfig.getPageTable());
         HTableDescriptor descriptor = new HTableDescriptor(tableName);
         descriptor.addFamily(new HColumnDescriptor(hBasePageConfig.getAnchorColumnFamily()));
-        descriptor.addFamily(new HColumnDescriptor(hBasePageConfig.getMetaColumnFamily()));
-        descriptor.addFamily(new HColumnDescriptor(hBasePageConfig.getRankColumnFamily()));
+        descriptor.addFamily(new HColumnDescriptor(hBasePageConfig.getDataColumnFamily()));
         connection.getAdmin().createTable(descriptor);
         hBaseDAO = new HBaseDAOImpl(connection, hBasePageConfig);
     }
