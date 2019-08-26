@@ -30,6 +30,9 @@ import java.util.Objects;
 
 public class App {
     public static void main(String[] args) {
+        System.out.println(getMainDomainForReversed("https://a.b.stackoverflow.com"));
+
+        System.exit(0);
         SiteGraphConfig siteGraphConfig = SiteGraphConfig.load();
         HBaseSiteConfig hBaseSiteConfig = HBaseSiteConfig.load();
         HBasePageConfig hBasePageConfig = HBasePageConfig.load();
@@ -85,8 +88,7 @@ public class App {
                 .map(cell -> {
                     String rankStr = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
                     return new Node(
-                            getMainDomainForReversed(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())
-                            ),
+                            getMainDomainForReversed(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())),
                             Double.parseDouble(rankStr)
                     );
                 });
@@ -101,9 +103,8 @@ public class App {
                     return new Tuple2<>(
                             Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
                             destination);
-                }).mapToPair(link -> new Tuple2<>(getMainDomainForReversed(link._1), getMainDomain(link._2))).
-                filter(domain -> !domain._1.equals(domain._2)).
-                map(link -> new Edge(link._1, link._2));
+                }).map(link -> new Edge(getMainDomainForReversed(link._1), getMainDomain(link._2))).
+                filter(domain -> !domain.getDst().equals(domain.getSrc()));
 
         hBaseRDD.unpersist();
 
@@ -171,6 +172,7 @@ public class App {
             return "@@@";
         }
     }
+
 
     private static String getMainDomainForReversed(String link) {
         try {
