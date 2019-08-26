@@ -41,7 +41,7 @@ public class KeywordExtractorService {
         pipeline.annotate(document);
         for (CoreMap token : document.tokens()) {
             String tok = token.get(CoreAnnotations.LemmaAnnotation.class);
-            if (!stop.contains(tok) && tok.length() > 1 && !tok.matches("[-+]?[0-9]*\\\\.?[0-9]+([eE][-+]?[0-9]+)?"))
+            if (!stop.contains(tok) && tok.length() > 1 && !tok.matches("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?"))
                 lemmas.merge(tok, 1, Integer::sum);
         }
         Map<String, Integer> sorted = lemmas

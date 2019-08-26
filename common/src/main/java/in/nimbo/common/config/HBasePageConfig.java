@@ -18,7 +18,7 @@ public class HBasePageConfig {
             PropertiesConfiguration configuration = new PropertiesConfiguration(CONFIG_NAME);
             config.setPageTable(configuration.getString("table"));
             config.setAnchorColumnFamily(Bytes.toBytes(configuration.getString("column.family.anchor")));
-            config.setDataColumnFamily(Bytes.toBytes(configuration.getString("column.family.rank")));
+            config.setDataColumnFamily(Bytes.toBytes(configuration.getString("column.family.data")));
             config.setRankColumn(Bytes.toBytes(configuration.getString("column.rank")));
             return config;
         } catch (ConfigurationException e) {
