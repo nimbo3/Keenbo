@@ -18,6 +18,7 @@
         <module>forward-extractor</module>
         <module>site-graph</module>
         <module>pagerank</module>
+        <module>classifier</module>
     </modules>
 
     <properties>
