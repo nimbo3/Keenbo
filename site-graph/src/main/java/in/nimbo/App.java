@@ -41,7 +41,7 @@ public class App {
         byte[] countColumn = hBaseSiteConfig.getCountColumn();
         byte[] siteRankColumn = hBaseSiteConfig.getRankColumn();
 
-        byte[] rankColumnFamily = hBasePageConfig.getRankColumnFamily();
+        byte[] dataColumnFamily = hBasePageConfig.getDataColumnFamily();
         byte[] pageRankColumn = hBasePageConfig.getRankColumn();
         byte[] anchorColumnFamily = hBasePageConfig.getAnchorColumnFamily();
 
@@ -82,7 +82,7 @@ public class App {
         hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
 
         JavaRDD<Node> nodes = hBaseRDD
-                .map(result -> result.getColumnLatestCell(rankColumnFamily, pageRankColumn))
+                .map(result -> result.getColumnLatestCell(dataColumnFamily, pageRankColumn))
                 .filter(Objects::nonNull)
                 .map(cell -> {
                     String rankStr = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());

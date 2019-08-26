@@ -34,7 +34,9 @@ public class App {
         PageRankConfig pageRankConfig = PageRankConfig.load();
         String esIndex = pageRankConfig.getEsIndex();
         String esType = pageRankConfig.getEsType();
-        byte[] rankColumn = hBasePageConfig.getRankColumnFamily();
+
+        byte[] dataColumnFamily = hBasePageConfig.getDataColumnFamily();
+        byte[] rankColumn = hBasePageConfig.getRankColumn();
         byte[] anchorColumnFamily = hBasePageConfig.getAnchorColumnFamily();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();
@@ -96,7 +98,7 @@ public class App {
 
         JavaPairRDD<ImmutableBytesWritable, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
             Put put = new Put(Bytes.toBytes(row.getString(0)));
-            put.addColumn(rankColumn, rankColumn, Bytes.toBytes(String.valueOf(row.getDouble(1))));
+            put.addColumn(dataColumnFamily, rankColumn, Bytes.toBytes(String.valueOf(row.getDouble(1))));
             return new Tuple2<>(new ImmutableBytesWritable(), put);
         });
 

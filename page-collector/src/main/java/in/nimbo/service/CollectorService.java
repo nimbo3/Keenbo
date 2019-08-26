@@ -4,6 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import in.nimbo.common.entity.Page;
+import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
@@ -45,7 +46,7 @@ public class CollectorService {
             } else {
                 logger.warn("Unable to add page with link {} to HBase", page.getLink());
             }
-        } catch (HBaseException | ElasticsearchException e) {
+        } catch (HBaseException | ElasticException e) {
             logger.error("Unable to establish connection", e);
             logger.info("Retry link {} again because of exception", page.getLink());
         }
