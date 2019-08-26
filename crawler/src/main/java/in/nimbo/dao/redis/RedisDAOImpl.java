@@ -16,7 +16,7 @@ public class RedisDAOImpl implements RedisDAO {
 
     @Override
     public void add(String link) {
-        cluster.set(link, String.valueOf(new Date().getTime()));
+        cluster.set(link, "");
         if (config.getExpireTime() > 0){
             cluster.expire(link, config.getExpireTime());
         }
