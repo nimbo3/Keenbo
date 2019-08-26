@@ -1,6 +1,6 @@
 package in.nimbo;
 
-import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.BackwardExtractorConfig;
 import in.nimbo.entity.Edge;
@@ -27,14 +27,14 @@ import static org.apache.spark.sql.functions.count;
 public class App {
     public static void main(String[] args) {
         BackwardExtractorConfig backwardExtractorConfig = BackwardExtractorConfig.load();
-        HBaseConfig hBaseConfig = HBaseConfig.load();
+        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
 
-        byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
+        byte[] anchorColumnFamily = hBasePageConfig.getAnchorColumnFamily();
 
         Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBaseConfig.getLinksTable());
+        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBasePageConfig.getPageTable());
         hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, backwardExtractorConfig.getScanBatchSize());
 
         SparkSession spark = SparkSession.builder()

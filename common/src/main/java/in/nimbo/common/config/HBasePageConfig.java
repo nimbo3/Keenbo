@@ -5,18 +5,18 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.hadoop.hbase.util.Bytes;
 
-public class HBaseConfig {
-    private static final String CONFIG_NAME = "hbase.properties";
-    private String linksTable;
+public class HBasePageConfig {
+    private static final String CONFIG_NAME = "hbase-page.properties";
+    private String pageTable;
     private byte[] anchorColumnFamily;
     private byte[] dataColumnFamily;
     private byte[] rankColumn;
 
-    public static HBaseConfig load() {
-        HBaseConfig config = new HBaseConfig();
+    public static HBasePageConfig load() {
+        HBasePageConfig config = new HBasePageConfig();
         try {
             PropertiesConfiguration configuration = new PropertiesConfiguration(CONFIG_NAME);
-            config.setLinksTable(configuration.getString("table"));
+            config.setPageTable(configuration.getString("table"));
             config.setAnchorColumnFamily(Bytes.toBytes(configuration.getString("column.family.anchor")));
             config.setDataColumnFamily(Bytes.toBytes(configuration.getString("column.family.rank")));
             config.setRankColumn(Bytes.toBytes(configuration.getString("column.rank")));
@@ -42,12 +42,12 @@ public class HBaseConfig {
         this.rankColumn = rankColumn;
     }
 
-    public String getLinksTable() {
-        return linksTable;
+    public String getPageTable() {
+        return pageTable;
     }
 
-    public void setLinksTable(String linksTable) {
-        this.linksTable = linksTable;
+    public void setPageTable(String pageTable) {
+        this.pageTable = pageTable;
     }
 
     public byte[] getAnchorColumnFamily() {

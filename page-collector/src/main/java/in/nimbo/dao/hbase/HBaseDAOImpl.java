@@ -1,6 +1,6 @@
 package in.nimbo.dao.hbase;
 
-import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
@@ -14,10 +14,10 @@ import java.io.IOException;
 import java.util.Map;
 
 public class HBaseDAOImpl implements HBaseDAO {
-    private HBaseConfig config;
+    private HBasePageConfig config;
     private Connection connection;
 
-    public HBaseDAOImpl(Connection connection, HBaseConfig config) {
+    public HBaseDAOImpl(Connection connection, HBasePageConfig config) {
         this.connection = connection;
         this.config = config;
     }
@@ -28,7 +28,7 @@ public class HBaseDAOImpl implements HBaseDAO {
 
     @Override
     public boolean add(Page page) {
-        try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
+        try (Table table = connection.getTable(TableName.valueOf(config.getPageTable()))) {
             Put put = new Put(Bytes.toBytes(page.getReversedLink()));
 
             for (Anchor anchor : page.getAnchors()) {
@@ -58,7 +58,7 @@ public class HBaseDAOImpl implements HBaseDAO {
 
     @Override
     public boolean contains(String link) {
-        try (Table table = connection.getTable(TableName.valueOf(config.getLinksTable()))) {
+        try (Table table = connection.getTable(TableName.valueOf(config.getPageTable()))) {
             Get get = new Get(Bytes.toBytes(link));
             Result result = table.get(get);
             return !result.isEmpty();

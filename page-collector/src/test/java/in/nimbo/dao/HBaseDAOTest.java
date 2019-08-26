@@ -1,6 +1,6 @@
 package in.nimbo.dao;
 
-import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.dao.hbase.HBaseDAOImpl;
@@ -28,24 +28,24 @@ import static org.junit.Assert.assertTrue;
 
 public class HBaseDAOTest {
     private static HBaseDAO hBaseDAO;
-    private static HBaseConfig hBaseConfig;
+    private static HBasePageConfig hBasePageConfig;
     private static Connection connection;
 
     @BeforeClass
     public static void init() throws IOException {
-        hBaseConfig = HBaseConfig.load();
+        hBasePageConfig = HBasePageConfig.load();
         connection = ConnectionFactory.createConnection();
-        TableName tableName = TableName.valueOf(hBaseConfig.getLinksTable());
+        TableName tableName = TableName.valueOf(hBasePageConfig.getPageTable());
         HTableDescriptor descriptor = new HTableDescriptor(tableName);
-        descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getAnchorColumnFamily()));
-        descriptor.addFamily(new HColumnDescriptor(hBaseConfig.getDataColumnFamily()));
+        descriptor.addFamily(new HColumnDescriptor(hBasePageConfig.getAnchorColumnFamily()));
+        descriptor.addFamily(new HColumnDescriptor(hBasePageConfig.getDataColumnFamily()));
         connection.getAdmin().createTable(descriptor);
-        hBaseDAO = new HBaseDAOImpl(connection, hBaseConfig);
+        hBaseDAO = new HBaseDAOImpl(connection, hBasePageConfig);
     }
 
     @Before
     public void afterEachTest() throws IOException {
-        TableName tableName = TableName.valueOf(hBaseConfig.getLinksTable());
+        TableName tableName = TableName.valueOf(hBasePageConfig.getPageTable());
         connection.getAdmin().disableTable(tableName);
         connection.getAdmin().truncateTable(tableName, false);
     }

@@ -4,7 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.jmx.JmxReporter;
 import in.nimbo.common.config.ElasticConfig;
-import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.entity.Page;
@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class App {
@@ -52,7 +51,7 @@ public class App {
     }
 
     public static void main(String[] args) {
-        HBaseConfig hBaseConfig = HBaseConfig.load();
+        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
         ProjectConfig projectConfig = ProjectConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
         ElasticConfig elasticConfig = ElasticConfig.load();
@@ -78,7 +77,7 @@ public class App {
             System.exit(1);
         }
 
-        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBaseConfig);
+        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBasePageConfig);
         appLogger.info("DAO interface created");
 
         CollectorService collectorService = new CollectorService(hBaseDAO, elasticDAO);
