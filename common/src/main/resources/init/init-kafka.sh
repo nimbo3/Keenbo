@@ -1,5 +1,10 @@
 #!/bin/bash
 
+export BASEDIR=$(dirname "$0")
+cd BASEDIR
+
+source ./keenbo-env.sh
+
 check_status () {
   status=$?
   if [ $status -ne 0 ]

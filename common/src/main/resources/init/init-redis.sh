@@ -1,5 +1,10 @@
 #!/bin/bash
 
+export BASEDIR=$(dirname "$0")
+cd BASEDIR
+
+source ./keenbo-env.sh
+
 echo 'Clear Redis history'
 for host in "${hosts[@]}"
 do

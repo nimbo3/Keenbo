@@ -1,5 +1,10 @@
 #!/bin/bash
 
+export BASEDIR=$(dirname "$0")
+cd BASEDIR
+
+source ./keenbo-env.sh
+
 echo 'DELETE old elasticsearch index'
 curl -XDELETE "http://$ELASTICSEARCH_NODE:9200/$ELASTICSEARCH_INDEX" >/dev/null
 sleep 2
