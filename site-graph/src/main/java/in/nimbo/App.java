@@ -2,6 +2,7 @@ package in.nimbo;
 
 import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.config.HBaseSiteConfig;
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.SiteGraphConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
@@ -50,6 +51,7 @@ public class App {
         hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBasePageConfig.getPageTable());
         hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, siteGraphConfig.getScanBatchSize());
 
+
         SparkSession spark = SparkSession.builder()
                 .appName(siteGraphConfig.getAppName())
                 .getOrCreate();
@@ -85,10 +87,10 @@ public class App {
                 .map(cell -> {
                     String rankStr = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
                     return new Node(
-                            getMainDomainForReversed(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())),
+                            LinkUtility.getMainDomainForReversed(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())),
                             Double.parseDouble(rankStr)
                     );
-                });
+                }).distinct();
 
         JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator()).
                 filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily)).
@@ -100,7 +102,7 @@ public class App {
                     return new Tuple2<>(
                             Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
                             destination);
-                }).map(link -> new Edge(getMainDomainForReversed(link._1), getMainDomain(link._2))).
+                }).map(link -> new Edge(LinkUtility.getMainDomainForReversed(link._1), LinkUtility.getMainDomain(link._2))).
                 filter(domain -> !domain.getDst().equals(domain.getSrc()));
 
         hBaseRDD.unpersist();
@@ -156,52 +158,5 @@ public class App {
         }
 
         spark.stop();
-    }
-
-    private static String getMainDomain(String link) {
-        try {
-            String domain = getDomain(link);
-            int lastDot = domain.lastIndexOf('.');
-            int beforeLastDot = domain.substring(0, lastDot).lastIndexOf('.');
-            return beforeLastDot == -1 ? domain : domain.substring(beforeLastDot + 1);
-        } catch (Throwable e) {
-            e.printStackTrace();
-            return "@@@";
-        }
-    }
-
-
-    private static String getMainDomainForReversed(String link) {
-        try {
-            String domain = getDomain(link);
-            int firstDot = domain.indexOf('.');
-            int afterFirstDot = domain.indexOf('.', firstDot + 1);
-            if (afterFirstDot != -1) {
-                domain = domain.substring(0, afterFirstDot);
-            }
-            return domain.substring(firstDot + 1) + "." + domain.substring(0, firstDot);
-        } catch (Throwable e) {
-            e.printStackTrace();
-            return "@@@";
-        }
-    }
-
-    private static String getDomain(String link) {
-        try {
-            int indexOfProtocol = link.indexOf('/') + 1;
-            int indexOfEndDomain = link.indexOf('/', indexOfProtocol + 1);
-            if (indexOfEndDomain < 0) {
-                indexOfEndDomain = link.length();
-            }
-            String domain = link.substring(indexOfProtocol + 1, indexOfEndDomain);
-            int colonIndex = domain.indexOf(':');
-            if (colonIndex > -1) {
-                domain = domain.substring(0, colonIndex);
-            }
-            return domain;
-        } catch (Throwable e) {
-            e.printStackTrace();
-            return "@@@";
-        }
     }
 }
