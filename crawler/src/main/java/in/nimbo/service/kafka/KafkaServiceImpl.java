@@ -1,8 +1,10 @@
 package in.nimbo.service.kafka;
 
+import com.codahale.metrics.CachedGauge;
+import com.codahale.metrics.MetricRegistry;
+import com.codahale.metrics.SharedMetricRegistries;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Page;
-import in.nimbo.common.exception.KafkaServiceException;
 import in.nimbo.monitoring.ThreadsMonitor;
 import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -17,55 +19,55 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class KafkaServiceImpl implements KafkaService {
-    private Logger logger = LoggerFactory.getLogger("app");
+    private Logger logger = LoggerFactory.getLogger("crawler");
+    private ScheduledExecutorService threadMonitorService;
     private KafkaConfig kafkaConfig;
     private CrawlerService crawlerService;
     private BlockingQueue<String> messageQueue;
-    private ConsumerService consumerService;
-    private List<ProducerService> producerServices;
     private CountDownLatch countDownLatch;
-    private ThreadsMonitor threadsMonitor;
+
+    private List<Thread> kafkaServices;
+    private List<ProducerService> producerServices;
+    private ConsumerService consumerService;
 
     public KafkaServiceImpl(CrawlerService crawlerService, KafkaConfig kafkaConfig) {
         this.crawlerService = crawlerService;
         this.kafkaConfig = kafkaConfig;
+        kafkaServices = new ArrayList<>();
         producerServices = new ArrayList<>();
+        messageQueue = new ArrayBlockingQueue<>(kafkaConfig.getLocalLinkQueueSize());
         countDownLatch = new CountDownLatch(kafkaConfig.getLinkProducerCount() + 1);
+        MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
+        metricRegistry.register(MetricRegistry.name(KafkaServiceImpl.class, "localMessageQueueSize"),
+                new CachedGauge<Integer>(15, TimeUnit.SECONDS) {
+                    @Override
+                    protected Integer loadValue() {
+                        return messageQueue.size();
+                    }
+                });
     }
 
-    /**
-     * prepare kafka producer and consumer services and start threads to send/receive messages
-     *
-     * @throws KafkaServiceException if unable to prepare services
-     */
     @Override
     public void schedule() {
-        final ThreadGroup threadGroup = new ThreadGroup("workers");
-        int numberOfThreads = kafkaConfig.getLinkProducerCount() + 1;
-        ThreadPoolExecutor executorService = new ThreadPoolExecutor(numberOfThreads, numberOfThreads, 0L, TimeUnit.MILLISECONDS,
-                new LinkedBlockingQueue<>(), r -> new Thread(threadGroup, r));
-        startThreadsMonitoring(executorService, threadGroup);
+        startThreadsMonitoring();
 
-        messageQueue = new ArrayBlockingQueue<>(kafkaConfig.getLocalLinkQueueSize());
-        // Prepare consumer
         KafkaConsumer<String, String> kafkaConsumer = new KafkaConsumer<>(kafkaConfig.getLinkConsumerProperties());
         kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getLinkTopic()));
-        consumerService = new ConsumerServiceImpl(kafkaConsumer, messageQueue, countDownLatch);
-        executorService.submit(consumerService);
+        consumerService = new ConsumerServiceImpl(kafkaConfig, kafkaConsumer, messageQueue, countDownLatch);
+        Thread consumerThread = new Thread(consumerService, kafkaConfig.getServiceName());
+        kafkaServices.add(consumerThread);
+        consumerThread.start();
 
-        // Prepare producer
         for (int i = 0; i < kafkaConfig.getLinkProducerCount(); i++) {
-            KafkaProducer<String, String> linkProducer = new KafkaProducer<>(kafkaConfig.getLinkProducerProperties());
+            KafkaProducer<String, String> shufflerProducer = new KafkaProducer<>(kafkaConfig.getShufflerProducerProperties());
             KafkaProducer<String, Page> pageProducer = new KafkaProducer<>(kafkaConfig.getPageProducerProperties());
-            ProducerService producerService =
-                    new ProducerServiceImpl(kafkaConfig, messageQueue,
-                            linkProducer, pageProducer,
-                            crawlerService,
-                            countDownLatch);
-            producerServices.add(producerService);
-            executorService.submit(producerService);
+            ProducerService pageProducerService = new ProducerServiceImpl(kafkaConfig, messageQueue,
+                    pageProducer, shufflerProducer, crawlerService, countDownLatch);
+            Thread pageProducerThread = new Thread(pageProducerService, kafkaConfig.getServiceName());
+            kafkaServices.add(pageProducerThread);
+            producerServices.add(pageProducerService);
+            pageProducerThread.start();
         }
-        executorService.shutdown();
     }
 
     /**
@@ -74,18 +76,20 @@ public class KafkaServiceImpl implements KafkaService {
     @Override
     public void stopSchedule() {
         logger.info("Stop schedule service");
-
         consumerService.close();
         for (ProducerService producerService : producerServices) {
             producerService.close();
         }
+        for (Thread service : kafkaServices) {
+            service.interrupt();
+        }
         try {
             countDownLatch.await();
             logger.info("All service stopped");
-            logger.info("Start sending {} messages to kafka", messageQueue.size());
             try (KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getLinkProducerProperties())) {
+                logger.info("Start sending {} messages from local message queue to kafka", messageQueue.size());
                 for (String message : messageQueue) {
-                    producer.send(new ProducerRecord<>(kafkaConfig.getLinkTopic(), message, message));
+                    producer.send(new ProducerRecord<>(kafkaConfig.getLinkTopic(), message));
                 }
                 producer.flush();
             }
@@ -93,20 +97,20 @@ public class KafkaServiceImpl implements KafkaService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        threadMonitorService.shutdown();
     }
 
     @Override
     public void sendMessage(String message) {
         try (KafkaProducer<String, String> producer = new KafkaProducer<>(kafkaConfig.getLinkProducerProperties())) {
-            producer.send(new ProducerRecord<>(kafkaConfig.getLinkTopic(), message, message));
+            producer.send(new ProducerRecord<>(kafkaConfig.getLinkTopic(), message));
             producer.flush();
         }
     }
 
-    private void startThreadsMonitoring(ThreadPoolExecutor threadPoolExecutor, ThreadGroup threadGroup) {
-        threadsMonitor = new ThreadsMonitor(threadPoolExecutor, threadGroup);
-        ScheduledExecutorService scheduledExecutorService = Executors.newScheduledThreadPool(1);
-        scheduledExecutorService.scheduleAtFixedRate(threadsMonitor, 0, 15, TimeUnit.SECONDS);
-        scheduledExecutorService.shutdown();
+    private void startThreadsMonitoring() {
+        ThreadsMonitor threadsMonitor = new ThreadsMonitor(kafkaServices);
+        threadMonitorService = Executors.newScheduledThreadPool(1);
+        threadMonitorService.scheduleAtFixedRate(threadsMonitor, 0, 1, TimeUnit.SECONDS);
     }
 }

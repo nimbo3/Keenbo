@@ -30,97 +30,14 @@
             <artifactId>common</artifactId>
             <version>1.0</version>
         </dependency>
-
     </dependencies>
 
     <build>
-        <pluginManagement>
-            <plugins>
-
-            </plugins>
-        </pluginManagement>
         <plugins>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-resources-plugin</artifactId>
-                <!--$NO-MVN-MAN-VER$ -->
-                <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <id>copy-sh</id>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <phase>validate</phase>
-                        <configuration>
-                            <outputDirectory>target/${project.name}/bin/</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>src/main/resources/</directory>
-                                    <includes>
-                                        <include>*.sh</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>copy-conf</id>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <phase>validate</phase>
-                        <configuration>
-                            <outputDirectory>target/${project.name}/conf</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>../common/src/main/resources/</directory>
-                                    <includes>
-                                        <include>*.properties</include>
-                                        <include>*.xml</include>
-                                    </includes>
-                                </resource>
-                                <resource>
-                                    <directory>../search/src/main/resources/</directory>
-                                    <includes>
-                                        <include>*.properties</include>
-                                        <include>*.xml</include>
-                                        <include>*.txt</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-                <configuration>
-                    <escapeString>\</escapeString>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>target/${project.name}/lib</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <artifactId>maven-jar-plugin</artifactId>
-                <version>3.0.2</version>
                 <configuration>
-                    <outputDirectory>target/${project.name}/lib</outputDirectory>
+                    <outputDirectory>target/</outputDirectory>
                     <archive>
                         <manifest>
                             <mainClass>in.nimbo.App</mainClass>
@@ -135,6 +52,7 @@
                         <exclude>*.properties</exclude>
                         <exclude>*.xml</exclude>
                         <exclude>*.sh</exclude>
+                        <exclude>*.yaml</exclude>
                     </excludes>
                 </configuration>
             </plugin>

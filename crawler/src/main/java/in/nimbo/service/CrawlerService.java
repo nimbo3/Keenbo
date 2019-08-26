@@ -13,7 +13,7 @@ import in.nimbo.dao.redis.RedisDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URISyntaxException;
+import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -54,35 +54,41 @@ public class CrawlerService {
      * @throws ParseLinkException if any exception happen in parser
      */
     public Optional<Page> crawl(String siteLink) {
-        LocalDateTime start = LocalDateTime.now();
+        appLogger.info("Start crawling link {}", siteLink);
         try {
             String siteDomain = LinkUtility.getMainDomain(siteLink);
             if (cache.getIfPresent(siteDomain) == null) {
                 cacheMissCounter.inc();
                 Timer.Context redisContainTimerContext = redisContainTimer.time();
-                boolean contains = redisDAO.contains(siteLink);
+                boolean contains = isCrawled(siteLink);
                 redisContainTimerContext.stop();
                 if (!contains) {
                     crawledLinksCounter.inc();
                     redisDAO.add(siteLink);
                     cache.put(siteDomain, LocalDateTime.now());
                     Timer.Context context = getPageTimer.time();
+                    appLogger.info("Start parse link {}", siteLink);
                     Page page = parserService.getPage(siteLink);
+                    appLogger.info("Finish parsing link {}", siteLink);
                     context.stop();
                     return Optional.of(page);
                 } else {
+                    appLogger.info("Skip link {} because crawled before", siteLink);
                     skippedLinksCounter.inc();
                     throw new InvalidLinkException("duplicated link: " + siteLink);
                 }
             } else {
+                appLogger.info("Skip link {} because of cache hit", siteLink);
                 cacheHitCounter.inc();
                 return Optional.empty();
             }
-        } catch (URISyntaxException e) {
-            parserLogger.warn("Illegal URL format: " + siteLink, e);
-        } catch (Exception e) {
-            appLogger.error(e.getMessage(), e);
+        } catch (MalformedURLException e) {
+            appLogger.warn("Illegal URL format: " + siteLink, e);
         }
         throw new InvalidLinkException();
+    }
+
+    public boolean isCrawled(String link) {
+        return redisDAO.contains(link);
     }
 }

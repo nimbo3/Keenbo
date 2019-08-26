@@ -26,7 +26,7 @@ import java.util.Scanner;
 
 public class App {
     private static Logger backendLogger = LoggerFactory.getLogger("backend");
-    private static Logger appLogger = LoggerFactory.getLogger("stdout");
+    private static Logger appLogger = LoggerFactory.getLogger("cli");
     private SearchController searchController;
     private SparkConfig sparkConfig;
     private JsonTransformer transformer;

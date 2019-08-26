@@ -4,7 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.jmx.JmxReporter;
 import in.nimbo.common.config.ElasticConfig;
-import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.entity.Page;
@@ -32,17 +32,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.concurrent.TimeUnit;
 
 public class App {
-    private static final String INVALID_INPUT = "invalid input";
-    private static Logger appLogger = LoggerFactory.getLogger("app");
     private static Logger cliLogger = LoggerFactory.getLogger("cli");
+    private static Logger appLogger = LoggerFactory.getLogger("collector");
     private RestHighLevelClient restHighLevelClient;
     private KafkaService kafkaService;
     private HBaseDAO hBaseDAO;
@@ -55,8 +51,7 @@ public class App {
     }
 
     public static void main(String[] args) {
-
-        HBaseConfig hBaseConfig = HBaseConfig.load();
+        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
         ProjectConfig projectConfig = ProjectConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
         ElasticConfig elasticConfig = ElasticConfig.load();
@@ -82,9 +77,8 @@ public class App {
             System.exit(1);
         }
 
-        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBaseConfig);
+        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBasePageConfig);
         appLogger.info("DAO interface created");
-
 
         CollectorService collectorService = new CollectorService(hBaseDAO, elasticDAO);
         KafkaService kafkaService = new KafkaServiceImpl(kafkaConfig, collectorService);
@@ -116,27 +110,13 @@ public class App {
         builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
         builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
                 elasticConfig.getBackoffMaxRetry()));
-        BulkProcessor bulkProcessor = builder.build();
-        appLogger.info("ElasticSearch started");
-        return bulkProcessor;
+        return builder.build();
     }
 
     private void startApp() {
         kafkaService.schedule();
         appLogger.info("Schedule service started");
-        cliLogger.info("Welcome to Search Engine\n");
-        cliLogger.info("engine> ");
-        Scanner in = new Scanner(System.in);
-        while (in.hasNext()) {
-            String cmd = in.next();
-            if (cmd.equals("exit")) {
-                stopApp();
-                break;
-            } else {
-                cliLogger.info(INVALID_INPUT + "\n");
-            }
-            cliLogger.info("engine> ");
-        }
+        cliLogger.info("Welcome to Page Collector\n");
     }
 
     private void stopApp() {
@@ -147,17 +127,12 @@ public class App {
         } catch (IOException e) {
             appLogger.warn("Unable to close resources", e);
         }
+        appLogger.info("Application stopped");
     }
 
     private static void initReporter(ProjectConfig projectConfig) {
-        String hostName = projectConfig.getReportName();
-        try {
-            hostName = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            appLogger.info("Unable to detect host name. Use default value");
-        }
         MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(projectConfig.getReportName());
-        JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).inDomain(hostName)
+        JmxReporter reporter = JmxReporter.forRegistry(metricRegistry)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .convertRatesTo(TimeUnit.MILLISECONDS)
                 .build();
