@@ -48,11 +48,14 @@ public class GraphExtractor {
                 .map(tuple -> tuple._2);
         hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
 
-        List<Result> bestNodes = hBaseRDD.sortBy(result -> {
-            Cell rankCell = result.getColumnLatestCell(infoColumnFamily, siteRankColumn);
-            String rank = Bytes.toString(rankCell.getValueArray(), rankCell.getValueOffset(), rankCell.getValueLength());
-            return Double.parseDouble(rank);
-        }, false, 32).take(100);
+        List<Result> bestNodes = hBaseRDD
+                .filter(result -> result.getColumnLatestCell(infoColumnFamily, siteRankColumn) != null)
+                .sortBy(result -> {
+                    Cell rankCell = result.getColumnLatestCell(infoColumnFamily, siteRankColumn);
+                    String row = Bytes.toString(result.getRow());
+                    String rank = Bytes.toString(rankCell.getValueArray(), rankCell.getValueOffset(), rankCell.getValueLength());
+                    return Double.parseDouble(rank);
+                }, false, 32).take(100);
 
         hBaseRDD.unpersist();
         JavaRDD<Result> bestNodesRdd = javaSparkContext.parallelize(bestNodes);
