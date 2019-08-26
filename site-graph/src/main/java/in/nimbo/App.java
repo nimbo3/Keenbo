@@ -6,6 +6,7 @@ import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.SiteGraphConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
+import in.nimbo.service.GraphExtractor;
 import in.nimbo.service.SiteExtractor;
 import org.apache.spark.sql.SparkSession;
 
@@ -41,7 +42,7 @@ public class App {
         if (siteGraphConfig.isExtractor()) {
             SiteExtractor.extract(hBasePageConfig, hBaseSiteConfig, siteGraphConfig, spark);
         } else if (siteGraphConfig.isGraph()) {
-
+            GraphExtractor.extract(hBaseSiteConfig, siteGraphConfig, spark);
         }
     }
 }
