@@ -4,13 +4,13 @@ import java.util.Objects;
 
 public class GraphNode {
     private String id;
-    private double size;
+    private GraphFont font;
 
     public GraphNode() {}
 
-    public GraphNode(String id, double rank) {
+    public GraphNode(String id, GraphFont font) {
         this.id = id;
-        this.size = rank;
+        this.font = font;
     }
 
     public String getId() {
@@ -21,12 +21,12 @@ public class GraphNode {
         this.id = id;
     }
 
-    public double getRank() {
-        return size;
+    public GraphFont getFont() {
+        return font;
     }
 
-    public void setRank(double rank) {
-        this.size = rank;
+    public void setFont(GraphFont font) {
+        this.font = font;
     }
 
     @Override

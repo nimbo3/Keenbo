@@ -1,34 +1,26 @@
 package in.nimbo.service;
 
 import in.nimbo.common.config.HBaseSiteConfig;
-import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.SiteGraphConfig;
-import in.nimbo.entity.Edge;
 import in.nimbo.entity.GraphEdge;
+import in.nimbo.entity.GraphFont;
 import in.nimbo.entity.GraphNode;
-import in.nimbo.entity.Node;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
-import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.mapreduce.Job;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.functions;
 import org.apache.spark.storage.StorageLevel;
-import org.graphframes.GraphFrame;
-import scala.Tuple2;
 
-import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 
 public class GraphExtractor {
@@ -37,6 +29,7 @@ public class GraphExtractor {
 
     public static void extract(HBaseSiteConfig hBaseSiteConfig, SiteGraphConfig siteGraphConfig,
                                SparkSession spark) {
+        JavaSparkContext javaSparkContext = new JavaSparkContext(spark.sparkContext());
         String siteTable = hBaseSiteConfig.getSiteTable();
         byte[] infoColumnFamily = hBaseSiteConfig.getInfoColumnFamily();
         byte[] domainColumnFamily = hBaseSiteConfig.getDomainColumnFamily();
@@ -55,18 +48,28 @@ public class GraphExtractor {
                 .map(tuple -> tuple._2);
         hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
 
-        JavaRDD<GraphNode> nodes = hBaseRDD
+        List<Result> bestNodes = hBaseRDD.sortBy(result -> {
+            Cell rankCell = result.getColumnLatestCell(infoColumnFamily, siteRankColumn);
+            String rank = Bytes.toString(rankCell.getValueArray(), rankCell.getValueOffset(), rankCell.getValueLength());
+            return Double.parseDouble(rank);
+        }, false, 32).take(100);
+
+        hBaseRDD.unpersist();
+        JavaRDD<Result> bestNodesRdd = javaSparkContext.parallelize(bestNodes);
+        bestNodesRdd.persist(StorageLevel.MEMORY_AND_DISK());
+
+        JavaRDD<GraphNode> nodes = bestNodesRdd
                 .map(result -> result.getColumnLatestCell(infoColumnFamily, siteRankColumn))
                 .filter(Objects::nonNull)
                 .map(cell -> {
                     String rankStr = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
                     return new GraphNode(
                             Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
-                            Double.parseDouble(rankStr)
+                            new GraphFont(Double.parseDouble(rankStr))
                     );
                 });
 
-        JavaRDD<GraphEdge> edges = hBaseRDD
+        JavaRDD<GraphEdge> edges = bestNodesRdd
                 .flatMap(result -> result.listCells().iterator())
                 .filter(cell -> CellUtil.matchingFamily(cell, domainColumnFamily))
                 .map(cell -> {
