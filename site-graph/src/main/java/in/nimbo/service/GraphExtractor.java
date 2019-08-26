@@ -80,8 +80,8 @@ public class GraphExtractor {
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, GraphNode.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, GraphEdge.class);
 
-        vertexDF.repartition(1).write().json("outputVertices");
-        edgeDF.repartition(1).write().json("outputEdges");
+        vertexDF.repartition(1).write().json("/outputVertices");
+        edgeDF.repartition(1).write().json("/outputEdges");
 
         spark.stop();
     }
