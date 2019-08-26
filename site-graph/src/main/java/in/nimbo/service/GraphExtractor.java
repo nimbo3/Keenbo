@@ -52,6 +52,7 @@ public class GraphExtractor {
 
         List<Result> bestNodes = hBaseRDD
                 .filter(result -> result.getColumnLatestCell(infoColumnFamily, siteRankColumn) != null)
+                .map()
                 .sortBy(result -> {
                     Cell rankCell = result.getColumnLatestCell(infoColumnFamily, siteRankColumn);
                     String rank = Bytes.toString(rankCell.getValueArray(), rankCell.getValueOffset(), rankCell.getValueLength());
@@ -73,6 +74,17 @@ public class GraphExtractor {
                     );
                 });
 
+        StructType nodesSchema = new StructType(new StructField[]{
+                new StructField("id", DataTypes.StringType, false, Metadata.empty()),
+                new StructField("font", DataTypes.createStructType(
+                        new StructField[]{
+                                new StructField("size", DataTypes.DoubleType, false, Metadata.empty())
+                        }
+                ), false, Metadata.empty())});
+
+        Dataset<Row> vertexDF = spark.createDataFrame(nodes, nodesSchema);
+        saveAsJson(vertexDF, "/outputVertices");
+
         JavaRDD<Row> edges = bestNodesRdd
                 .flatMap(result -> result.listCells().iterator())
                 .filter(cell -> CellUtil.matchingFamily(cell, domainColumnFamily))
@@ -84,26 +96,13 @@ public class GraphExtractor {
                 });
         hBaseRDD.unpersist();
 
-        StructType nodesSchema = new StructType(new StructField[]{
-                new StructField("id", DataTypes.StringType, false, Metadata.empty()),
-                new StructField("font", DataTypes.createStructType(
-                        new StructField[]{
-                                new StructField("size", DataTypes.DoubleType, false, Metadata.empty())
-                        }
-                ), false, Metadata.empty())});
-
         StructType edgesSchema = new StructType(new StructField[]{
                 new StructField("from", DataTypes.StringType, false, Metadata.empty()),
-                new StructField("to", DataTypes.createStructType(
-                        new StructField[]{
-                                new StructField("width", DataTypes.DoubleType, false, Metadata.empty())
-                        }
-                ), false, Metadata.empty())});
+                new StructField("to", DataTypes.StringType, false, Metadata.empty()),
+                new StructField("width", DataTypes.LongType, false, Metadata.empty())
+        });
 
-        Dataset<Row> vertexDF = spark.createDataFrame(nodes, nodesSchema);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, edgesSchema);
-
-        saveAsJson(vertexDF, "/outputVertices");
         saveAsJson(edgeDF, "/outputEdges");
 
         spark.stop();
