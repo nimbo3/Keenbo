@@ -18,7 +18,6 @@ public class App {
 
         SparkSession spark = SparkSession.builder()
                 .appName(siteGraphConfig.getAppName())
-                .master("local")
                 .getOrCreate();
         spark.sparkContext().conf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         spark.sparkContext().conf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
