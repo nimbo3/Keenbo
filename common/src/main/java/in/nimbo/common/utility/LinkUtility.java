@@ -118,8 +118,8 @@ public class LinkUtility {
 
     public static String normalize(String link) throws MalformedURLException {
         URL url = new URL(link);
-        String protocol = url.getProtocol();
-        String host = url.getHost();
+        String protocol = url.getProtocol().toLowerCase();
+        String host = url.getHost().toLowerCase();
         int port = url.getPort();
         String uri = url.getPath();
         String newLink = protocol + "://" + host;
