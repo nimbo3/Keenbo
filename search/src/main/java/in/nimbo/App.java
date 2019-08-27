@@ -44,10 +44,14 @@ public class App {
         ObjectWriter writer = mapper.writer();
         JsonTransformer transformer = new JsonTransformer(writer);
         InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("violence-words.txt");
-        Scanner scanner = new Scanner(inputStream);
         List<String> violenceWords = new ArrayList<>();
-        while (scanner.hasNextLine()) {
-            violenceWords.addAll(Arrays.asList(scanner.nextLine().split(" ")));
+        if (inputStream == null)
+            backendLogger.error("violence-words.txt not found");
+        else {
+            Scanner scanner = new Scanner(inputStream);
+            while (scanner.hasNextLine()) {
+                violenceWords.addAll(Arrays.asList(scanner.nextLine().split(" ")));
+            }
         }
 
         ElasticConfig elasticConfig = ElasticConfig.load();
