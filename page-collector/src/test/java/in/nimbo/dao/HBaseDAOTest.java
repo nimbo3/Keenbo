@@ -61,7 +61,9 @@ public class HBaseDAOTest {
             metas.add(meta);
         }
         Page page = new Page("http://www.google.com/", "Google", "content", anchors, metas, 100.0);
-        hBaseDAO.add(page);
+        List<Page> pages = new ArrayList<>();
+        pages.add(page);
+        hBaseDAO.add(pages);
         assertTrue(hBaseDAO.contains(LinkUtility.reverseLink(page.getLink())));
     }
 
