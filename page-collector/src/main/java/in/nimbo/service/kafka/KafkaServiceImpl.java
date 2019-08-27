@@ -25,6 +25,7 @@ public class KafkaServiceImpl implements KafkaService {
     private CollectorService collectorService;
 
     private BlockingQueue<Page> messageQueue;
+    private List<Page> bufferList;
     private ConsumerService consumerService;
 
     private List<ProducerService> producerServices;
@@ -36,6 +37,7 @@ public class KafkaServiceImpl implements KafkaService {
         this.collectorService = collectorService;
         producerServices = new ArrayList<>();
         kafkaServices = new ArrayList<>();
+        bufferList = new ArrayList<>();
         messageQueue = new ArrayBlockingQueue<>(config.getLocalPageQueueSize());
         countDownLatch = new CountDownLatch(kafkaConfig.getPageProducerCount() + 1);
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
@@ -62,7 +64,7 @@ public class KafkaServiceImpl implements KafkaService {
         for (int i = 0; i < config.getPageProducerCount(); i++) {
             KafkaProducer<String, Page> producer = new KafkaProducer<>(config.getPageProducerProperties());
             ProducerService producerService =
-                    new ProducerServiceImpl(config, messageQueue, producer, collectorService, countDownLatch);
+                    new ProducerServiceImpl(config, messageQueue, bufferList, producer, collectorService, countDownLatch);
             Thread pageProducerThread = new Thread(producerService, config.getServiceName());
             kafkaServices.add(pageProducerThread);
             producerServices.add(producerService);
@@ -89,6 +91,9 @@ public class KafkaServiceImpl implements KafkaService {
             try (KafkaProducer<String, Page> producer = new KafkaProducer<>(config.getPageProducerProperties())) {
                 logger.info("Start sending {} messages from local page queue to kafka", messageQueue.size());
                 for (Page page : messageQueue) {
+                    producer.send(new ProducerRecord<>(config.getPageTopic(), page));
+                }
+                for (Page page : bufferList) {
                     producer.send(new ProducerRecord<>(config.getPageTopic(), page));
                 }
                 producer.flush();

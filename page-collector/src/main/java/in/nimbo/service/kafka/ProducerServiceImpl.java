@@ -29,15 +29,15 @@ public class ProducerServiceImpl implements ProducerService {
     private CountDownLatch countDownLatch;
     private List<Page> bufferList;
 
-    public ProducerServiceImpl(KafkaConfig kafkaConfig, BlockingQueue<Page> messageQueue, Producer<String, Page> pageProducer,
-                               CollectorService collectorService,
+    public ProducerServiceImpl(KafkaConfig kafkaConfig, BlockingQueue<Page> messageQueue, List<Page> bufferList,
+                               Producer<String, Page> pageProducer, CollectorService collectorService,
                                CountDownLatch countDownLatch) {
         this.config = kafkaConfig;
         this.messageQueue = messageQueue;
         this.pageProducer = pageProducer;
         this.countDownLatch = countDownLatch;
         this.collectorService = collectorService;
-        bufferList = new ArrayList<>();
+        this.bufferList = bufferList;
     }
 
     @Override
@@ -81,12 +81,14 @@ public class ProducerServiceImpl implements ProducerService {
     }
 
     private void handle() {
+        logger.info("Start collecting {} pages", bufferList.size());
         boolean collected = collectorService.processList(bufferList);
         if (!collected) {
             for (Page page : bufferList) {
                 pageProducer.send(new ProducerRecord<>(config.getPageTopic(), page));
             }
         }
+        logger.info("Finish collecting {} pages", bufferList.size());
         bufferList.clear();
     }
 }
