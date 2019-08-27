@@ -19,6 +19,7 @@
         <maven.compiler.target>1.7</maven.compiler.target>
         <spark.version>2.3.3</spark.version>
         <graphframes.version>0.7.0-spark2.4-s_2.11</graphframes.version>
+        <caffeine.version>2.7.0</caffeine.version>
     </properties>
 
     <dependencies>
@@ -81,31 +82,9 @@
             <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>in.nimbo</groupId>
-            <artifactId>common</artifactId>
-            <version>1.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>in.nimbo</groupId>
-            <artifactId>common</artifactId>
-            <version>1.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.12.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.10.2</version>
-        </dependency>
-        <dependency>
-            <groupId>com.cybozu.labs</groupId>
-            <artifactId>langdetect</artifactId>
-            <version>RELEASE</version>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
+            <version>${caffeine.version}</version>
         </dependency>
     </dependencies>
 

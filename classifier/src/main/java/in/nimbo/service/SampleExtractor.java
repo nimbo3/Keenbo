@@ -4,6 +4,7 @@ import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
 import in.nimbo.common.exception.ParseLinkException;
 import in.nimbo.common.utility.LinkUtility;
+import in.nimbo.config.ClassifierConfig;
 import in.nimbo.entity.Link;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,18 +19,20 @@ public class SampleExtractor {
     private CrawlerService crawlerService;
     private BlockingQueue<Link> queue;
     private List<String> domains;
+    private ClassifierConfig config;
 
-    public SampleExtractor(CrawlerService crawlerService, BlockingQueue<Link> queue, List<String> domains) {
+    public SampleExtractor(CrawlerService crawlerService, BlockingQueue<Link> queue, List<String> domains, ClassifierConfig config) {
         this.crawlerService = crawlerService;
         this.queue = queue;
         this.domains = domains;
+        this.config = config;
     }
 
     public void extract() {
         try {
             while (true) {
                 Link poll = queue.take();
-                if (poll.getLevel() > 1) {
+                if (poll.getLevel() > config.getCrawlerLevel()) {
                     break;
                 }
                 try {
@@ -50,6 +53,7 @@ public class SampleExtractor {
                         queue.put(poll);
                     }
                 } catch (ParseLinkException | InvalidLinkException ignored) {
+                    ignored.printStackTrace();
                     logger.info("Skip corrupt link {}", poll.getUrl());
                 } catch (Exception e) {
                     logger.error("Uncached exception", e);
