@@ -45,7 +45,7 @@ public class CrawlerService {
                 elasticDao.save(page, labelMap.get(link.getLabel()));
                 return Optional.of(page);
             }
-            else if (!duplicate){
+            else if (!politeness){
                 appLogger.info("Skip link {} because crawled before", url);
                 throw new InvalidLinkException("duplicated link: " + url);
             }

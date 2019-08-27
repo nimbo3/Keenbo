@@ -71,6 +71,7 @@ public class App {
         SampleExtractor sampleExtractor = new SampleExtractor(crawlerService, queue, domains, classifierConfig);
         ScheduleService scheduleService = new ScheduleService(sampleExtractor, classifierConfig);
         scheduleService.schedule();
+        Runtime.getRuntime().addShutdownHook(new Thread(scheduleService::stop));
     }
 
     private static RestHighLevelClient initializeElasticSearchClient(ElasticConfig elasticConfig) {
