@@ -8,8 +8,6 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.config.ProjectConfig;
-import in.nimbo.dao.ElasticBulkListener;
-import in.nimbo.common.entity.Page;
 import in.nimbo.config.ClassifierConfig;
 import in.nimbo.dao.ElasticDAO;
 import in.nimbo.dao.ElasticDAOImpl;
@@ -33,15 +31,9 @@ import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.elasticsearch.action.bulk.BackoffPolicy;
-import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.unit.ByteSizeUnit;
-import org.elasticsearch.common.unit.ByteSizeValue;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import scala.Tuple2;
 
@@ -67,10 +59,7 @@ public class App {
         Cache<String, LocalDateTime> crawlerCache = Caffeine.newBuilder().build();
         ElasticConfig elasticConfig = ElasticConfig.load();
         RestHighLevelClient client = initializeElasticSearchClient(elasticConfig);
-        List<Page> backupPages = new ArrayList<>();
-        ElasticBulkListener elasticBulkListener = new ElasticBulkListener();
-        BulkProcessor bulkProcessor = initBulkElastic(elasticConfig, client, elasticBulkListener);
-        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, backupPages, bulkProcessor);
+        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, client);
         ParserService parserService = new ParserService(projectConfig);
         ObjectMapper mapper = new ObjectMapper();
         List<Category> categories = loadFeed(mapper);
@@ -91,19 +80,6 @@ public class App {
                         .setSocketTimeout(elasticConfig.getSocketTimeout()))
                 .setMaxRetryTimeoutMillis(elasticConfig.getMaxRetryTimeoutMillis());
         return new RestHighLevelClient(restClientBuilder);
-    }
-
-    private static BulkProcessor initBulkElastic(ElasticConfig elasticConfig, RestHighLevelClient restHighLevelClient,
-                                        ElasticBulkListener elasticBulkListener) {
-        BulkProcessor.Builder builder = BulkProcessor.builder(
-                (request, bulkListener) -> restHighLevelClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
-                elasticBulkListener);
-        builder.setBulkActions(elasticConfig.getBulkActions());
-        builder.setBulkSize(new ByteSizeValue(elasticConfig.getBulkSize(), ByteSizeUnit.valueOf(elasticConfig.getBulkSizeUnit())));
-        builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
-        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
-                elasticConfig.getBackoffMaxRetry()));
-        return builder.build();
     }
 
     private static void fill(BlockingQueue<Link> queue, List<Category> categories) {
