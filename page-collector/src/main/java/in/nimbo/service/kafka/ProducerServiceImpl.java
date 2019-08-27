@@ -44,7 +44,7 @@ public class ProducerServiceImpl implements ProducerService {
                 Page page = messageQueue.take();
                 handle(page);
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | edu.stanford.nlp.util.RuntimeInterruptedException e) {
             // ignored
         } finally {
             CloseUtility.closeSafely(pageProducer);
