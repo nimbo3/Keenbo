@@ -17,6 +17,7 @@
         <module>search</module>
         <module>backward-extractor</module>
         <module>site-graph</module>
+        <module>word-graph</module>
         <module>pagerank</module>
         <module>shuffler</module>
     </modules>
