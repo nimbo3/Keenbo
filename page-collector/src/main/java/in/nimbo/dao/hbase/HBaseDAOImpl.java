@@ -1,13 +1,15 @@
 package in.nimbo.dao.hbase;
 
 import in.nimbo.common.config.HBasePageConfig;
-import in.nimbo.common.exception.HBaseException;
 import in.nimbo.common.entity.Anchor;
-import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
+import in.nimbo.common.exception.HBaseException;
 import in.nimbo.service.KeywordExtractorService;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.Put;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
@@ -36,8 +38,6 @@ public class HBaseDAOImpl implements HBaseDAO {
                         Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getContent()));
             }
 
-            put.addColumn(config.getDataColumnFamily(), config.getRankColumn(), Bytes.toBytes("1"));
-
             Map<String, Integer> keywords = KeywordExtractorService.extractKeywords(page.getContent());
             for (Map.Entry<String, Integer> keyword : keywords.entrySet()) {
                 put.addColumn(config.getDataColumnFamily(),
@@ -60,8 +60,7 @@ public class HBaseDAOImpl implements HBaseDAO {
     public boolean contains(String link) {
         try (Table table = connection.getTable(TableName.valueOf(config.getPageTable()))) {
             Get get = new Get(Bytes.toBytes(link));
-            Result result = table.get(get);
-            return !result.isEmpty();
+            return table.exists(get);
         } catch (IOException e) {
             throw new HBaseException(e);
         }

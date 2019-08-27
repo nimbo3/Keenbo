@@ -125,15 +125,16 @@ public class ShufflerService implements Runnable, Closeable {
 
     private void processList() {
         logger.info("Start filtering {} links", shuffleList.size());
-        List<String> hashedList = shuffleList.stream().map(LinkUtility::hashLinkCompressed).collect(Collectors.toList());
-        List<?> containStatus = redisDAO.contains(hashedList);
-        List<String> filteredLinks = new ArrayList<>();
-        for (int i = 0; i < containStatus.size(); i++) {
-            Boolean contain = (Boolean) containStatus.get(i);
-            if (!contain) {
-                filteredLinks.add(shuffleList.get(i));
-            }
-        }
+//        List<String> hashedList = shuffleList.stream().map(LinkUtility::hashLinkCompressed).collect(Collectors.toList());
+//        List<?> containStatus = redisDAO.contains(hashedList);
+//        List<String> filteredLinks = new ArrayList<>();
+//        for (int i = 0; i < containStatus.size(); i++) {
+//            Boolean contain = (Boolean) containStatus.get(i);
+//            if (!contain) {
+//                filteredLinks.add(shuffleList.get(i));
+//            }
+//        }
+        List<String> filteredLinks = shuffleList;
         logger.info("Start shuffling {} links", filteredLinks.size());
         Timer.Context shuffleLinksTimerContext = shuffleLinksTimer.time();
         String[] shuffledLinks = shuffle(filteredLinks);
