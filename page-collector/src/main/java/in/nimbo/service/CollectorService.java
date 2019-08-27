@@ -26,8 +26,8 @@ public class CollectorService {
         this.hBaseDAO = hBaseDAO;
         this.elasticDAO = elasticDAO;
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
-        hBaseAddTimer = metricRegistry.timer(MetricRegistry.name(CollectorService.class, "HBaseAdd"));
-        ElasticsearchAdd = metricRegistry.timer(MetricRegistry.name(CollectorService.class, "ElasticsearchAdd"));
+        hBaseAddTimer = metricRegistry.timer(MetricRegistry.name(CollectorService.class, Thread.currentThread().getName(), "HBaseAdd"));
+        ElasticsearchAdd = metricRegistry.timer(MetricRegistry.name(CollectorService.class, Thread.currentThread().getName(), "ElasticsearchAdd"));
     }
 
     public boolean processList(List<Page> bufferList) {

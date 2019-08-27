@@ -11,6 +11,8 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public class HBaseDAOImpl implements HBaseDAO {
+    private Logger logger = LoggerFactory.getLogger("collector");
     private HBasePageConfig config;
     private Connection connection;
 
@@ -54,18 +57,23 @@ public class HBaseDAOImpl implements HBaseDAO {
     }
 
     private Put getPut(Page page) {
+        logger.info("Start create get");
         Put put = new Put(Bytes.toBytes(page.getReversedLink()));
 
+        logger.info("Start adding anchors");
         for (Anchor anchor : page.getAnchors()) {
             put.addColumn(config.getAnchorColumnFamily(),
                     Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getContent()));
         }
 
+        logger.info("Start extract keywords");
         Map<String, Integer> keywords = KeywordExtractorService.extractKeywords(page.getContent());
+        logger.info("Finish extract keywords");
         for (Map.Entry<String, Integer> keyword : keywords.entrySet()) {
             put.addColumn(config.getDataColumnFamily(),
                     Bytes.toBytes(keyword.getKey()), Bytes.toBytes(Integer.toString(keyword.getValue())));
         }
+        logger.info("Finish adding keywords");
 
         put.addColumn(config.getDataColumnFamily(), config.getRankColumn(), Bytes.toBytes("1"));
         return put;

@@ -57,16 +57,16 @@ public class KafkaServiceImpl implements KafkaService {
         KafkaConsumer<String, Page> kafkaConsumer = new KafkaConsumer<>(config.getPageConsumerProperties());
         kafkaConsumer.subscribe(Collections.singletonList(config.getPageTopic()));
         consumerService = new ConsumerServiceImpl(config, kafkaConsumer, messageQueue, countDownLatch);
-        Thread consumerThread = new Thread(consumerService, config.getServiceName());
+        Thread consumerThread = new Thread(consumerService, config.getServiceName() + "0");
         kafkaServices.add(consumerThread);
         consumerThread.start();
 
-        for (int i = 0; i < config.getPageProducerCount(); i++) {
+        for (int i = 1; i <= config.getPageProducerCount(); i++) {
             List<Page> bufferList = new ArrayList<>();
             KafkaProducer<String, Page> producer = new KafkaProducer<>(config.getPageProducerProperties());
             ProducerService producerService =
                     new ProducerServiceImpl(config, messageQueue, bufferList, producer, collectorService, countDownLatch);
-            Thread pageProducerThread = new Thread(producerService, config.getServiceName());
+            Thread pageProducerThread = new Thread(producerService, config.getServiceName() + i);
             kafkaServices.add(pageProducerThread);
             producerServices.add(producerService);
             pageProducerThread.start();
