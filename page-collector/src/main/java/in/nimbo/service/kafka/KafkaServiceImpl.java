@@ -25,11 +25,11 @@ public class KafkaServiceImpl implements KafkaService {
     private CollectorService collectorService;
 
     private BlockingQueue<Page> messageQueue;
-    private List<Page> bufferList;
     private ConsumerService consumerService;
 
     private List<ProducerService> producerServices;
     private List<Thread> kafkaServices;
+    private List<List<Page>> bufferLists;
     private CountDownLatch countDownLatch;
 
     public KafkaServiceImpl(KafkaConfig kafkaConfig, CollectorService collectorService) {
@@ -37,7 +37,7 @@ public class KafkaServiceImpl implements KafkaService {
         this.collectorService = collectorService;
         producerServices = new ArrayList<>();
         kafkaServices = new ArrayList<>();
-        bufferList = new ArrayList<>();
+        bufferLists = new ArrayList<>();
         messageQueue = new ArrayBlockingQueue<>(config.getLocalPageQueueSize());
         countDownLatch = new CountDownLatch(kafkaConfig.getPageProducerCount() + 1);
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
@@ -62,6 +62,7 @@ public class KafkaServiceImpl implements KafkaService {
         consumerThread.start();
 
         for (int i = 0; i < config.getPageProducerCount(); i++) {
+            List<Page> bufferList = new ArrayList<>();
             KafkaProducer<String, Page> producer = new KafkaProducer<>(config.getPageProducerProperties());
             ProducerService producerService =
                     new ProducerServiceImpl(config, messageQueue, bufferList, producer, collectorService, countDownLatch);
@@ -69,6 +70,7 @@ public class KafkaServiceImpl implements KafkaService {
             kafkaServices.add(pageProducerThread);
             producerServices.add(producerService);
             pageProducerThread.start();
+            bufferLists.add(bufferList);
         }
     }
 
@@ -93,8 +95,10 @@ public class KafkaServiceImpl implements KafkaService {
                 for (Page page : messageQueue) {
                     producer.send(new ProducerRecord<>(config.getPageTopic(), page));
                 }
-                for (Page page : bufferList) {
-                    producer.send(new ProducerRecord<>(config.getPageTopic(), page));
+                for (List<Page> bufferList : bufferLists) {
+                    for (Page page : bufferList) {
+                        producer.send(new ProducerRecord<>(config.getPageTopic(), page));
+                    }
                 }
                 producer.flush();
             }

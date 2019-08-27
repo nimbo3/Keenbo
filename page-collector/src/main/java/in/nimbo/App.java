@@ -57,8 +57,6 @@ public class App {
         ElasticConfig elasticConfig = ElasticConfig.load();
         appLogger.info("Configuration loaded");
 
-        System.out.println(1);
-
         initReporter(projectConfig);
         appLogger.info("Reporter started");
 
