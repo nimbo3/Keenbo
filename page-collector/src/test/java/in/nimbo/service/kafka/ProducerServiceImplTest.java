@@ -17,6 +17,7 @@ import org.junit.Test;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -53,7 +54,7 @@ public class ProducerServiceImplTest {
         anchors.add(new Anchor("https://google.com", "google"));
         Page page = new Page("http://nimbo.in", "nimbo", "sahab internship", anchors, new ArrayList<Meta>(), 1.0);
         messageQueue.add(page);
-        when(collectorService.handle(page)).thenReturn(false);
+        when(collectorService.processList(any(List.class))).thenReturn(false);
 
         Thread producerServiceThread = new Thread(producerService);
         producerServiceThread.start();

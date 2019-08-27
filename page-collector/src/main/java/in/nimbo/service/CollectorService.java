@@ -41,6 +41,7 @@ public class CollectorService {
                 elasticDAO.save(page);
             }
             ElasticsearchAddContext.stop();
+            return true;
         } catch (HBaseException | ElasticException e) {
             logger.error("Unable to establish connection", e);
             logger.info("Retry link again because of exception");
