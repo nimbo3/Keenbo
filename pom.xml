@@ -43,6 +43,8 @@
         <http.httpcomponents.version>4.5.9</http.httpcomponents.version>
         <dropwizard-metrics.version>4.1.0</dropwizard-metrics.version>
         <kafka.version>2.3.0</kafka.version>
+        <graphframes.version>0.7.0-spark2.4-s_2.11</graphframes.version>
+
     </properties>
 
     <dependencies>
@@ -147,6 +149,11 @@
             <artifactId>metrics-jmx</artifactId>
             <version>${dropwizard-metrics.version}</version>
         </dependency>
+        <dependency>
+            <groupId>graphframes</groupId>
+            <artifactId>graphframes</artifactId>
+            <version>${graphframes.version}</version>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -155,6 +162,7 @@
             <url>http://dl.bintray.com/spark-packages/maven</url>
         </repository>
     </repositories>
+
 
     <build>
         <plugins>

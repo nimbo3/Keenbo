@@ -18,7 +18,6 @@
         <maven.compiler.target>1.8</maven.compiler.target>
         <spark.version>2.3.3</spark.version>
         <elastic.version>6.6.2</elastic.version>
-        <graphframes.version>0.7.0-spark2.4-s_2.11</graphframes.version>
     </properties>
 
     <dependencies>
@@ -31,11 +30,6 @@
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-graphx_2.11</artifactId>
             <version>${spark.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>graphframes</groupId>
-            <artifactId>graphframes</artifactId>
-            <version>${graphframes.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
