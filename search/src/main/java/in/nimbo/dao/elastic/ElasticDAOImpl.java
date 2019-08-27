@@ -50,6 +50,8 @@ public class ElasticDAOImpl implements ElasticDAO {
                     content.append(text.string()).append("\n");
                 }
                 page.setContent(content.toString());
+            } else if (fields.containsKey("content")) {
+                page.setContent((String) fields.get("content"));
             }
             pages.add(page);
         }
