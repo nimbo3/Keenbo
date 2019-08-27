@@ -74,6 +74,24 @@
             <artifactId>graphframes</artifactId>
             <version>${graphframes.version}</version>
         </dependency>
+        <dependency>
+            <groupId>in.nimbo</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>in.nimbo</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>in.nimbo</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
     </dependencies>
 
     <build>
