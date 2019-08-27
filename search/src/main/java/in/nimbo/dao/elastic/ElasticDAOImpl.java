@@ -7,12 +7,14 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.text.Text;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.MultiMatchQueryBuilder;
 import org.elasticsearch.index.query.Operator;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,8 +43,13 @@ public class ElasticDAOImpl implements ElasticDAO {
             if (fields.containsKey("title")) {
                 page.setTitle((String) fields.get("title"));
             }
-            if (fields.containsKey("content")) {
-                page.setContent((String) fields.get("content"));
+            if (hit.getHighlightFields().containsKey("content")) {
+                Text[] texts = hit.getHighlightFields().get("content").getFragments();
+                StringBuilder content = new StringBuilder();
+                for (Text text : texts) {
+                    content.append(text.string()).append("\n");
+                }
+                page.setContent(content.toString());
             }
             pages.add(page);
         }
@@ -53,6 +60,7 @@ public class ElasticDAOImpl implements ElasticDAO {
         try {
             SearchRequest request = new SearchRequest(config.getIndexName());
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            highlightContentField(searchSourceBuilder);
             BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
             for (String word : violenceWords) {
                 MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(word);
@@ -80,5 +88,13 @@ public class ElasticDAOImpl implements ElasticDAO {
         } catch (IOException e) {
             throw new ElasticException("Unable to search in elastic search", e);
         }
+    }
+
+    private void highlightContentField(SearchSourceBuilder searchSourceBuilder) {
+        HighlightBuilder highlightBuilder = new HighlightBuilder();
+        highlightBuilder.field(new HighlightBuilder.Field("content"));
+        highlightBuilder.preTags("<span class=\"highlighted\">");
+        highlightBuilder.postTags("</span>");
+        searchSourceBuilder.highlighter(highlightBuilder);
     }
 }
