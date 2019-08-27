@@ -5,6 +5,7 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.utility.CloseUtility;
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.ShufflerConfig;
 import in.nimbo.redis.RedisDAO;
 import org.apache.kafka.clients.consumer.CommitFailedException;
@@ -25,6 +26,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 public class ShufflerService implements Runnable, Closeable {
     private Logger logger = LoggerFactory.getLogger("shuffler");
@@ -123,14 +125,7 @@ public class ShufflerService implements Runnable, Closeable {
 
     private void processList() {
         logger.info("Start filtering {} links", shuffleList.size());
-        List<?> containStatus = redisDAO.contains(shuffleList);
-        List<String> filteredLinks = new ArrayList<>();
-        for (int i = 0; i < containStatus.size(); i++) {
-            Boolean contain = (Boolean) containStatus.get(i);
-            if (!contain) {
-                filteredLinks.add(shuffleList.get(i));
-            }
-        }
+        List<String> filteredLinks = shuffleList;
         logger.info("Start shuffling {} links", filteredLinks.size());
         Timer.Context shuffleLinksTimerContext = shuffleLinksTimer.time();
         String[] shuffledLinks = shuffle(filteredLinks);

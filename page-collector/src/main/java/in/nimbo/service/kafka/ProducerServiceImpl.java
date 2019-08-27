@@ -1,16 +1,22 @@
 package in.nimbo.service.kafka;
 
+import edu.stanford.nlp.util.RuntimeInterruptedException;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.utility.CloseUtility;
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.service.CollectorService;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProducerServiceImpl implements ProducerService {
@@ -21,6 +27,7 @@ public class ProducerServiceImpl implements ProducerService {
     private Producer<String, Page> pageProducer;
     private AtomicBoolean closed = new AtomicBoolean(false);
     private CountDownLatch countDownLatch;
+    private List<Page> bufferList;
 
     public ProducerServiceImpl(KafkaConfig kafkaConfig, BlockingQueue<Page> messageQueue, Producer<String, Page> pageProducer,
                                CollectorService collectorService,
@@ -30,6 +37,7 @@ public class ProducerServiceImpl implements ProducerService {
         this.pageProducer = pageProducer;
         this.countDownLatch = countDownLatch;
         this.collectorService = collectorService;
+        bufferList = new ArrayList<>();
     }
 
     @Override
@@ -40,11 +48,30 @@ public class ProducerServiceImpl implements ProducerService {
     @Override
     public void run() {
         try {
+            int retry = 0;
+            int lastSize = -1;
             while (!closed.get()) {
                 Page page = messageQueue.take();
-                handle(page);
+                try {
+                    page.setLink(LinkUtility.normalize(page.getLink()));
+                    bufferList.add(page);
+                    int size = bufferList.size();
+                    if (size > 0 && (size >= 2000 || retry >= 10)) {
+                        handle();
+                        retry = 0;
+                    } else {
+                        if (size == lastSize) {
+                            retry++;
+                        } else {
+                            retry = 0;
+                        }
+                    }
+                    lastSize = size;
+                } catch (MalformedURLException e) {
+                    logger.error("Illegal url format: {}", page.getLink(), e);
+                }
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | RuntimeInterruptedException e) {
             // ignored
         } finally {
             CloseUtility.closeSafely(pageProducer);
@@ -53,10 +80,13 @@ public class ProducerServiceImpl implements ProducerService {
         }
     }
 
-    private void handle(Page page) {
-        boolean collected = collectorService.handle(page);
+    private void handle() {
+        boolean collected = collectorService.processList(bufferList);
         if (!collected) {
-            pageProducer.send(new ProducerRecord<>(config.getPageTopic(), page));
+            for (Page page : bufferList) {
+                pageProducer.send(new ProducerRecord<>(config.getPageTopic(), page));
+            }
         }
+        bufferList.clear();
     }
 }

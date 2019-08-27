@@ -5,6 +5,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Page;
+import in.nimbo.common.monitoring.ThreadsMonitor;
 import in.nimbo.service.CollectorService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -19,6 +20,7 @@ import java.util.concurrent.*;
 
 public class KafkaServiceImpl implements KafkaService {
     private Logger logger = LoggerFactory.getLogger("collector");
+    private ScheduledExecutorService threadMonitorService;
     private KafkaConfig config;
     private CollectorService collectorService;
 
@@ -48,6 +50,8 @@ public class KafkaServiceImpl implements KafkaService {
 
     @Override
     public void schedule() {
+        startThreadsMonitoring();
+
         KafkaConsumer<String, Page> kafkaConsumer = new KafkaConsumer<>(config.getPageConsumerProperties());
         kafkaConsumer.subscribe(Collections.singletonList(config.getPageTopic()));
         consumerService = new ConsumerServiceImpl(config, kafkaConsumer, messageQueue, countDownLatch);
@@ -93,5 +97,12 @@ public class KafkaServiceImpl implements KafkaService {
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+        threadMonitorService.shutdown();
+    }
+
+    private void startThreadsMonitoring() {
+        ThreadsMonitor threadsMonitor = new ThreadsMonitor(kafkaServices);
+        threadMonitorService = Executors.newScheduledThreadPool(1);
+        threadMonitorService.scheduleAtFixedRate(threadsMonitor, 0, 1, TimeUnit.SECONDS);
     }
 }

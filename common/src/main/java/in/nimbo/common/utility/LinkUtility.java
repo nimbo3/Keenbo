@@ -8,6 +8,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -118,8 +119,8 @@ public class LinkUtility {
 
     public static String normalize(String link) throws MalformedURLException {
         URL url = new URL(link);
-        String protocol = url.getProtocol();
-        String host = url.getHost();
+        String protocol = url.getProtocol().toLowerCase();
+        String host = url.getHost().toLowerCase();
         int port = url.getPort();
         String uri = url.getPath();
         String newLink = protocol + "://" + host;
@@ -152,6 +153,16 @@ public class LinkUtility {
                 hashText.insert(0, "0");
             }
             return hashText.toString();
+        } catch (NoSuchAlgorithmException e) {
+            throw new HashException(e);
+        }
+    }
+
+    public static String hashLinkCompressed(String url) {
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] digest = md5.digest(url.getBytes());
+            return new String(digest, StandardCharsets.UTF_8);
         } catch (NoSuchAlgorithmException e) {
             throw new HashException(e);
         }

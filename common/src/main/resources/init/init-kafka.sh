@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export BASEDIR=$(dirname "$0")
-cd BASEDIR
+cd $BASEDIR
 
 source ./keenbo-env.sh
 
