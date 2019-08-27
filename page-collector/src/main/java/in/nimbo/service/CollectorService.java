@@ -34,16 +34,16 @@ public class CollectorService {
         List<Page> filtered = bufferList.stream().filter(page -> !page.getAnchors().isEmpty()).collect(Collectors.toList());
         try {
             Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
-            logger.info("Start adding {} pages to HBase", filtered);
+            logger.info("Start adding {} pages to HBase", filtered.size());
             hBaseDAO.add(filtered);
-            logger.info("Finish adding {} pages to HBase", filtered);
+            logger.info("Finish adding {} pages to HBase", filtered.size());
             hBaseAddTimerContext.stop();
             Timer.Context ElasticsearchAddContext = ElasticsearchAdd.time();
-            logger.info("Start adding {} pages to Elasticsearch", filtered);
+            logger.info("Start adding {} pages to Elasticsearch", filtered.size());
             for (Page page : bufferList) {
                 elasticDAO.save(page);
             }
-            logger.info("Finish adding {} pages to Elasticsearch", filtered);
+            logger.info("Finish adding {} pages to Elasticsearch", filtered.size());
             ElasticsearchAddContext.stop();
             return true;
         } catch (HBaseException | ElasticException e) {
