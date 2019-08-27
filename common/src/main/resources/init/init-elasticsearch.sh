@@ -12,7 +12,8 @@ sleep 2
 echo "--------------------------------------------------------------------------------"
 echo 'Create elasticsearch index'
 curl -XPUT "http://$ELASTICSEARCH_NODE:9200/$ELASTICSEARCH_INDEX" -H 'Content-Type: application/json' -d'
-  "settings": {
+{
+    "settings": {
     "index": {
       "number_of_shards": 6,
       "number_of_replicas": 1
@@ -208,23 +209,23 @@ curl -XPUT "http://$ELASTICSEARCH_NODE:9200/$ELASTICSEARCH_INDEX" -H 'Content-Ty
         "content": {
           "type": "text",
           "term_vector" : "yes",
+          "analyzer" : "custom_analyzer",
           "fields" : {
             "keyword" : {
               "type" : "keyword",
               "ignore_above" : 256
             }
-          },
-          "analyzer" : "custom_analyzer"
+          }
         },
         "link": {
           "type": "text",
+          "analyzer" : "custom_analyzer",
           "fields" : {
             "keyword" : {
               "type" : "keyword",
               "ignore_above" : 2048
             }
-          },
-          "analyzer" : "custom_analyzer"
+          }
         },
         "forward_count": {
           "type": "long"
@@ -236,23 +237,23 @@ curl -XPUT "http://$ELASTICSEARCH_NODE:9200/$ELASTICSEARCH_INDEX" -H 'Content-Ty
           "properties": {
             "content": {
               "type": "text",
+              "analyzer" : "custom_analyzer",
               "fields" : {
                 "keyword" : {
                   "type" : "keyword",
                   "ignore_above" : 256
                 }
-              },
-              "analyzer" : "custom_analyzer"
+              }
             },
             "key": {
               "type": "text",
+              "analyzer" : "custom_analyzer",
               "fields" : {
                 "keyword" : {
                   "type" : "keyword",
                   "ignore_above" : 256
                 }
-              },
-              "analyzer" : "custom_analyzer"
+              }
             }
           }
         },
@@ -261,13 +262,13 @@ curl -XPUT "http://$ELASTICSEARCH_NODE:9200/$ELASTICSEARCH_INDEX" -H 'Content-Ty
         },
         "title": {
           "type": "text",
+          "analyzer" : "custom_analyzer",
           "fields": {
             "keyword": {
               "type": "keyword"
             }
           }
-        },
-        "analyzer" : "custom_analyzer"
+        }
       }
     }
   }

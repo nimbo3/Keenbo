@@ -5,6 +5,9 @@ cd $BASEDIR
 
 source ./keenbo-env.sh
 
+echo 'Create Hbase Table'
+echo "create '$HBASE_TABLE', 'D', 'A'" | hbase shell -n >/dev/null
+
 echo 'Truncating Hbase Table'
 echo "truncate '$HBASE_TABLE'" | hbase shell -n >/dev/null
 status=$?
