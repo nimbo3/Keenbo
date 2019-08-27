@@ -41,6 +41,9 @@ public class ElasticDAOImpl implements ElasticDAO {
             if (fields.containsKey("title")) {
                 page.setTitle((String) fields.get("title"));
             }
+            if (fields.containsKey("content")) {
+                page.setContent((String) fields.get("content"));
+            }
             pages.add(page);
         }
         return pages;
@@ -68,7 +71,7 @@ public class ElasticDAOImpl implements ElasticDAO {
             multiMatchQueryBuilder.operator(Operator.AND);
             boolQueryBuilder.must(multiMatchQueryBuilder);
             searchSourceBuilder.query(boolQueryBuilder);
-            String[] includes = new String[]{"title", "link"};
+            String[] includes = new String[]{"title", "link", "content"};
             searchSourceBuilder.fetchSource(includes, null);
             request.source(searchSourceBuilder);
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
