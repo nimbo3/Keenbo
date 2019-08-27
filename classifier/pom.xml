@@ -78,6 +78,19 @@
             <groupId>in.nimbo</groupId>
             <artifactId>common</artifactId>
             <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>in.nimbo</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>in.nimbo</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.jsoup</groupId>
