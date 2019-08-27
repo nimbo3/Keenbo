@@ -41,10 +41,8 @@ public class SampleExtractor {
                         List<Link> collect = crawl.get().getAnchors().stream().map(anchor -> new Link(anchor.getHref(), poll.getLabel(), poll.getLevel() + 1)).collect(Collectors.toList());
                         for (Link link : collect) {
                             try {
-                                String domain = LinkUtility.getDomain(link.getUrl());
-                                if (domains.contains(domain)) {
-                                    queue.put(link);
-                                }
+                                queue.put(link);
+                                System.out.println(link);
                             } catch (InterruptedException e) {
                                 logger.warn("Interrupted");
                             }

@@ -30,8 +30,8 @@ public class CrawlerService {
         this.labelMap = labelMap;
     }
 
-    public Optional<Page> crawl(Link link) {
-        String url = link.getUrl();
+    public Optional<Page> crawl(Link link) throws MalformedURLException {
+        String url = LinkUtility.normalize(link.getUrl());
         try {
             String domain = LinkUtility.getMainDomain(url);
             boolean politeness = politenessCache.getIfPresent(domain) == null;
@@ -39,13 +39,13 @@ public class CrawlerService {
             if (politeness && duplicate) {
                 LocalDateTime now = LocalDateTime.now();
                 politenessCache.put(domain, now);
-                crawlerCache.put(LinkUtility.normalize(url), now);
+                crawlerCache.put(url, now);
                 System.out.println(url);
                 Page page = parserService.getPage(url);
                 elasticDao.save(page, labelMap.get(link.getLabel()));
                 return Optional.of(page);
             }
-            else if (!politeness){
+            else if (!duplicate){
                 appLogger.info("Skip link {} because crawled before", url);
                 throw new InvalidLinkException("duplicated link: " + url);
             }
