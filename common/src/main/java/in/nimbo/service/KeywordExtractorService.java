@@ -44,12 +44,11 @@ public class KeywordExtractorService {
             if (!stop.contains(tok) && tok.length() > 1 && !tok.matches("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?"))
                 lemmas.merge(tok, 1, Integer::sum);
         }
-        Map<String, Integer> sorted = lemmas
+        return lemmas
                 .entrySet()
                 .stream()
                 .sorted(Collections.reverseOrder(comparingByValue()))
                 .limit(5)
                 .collect(toMap(Map.Entry::getKey, Map.Entry::getValue, (e1, e2) -> e2, LinkedHashMap::new));
-        return sorted;
     }
 }

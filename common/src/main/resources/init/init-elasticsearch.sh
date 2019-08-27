@@ -1,7 +1,7 @@
 #!/bin/bash
 
 export BASEDIR=$(dirname "$0")
-cd BASEDIR
+cd $BASEDIR
 
 source ./keenbo-env.sh
 
@@ -13,12 +13,265 @@ echo "--------------------------------------------------------------------------
 echo 'Create elasticsearch index'
 curl -XPUT "http://$ELASTICSEARCH_NODE:9200/$ELASTICSEARCH_INDEX" -H 'Content-Type: application/json' -d'
 {
-    "settings" : {
-        "index" : {
-            "number_of_shards" : 6,
-            "number_of_replicas" : 1
+    "settings": {
+    "index": {
+      "number_of_shards": 6,
+      "number_of_replicas": 1
+    },
+    "analysis": {
+      "analyzer": {
+        "custom_analyzer": {
+          "type": "custom",
+          "char_filter": [
+            "html_strip"
+          ],
+          "tokenizer": "standard",
+          "filter": [
+            "lowercase",
+            "english_stop"
+          ]
         }
+      },
+      "filter": {
+        "english_stop": {
+          "type": "stop",
+          "stopwords": [
+            "his",
+            "did",
+            "up",
+            "you",
+            "each",
+            "most",
+            "nor",
+            "while",
+            "now",
+            "wants",
+            "me",
+            "these",
+            "its",
+            "only",
+            "own",
+            "dear",
+            "would",
+            "very",
+            "don",
+            "under",
+            "t",
+            "them",
+            "with",
+            "tis",
+            "ever",
+            "because",
+            "few",
+            "your",
+            "from",
+            "ours",
+            "into",
+            "may",
+            "been",
+            "my",
+            "out",
+            "cannot",
+            "us",
+            "least",
+            "might",
+            "rather",
+            "below",
+            "as",
+            "said",
+            "of",
+            "himself",
+            "can",
+            "should",
+            "and",
+            "must",
+            "else",
+            "do",
+            "their",
+            "almost",
+            "often",
+            "to",
+            "him",
+            "was",
+            "had",
+            "if",
+            "before",
+            "against",
+            "when",
+            "across",
+            "got",
+            "again",
+            "on",
+            "then",
+            "her",
+            "not",
+            "where",
+            "what",
+            "get",
+            "am",
+            "an",
+            "any",
+            "after",
+            "however",
+            "since",
+            "doing",
+            "our",
+            "able",
+            "like",
+            "there",
+            "who",
+            "myself",
+            "for",
+            "above",
+            "hers",
+            "every",
+            "neither",
+            "no",
+            "or",
+            "about",
+            "through",
+            "yourself",
+            "say",
+            "itself",
+            "were",
+            "being",
+            "down",
+            "in",
+            "themselves",
+            "says",
+            "they",
+            "over",
+            "it",
+            "than",
+            "also",
+            "yours",
+            "so",
+            "let",
+            "by",
+            "the",
+            "likely",
+            "some",
+            "s",
+            "off",
+            "both",
+            "has",
+            "once",
+            "i",
+            "here",
+            "more",
+            "such",
+            "she",
+            "all",
+            "herself",
+            "which",
+            "until",
+            "we",
+            "same",
+            "among",
+            "but",
+            "other",
+            "are",
+            "at",
+            "he",
+            "whom",
+            "how",
+            "a",
+            "will",
+            "yet",
+            "yourselves",
+            "be",
+            "too",
+            "have",
+            "theirs",
+            "further",
+            "this",
+            "does",
+            "is",
+            "during",
+            "either",
+            "could",
+            "that",
+            "between",
+            "twas",
+            "why",
+            "those",
+            "having",
+            "just",
+            "ourselves"
+          ]
+        }
+      }
     }
+  },
+  "mappings": {
+    "page": {
+      "properties": {
+        "content": {
+          "type": "text",
+          "term_vector" : "yes",
+          "analyzer" : "custom_analyzer",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 256
+            }
+          }
+        },
+        "link": {
+          "type": "text",
+          "analyzer" : "custom_analyzer",
+          "fields" : {
+            "keyword" : {
+              "type" : "keyword",
+              "ignore_above" : 2048
+            }
+          }
+        },
+        "forward_count": {
+          "type": "long"
+        },
+        "link_depth": {
+          "type": "long"
+        },
+        "meta": {
+          "properties": {
+            "content": {
+              "type": "text",
+              "analyzer" : "custom_analyzer",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
+                }
+              }
+            },
+            "key": {
+              "type": "text",
+              "analyzer" : "custom_analyzer",
+              "fields" : {
+                "keyword" : {
+                  "type" : "keyword",
+                  "ignore_above" : 256
+                }
+              }
+            }
+          }
+        },
+        "rank": {
+          "type": "double"
+        },
+        "title": {
+          "type": "text",
+          "analyzer" : "custom_analyzer",
+          "fields": {
+            "keyword": {
+              "type": "keyword"
+            }
+          }
+        }
+      }
+    }
+  }
 }' >/dev/null
 
 status=$?
@@ -28,3 +281,5 @@ then
 else
 	echo 'ElasticSearch initialized'
 fi
+
+

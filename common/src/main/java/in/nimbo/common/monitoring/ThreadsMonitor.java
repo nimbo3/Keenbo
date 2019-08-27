@@ -1,4 +1,4 @@
-package in.nimbo.monitoring;
+package in.nimbo.common.monitoring;
 
 import com.codahale.metrics.Histogram;
 import com.codahale.metrics.MetricRegistry;

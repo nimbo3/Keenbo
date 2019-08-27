@@ -64,7 +64,7 @@ public class CrawlerService {
                 redisContainTimerContext.stop();
                 if (!contains) {
                     crawledLinksCounter.inc();
-                    redisDAO.add(siteLink);
+                    redisDAO.add(LinkUtility.hashLinkCompressed(siteLink));
                     cache.put(siteDomain, LocalDateTime.now());
                     Timer.Context context = getPageTimer.time();
                     appLogger.info("Start parse link {}", siteLink);
@@ -89,6 +89,6 @@ public class CrawlerService {
     }
 
     public boolean isCrawled(String link) {
-        return redisDAO.contains(link);
+        return redisDAO.contains(LinkUtility.hashLinkCompressed(link));
     }
 }

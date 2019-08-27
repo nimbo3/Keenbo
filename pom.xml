@@ -176,6 +176,7 @@
                                     <directory>src/main/resources/</directory>
                                     <includes>
                                         <include>*.sh</include>
+                                        <include>init/*</include>
                                     </includes>
                                 </resource>
                             </resources>
@@ -198,7 +199,6 @@
                                         <include>*.xml</include>
                                         <include>profiles/*</include>
                                         <include>kafka/*</include>
-                                        <include>init/*</include>
                                     </includes>
                                 </resource>
                             </resources>

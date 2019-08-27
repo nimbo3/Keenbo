@@ -10,6 +10,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.config.RedisConfig;
+import in.nimbo.common.utility.CloseUtility;
 import in.nimbo.dao.redis.RedisDAOImpl;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;

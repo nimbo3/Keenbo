@@ -8,9 +8,11 @@ import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
-import org.elasticsearch.ElasticsearchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CollectorService {
     private Logger logger = LoggerFactory.getLogger("collector");
@@ -28,27 +30,21 @@ public class CollectorService {
         ElasticsearchAdd = metricRegistry.timer(MetricRegistry.name(CollectorService.class, "ElasticsearchAdd"));
     }
 
-    public boolean handle(Page page) {
+    public boolean processList(List<Page> bufferList) {
+        List<Page> filtered = bufferList.stream().filter(page -> !page.getAnchors().isEmpty()).collect(Collectors.toList());
         try {
-            boolean isAddedToHBase;
-            if (page.getAnchors().isEmpty()) {
-                isAddedToHBase = true;
-            } else {
-                Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
-                isAddedToHBase = hBaseDAO.add(page);
-                hBaseAddTimerContext.stop();
-            }
-            if (isAddedToHBase) {
-                Timer.Context ElasticsearchAddContext = ElasticsearchAdd.time();
+            Timer.Context hBaseAddTimerContext = hBaseAddTimer.time();
+            hBaseDAO.add(filtered);
+            hBaseAddTimerContext.stop();
+            Timer.Context ElasticsearchAddContext = ElasticsearchAdd.time();
+            for (Page page : bufferList) {
                 elasticDAO.save(page);
-                ElasticsearchAddContext.stop();
-                return true;
-            } else {
-                logger.warn("Unable to add page with link {} to HBase", page.getLink());
             }
+            ElasticsearchAddContext.stop();
+            return true;
         } catch (HBaseException | ElasticException e) {
             logger.error("Unable to establish connection", e);
-            logger.info("Retry link {} again because of exception", page.getLink());
+            logger.info("Retry link again because of exception");
         }
         return false;
     }
