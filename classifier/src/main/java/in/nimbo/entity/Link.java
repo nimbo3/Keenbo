@@ -3,10 +3,12 @@ package in.nimbo.entity;
 public class Link {
     private String url;
     private String label;
+    private int level;
 
-    public Link(String url, String label) {
+    public Link(String url, String label, int level) {
         this.url = url;
         this.label = label;
+        this.level = level;
     }
 
     public String getUrl() {
@@ -15,5 +17,9 @@ public class Link {
 
     public String getLabel() {
         return label;
+    }
+
+    public int getLevel() {
+        return level;
     }
 }
