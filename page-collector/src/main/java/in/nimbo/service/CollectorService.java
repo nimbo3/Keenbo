@@ -6,11 +6,14 @@ import com.codahale.metrics.Timer;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import org.elasticsearch.ElasticsearchException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.net.MalformedURLException;
 
 public class CollectorService {
     private Logger logger = LoggerFactory.getLogger("collector");
@@ -30,6 +33,7 @@ public class CollectorService {
 
     public boolean handle(Page page) {
         try {
+            page.setLink(LinkUtility.normalize(page.getLink()));
             boolean isAddedToHBase;
             if (page.getAnchors().isEmpty()) {
                 isAddedToHBase = true;
@@ -49,6 +53,8 @@ public class CollectorService {
         } catch (HBaseException | ElasticException e) {
             logger.error("Unable to establish connection", e);
             logger.info("Retry link {} again because of exception", page.getLink());
+        } catch (MalformedURLException e) {
+            logger.error("illegal url format: " + page.getLink(), e);
         }
         return false;
     }
