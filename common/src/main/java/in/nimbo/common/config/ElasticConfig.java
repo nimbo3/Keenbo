@@ -7,6 +7,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 public class ElasticConfig {
     private static final String CONFIG_NAME = "elastic-search.properties";
     private String indexName;
+    private String testIndexName;
     private String host;
     private String type;
     private int port;
@@ -27,6 +28,7 @@ public class ElasticConfig {
             elasticConfig.setHost(config.getString("host"));
             elasticConfig.setPort(config.getInt("port"));
             elasticConfig.setIndexName(config.getString("index"));
+            elasticConfig.setTestIndexName(config.getString("index.test"));
             elasticConfig.setType(config.getString("type"));
             elasticConfig.setBulkActions(config.getInt("bulk.actions"));
             elasticConfig.setBulkSize(config.getLong("bulk.size"));
@@ -41,6 +43,14 @@ public class ElasticConfig {
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public String getTestIndexName() {
+        return testIndexName;
+    }
+
+    public void setTestIndexName(String testIndexName) {
+        this.testIndexName = testIndexName;
     }
 
     public String getIndexName() {

@@ -53,7 +53,6 @@ public class SampleExtractor {
                         queue.put(poll);
                     }
                 } catch (ParseLinkException | InvalidLinkException ignored) {
-                    ignored.printStackTrace();
                     logger.info("Skip corrupt link {}", poll.getUrl());
                 } catch (Exception e) {
                     logger.error("Uncached exception", e);

@@ -6,7 +6,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.config.ProjectConfig;
+import in.nimbo.dao.ElasticBulkListener;
+import in.nimbo.common.entity.Page;
 import in.nimbo.config.ClassifierConfig;
 import in.nimbo.dao.ElasticDAO;
 import in.nimbo.dao.ElasticDAOImpl;
@@ -17,6 +20,7 @@ import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
 import in.nimbo.service.SampleExtractor;
 import in.nimbo.service.ScheduleService;
+import org.apache.http.HttpHost;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -29,6 +33,15 @@ import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.elasticsearch.action.bulk.BackoffPolicy;
+import org.elasticsearch.action.bulk.BulkProcessor;
+import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.unit.ByteSizeUnit;
+import org.elasticsearch.common.unit.ByteSizeValue;
+import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import scala.Tuple2;
 
@@ -51,9 +64,13 @@ public class App {
         DetectorFactory.loadProfile("../conf/profiles");
         Cache<String, LocalDateTime> politenessCache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
                 .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
-        Cache<String, LocalDateTime> crawlerCache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
-                .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
-        ElasticDAO elasticDAO = new ElasticDAOImpl();
+        Cache<String, LocalDateTime> crawlerCache = Caffeine.newBuilder().build();
+        ElasticConfig elasticConfig = ElasticConfig.load();
+        RestHighLevelClient client = initializeElasticSearchClient(elasticConfig);
+        List<Page> backupPages = new ArrayList<>();
+        ElasticBulkListener elasticBulkListener = new ElasticBulkListener();
+        BulkProcessor bulkProcessor = initBulkElastic(elasticConfig, client, elasticBulkListener);
+        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, backupPages, bulkProcessor);
         ParserService parserService = new ParserService(projectConfig);
         ObjectMapper mapper = new ObjectMapper();
         List<Category> categories = loadFeed(mapper);
@@ -65,6 +82,28 @@ public class App {
         SampleExtractor sampleExtractor = new SampleExtractor(crawlerService, queue, domains, classifierConfig);
         ScheduleService scheduleService = new ScheduleService(sampleExtractor, classifierConfig);
         scheduleService.schedule();
+    }
+
+    private static RestHighLevelClient initializeElasticSearchClient(ElasticConfig elasticConfig) {
+        RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
+                .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
+                        .setConnectTimeout(elasticConfig.getConnectTimeout())
+                        .setSocketTimeout(elasticConfig.getSocketTimeout()))
+                .setMaxRetryTimeoutMillis(elasticConfig.getMaxRetryTimeoutMillis());
+        return new RestHighLevelClient(restClientBuilder);
+    }
+
+    private static BulkProcessor initBulkElastic(ElasticConfig elasticConfig, RestHighLevelClient restHighLevelClient,
+                                        ElasticBulkListener elasticBulkListener) {
+        BulkProcessor.Builder builder = BulkProcessor.builder(
+                (request, bulkListener) -> restHighLevelClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
+                elasticBulkListener);
+        builder.setBulkActions(elasticConfig.getBulkActions());
+        builder.setBulkSize(new ByteSizeValue(elasticConfig.getBulkSize(), ByteSizeUnit.valueOf(elasticConfig.getBulkSizeUnit())));
+        builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
+        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
+                elasticConfig.getBackoffMaxRetry()));
+        return builder.build();
     }
 
     private static void fill(BlockingQueue<Link> queue, List<Category> categories) {
