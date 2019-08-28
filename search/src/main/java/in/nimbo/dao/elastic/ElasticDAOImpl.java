@@ -21,12 +21,10 @@ import java.util.Map;
 public class ElasticDAOImpl implements ElasticDAO {
     private final ElasticConfig config;
     private RestHighLevelClient client;
-    private List<String> violenceWords;
 
-    public ElasticDAOImpl(RestHighLevelClient client, ElasticConfig config, List<String> violenceWords) {
+    public ElasticDAOImpl(RestHighLevelClient client, ElasticConfig config) {
         this.config = config;
         this.client = client;
-        this.violenceWords = violenceWords;
     }
 
     private List<Page> convertHitArrayToPageList(SearchHit[] hits) {
@@ -61,10 +59,6 @@ public class ElasticDAOImpl implements ElasticDAO {
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
             highlightContentField(searchSourceBuilder);
             BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-            for (String word : violenceWords) {
-                MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(word);
-                boolQueryBuilder.mustNot(multiMatchQueryBuilder);
-            }
             if (!site.equals("")) {
                 MatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.matchQuery("link", site);
                 boolQueryBuilder.filter(multiMatchQueryBuilder);

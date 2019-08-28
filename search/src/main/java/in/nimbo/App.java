@@ -18,9 +18,6 @@ import org.slf4j.LoggerFactory;
 import spark.Spark;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
@@ -43,22 +40,12 @@ public class App {
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer = mapper.writer();
         JsonTransformer transformer = new JsonTransformer(writer);
-        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("violence-words.txt");
-        List<String> violenceWords = new ArrayList<>();
-        if (inputStream == null)
-            backendLogger.error("violence-words.txt not found");
-        else {
-            Scanner scanner = new Scanner(inputStream);
-            while (scanner.hasNextLine()) {
-                violenceWords.addAll(Arrays.asList(scanner.nextLine().split(" ")));
-            }
-        }
 
         ElasticConfig elasticConfig = ElasticConfig.load();
         SparkConfig sparkConfig = SparkConfig.load();
 
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
-        ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig, violenceWords);
+        ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         SearchController searchController = new SearchController(elasticDAO);
 
         App app = new App(searchController, sparkConfig, transformer, restHighLevelClient);
