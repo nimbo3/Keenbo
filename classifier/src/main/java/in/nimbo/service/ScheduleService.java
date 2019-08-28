@@ -3,6 +3,7 @@ package in.nimbo.service;
 import in.nimbo.common.monitoring.ThreadsMonitor;
 import in.nimbo.config.ClassifierConfig;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -11,12 +12,14 @@ import java.util.concurrent.TimeUnit;
 
 public class ScheduleService {
     private SampleExtractor sampleExtractor;
+    private KafkaConsumerService consumerService;
     private ClassifierConfig config;
     private List<Thread> threads;
     private ScheduledExecutorService threadMonitorService;
 
-    public ScheduleService(SampleExtractor sampleExtractor, ClassifierConfig config) {
+    public ScheduleService(SampleExtractor sampleExtractor, KafkaConsumerService consumerService, ClassifierConfig config) {
         this.sampleExtractor = sampleExtractor;
+        this.consumerService = consumerService;
         this.config = config;
         this.threads = new ArrayList<>();
     }
@@ -31,6 +34,14 @@ public class ScheduleService {
             thread.start();
             threads.add(thread);
         }
+        Thread consumerThread = new Thread(() -> {
+            try {
+                consumerService.consume();
+            } catch (IOException e) {
+            }
+        });
+        threads.add(consumerThread);
+        startThreadsMonitoring();
     }
 
     public void stop() {

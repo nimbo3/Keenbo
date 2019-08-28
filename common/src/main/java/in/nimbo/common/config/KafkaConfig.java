@@ -11,9 +11,11 @@ public class KafkaConfig {
     private Properties linkConsumerProperties;
     private Properties pageConsumerProperties;
     private Properties shufflerConsumerProperties;
+    private Properties trainingConsumerProperties;
     private Properties pageProducerProperties;
     private Properties linkProducerProperties;
     private Properties shufflerProducerProperties;
+    private Properties trainingProducerProperties;
     private String serviceName;
     private String linkTopic;
     private String pageTopic;
@@ -24,6 +26,7 @@ public class KafkaConfig {
     private int shufflerProducerCount;
     private int localLinkQueueSize;
     private int localPageQueueSize;
+    private String trainingTopic;
 
     public static KafkaConfig load() {
         KafkaConfig config = new KafkaConfig();
@@ -34,10 +37,13 @@ public class KafkaConfig {
             config.setLinkProducerProperties(Config.loadProperties("kafka/link-producer.properties"));
             config.setPageProducerProperties(Config.loadProperties("kafka/page-producer.properties"));
             config.setShufflerConsumerProperties(Config.loadProperties("kafka/shuffler-consumer.properties"));
-            config.setShufflerProducerProperties(Config.loadProperties("kafka/shuffler-producer.properties"));
+            config.setTrainingConsumerProperties(Config.loadProperties("kafka/shuffler-consumer.properties"));
+            config.setShufflerProducerProperties(Config.loadProperties("kafka/training-producer.properties"));
+            config.setTrainingProducerProperties(Config.loadProperties("kafka/training-producer.properties"));
             config.setServiceName(configuration.getString("service.name"));
             config.setLinkTopic(configuration.getString("link.topic.name"));
             config.setPageTopic(configuration.getString("page.topic.name"));
+            config.setTrainingTopic(configuration.getString("training.topic.name"));
             config.setShufflerTopic(configuration.getString("shuffler.topic.name"));
             config.setMaxPollDuration(configuration.getInt("max.poll.duration.milliseconds"));
             config.setPageProducerCount(configuration.getInt("page.producer.count"));
@@ -49,6 +55,22 @@ public class KafkaConfig {
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public Properties getTrainingConsumerProperties() {
+        return trainingConsumerProperties;
+    }
+
+    public void setTrainingConsumerProperties(Properties trainingConsumerProperties) {
+        this.trainingConsumerProperties = trainingConsumerProperties;
+    }
+
+    public Properties getTrainingProducerProperties() {
+        return trainingProducerProperties;
+    }
+
+    public void setTrainingProducerProperties(Properties trainingProducerProperties) {
+        this.trainingProducerProperties = trainingProducerProperties;
     }
 
     public int getMaxPollDuration() {
@@ -179,4 +201,11 @@ public class KafkaConfig {
         this.serviceName = serviceName;
     }
 
+    public String getTrainingTopic() {
+        return trainingTopic;
+    }
+
+    public void setTrainingTopic(String trainingTopic) {
+        this.trainingTopic = trainingTopic;
+    }
 }

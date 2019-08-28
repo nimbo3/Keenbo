@@ -5,7 +5,7 @@ import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.ElasticDAO;
-import in.nimbo.entity.Link;
+import in.nimbo.common.entity.Link;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,9 +34,9 @@ public class CrawlerService {
         String url = LinkUtility.normalize(link.getUrl());
         try {
             String domain = LinkUtility.getMainDomain(url);
-            boolean politeness = politenessCache.getIfPresent(domain) == null;
-            boolean duplicate = crawlerCache.getIfPresent(url) == null;
-            if (politeness && duplicate) {
+            boolean isPolite = politenessCache.getIfPresent(domain) == null;
+            boolean isDuplicate = crawlerCache.getIfPresent(url) != null;
+            if (isPolite && !isDuplicate) {
                 LocalDateTime now = LocalDateTime.now();
                 politenessCache.put(domain, now);
                 crawlerCache.put(url, now);
@@ -44,12 +44,10 @@ public class CrawlerService {
                 Page page = parserService.getPage(url);
                 elasticDao.save(page, labelMap.get(link.getLabel()));
                 return Optional.of(page);
-            }
-            else if (!duplicate){
+            } else if (isDuplicate) {
                 appLogger.info("Skip link {} because crawled before", url);
                 throw new InvalidLinkException("duplicated link: " + url);
-            }
-            else {
+            } else {
                 return Optional.empty();
             }
         } catch (MalformedURLException e) {
