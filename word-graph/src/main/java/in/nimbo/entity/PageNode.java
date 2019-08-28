@@ -1,8 +1,9 @@
 package in.nimbo.entity;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class PageNode {
+public class PageNode implements Serializable {
     private String id;
     private Iterable<String> keywords;
 

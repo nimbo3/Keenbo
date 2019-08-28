@@ -1,16 +1,18 @@
 package in.nimbo.entity;
 
-public class Edge {
+import java.io.Serializable;
+
+public class Edge implements Serializable {
     private String src;
     private String dst;
     private int numOfLinks;
 
     public Edge() {}
 
-    public Edge(String src, String dst) {
+    public Edge(String src, String dst, int numOfLinks) {
         this.src = src;
         this.dst = dst;
-        this.numOfLinks = 1;
+        this.numOfLinks = numOfLinks;
     }
 
     public String getSrc() {
