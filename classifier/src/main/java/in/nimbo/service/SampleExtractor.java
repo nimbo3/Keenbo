@@ -14,7 +14,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.stream.Collectors;
 
 public class SampleExtractor {
-    private Logger logger = LoggerFactory.getLogger("crawler");
+    private Logger logger = LoggerFactory.getLogger("classifier");
     private CrawlerService crawlerService;
     private BlockingQueue<Link> queue;
     private List<String> domains;
@@ -32,30 +32,22 @@ public class SampleExtractor {
     public void extract() {
         try {
             while (true) {
-                System.out.println(Thread.currentThread().getName() + " extract " + 35);
                 Link poll = queue.take();
                 if (poll.getLevel() > config.getCrawlerLevel()) {
                     continue;
                 }
-                System.out.println(Thread.currentThread().getName() + " extract " + 40);
                 try {
-                    System.out.println(Thread.currentThread().getName() + " extract " + 42);
                     Optional<Page> crawl = crawlerService.crawl(poll);
-                    System.out.println(Thread.currentThread().getName() + " extract " + 44);
                     if (crawl.isPresent()) {
                         List<Link> collect = crawl.get().getAnchors().stream()
                                 .map(anchor -> new Link(anchor.getHref(), poll.getLabel(), poll.getLevel() + 1))
                                 .collect(Collectors.toList());
                         for (Link link : collect) {
                             // TODO check domain *if needed*
-                            System.out.println(Thread.currentThread().getName() + " extract " + 51);
                             producerService.produce(link);
-                            System.out.println(Thread.currentThread().getName() + " extract " + 53);
                         }
                     } else {
-                        System.out.println(Thread.currentThread().getName() + " extract " + 56);
                         producerService.produce(poll);
-                        System.out.println(Thread.currentThread().getName() + " extract " + 58);
                     }
                 } catch (ParseLinkException | InvalidLinkException ignored) {
                     logger.info("Skip corrupt link {}", poll.getUrl());

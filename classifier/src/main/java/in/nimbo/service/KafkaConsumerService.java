@@ -7,6 +7,8 @@ import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.common.errors.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.time.Duration;
@@ -16,6 +18,7 @@ public class KafkaConsumerService {
     private BlockingQueue<Link> queue;
     private KafkaConfig config;
     private Consumer<String, Link> consumer;
+    private Logger logger = LoggerFactory.getLogger("classifier");
 
     public KafkaConsumerService(BlockingQueue<Link> queue, KafkaConfig config, Consumer<String, Link> consumer) {
         this.queue = queue;
@@ -27,7 +30,6 @@ public class KafkaConsumerService {
         try {
             while (true) {
                 ConsumerRecords<String, Link> records = consumer.poll(Duration.ofMillis(config.getMaxPollDuration()));
-                System.out.println(Thread.currentThread().getName() + " extract " + 30 + " " + records.count());
                 for (ConsumerRecord<String, Link> record : records) {
                     Link link = record.value();
                     queue.put(link);
@@ -36,15 +38,14 @@ public class KafkaConsumerService {
                             consumer.commitSync();
                         }
                     } catch (TimeoutException | CommitFailedException e) {
-                        e.printStackTrace();
+                        logger.warn("timeout or commit failed");
                     } catch (org.apache.kafka.common.errors.InterruptException e) {
                         Thread.currentThread().interrupt();
                     }
                 }
-                System.out.println(Thread.currentThread().getName() + " extract " + 44 + " " + queue.size());
             }
         } catch (InterruptedException e) {
-            e.printStackTrace();
+            logger.info("interrupted");
         }
     }
 }

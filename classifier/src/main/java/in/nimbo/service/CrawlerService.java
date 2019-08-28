@@ -20,7 +20,7 @@ public class CrawlerService {
     private ParserService parserService;
     private ElasticDAO elasticDao;
     private Map<String, Integer> labelMap;
-    private Logger appLogger = LoggerFactory.getLogger("app");
+    private Logger appLogger = LoggerFactory.getLogger("classifier");
 
     public CrawlerService(Cache<String, LocalDateTime> politenessCache, Cache<String, LocalDateTime> crawlerCache, ParserService parserService, ElasticDAO elasticDao, Map<String, Integer> labelMap) {
         this.politenessCache = politenessCache;
@@ -40,11 +40,8 @@ public class CrawlerService {
                 LocalDateTime now = LocalDateTime.now();
                 politenessCache.put(domain, now);
                 crawlerCache.put(url, now);
-                System.out.println(Thread.currentThread().getName() + " " + 43);
                 Page page = parserService.getPage(url);
-                System.out.println(Thread.currentThread().getName() + " " + 45);
                 elasticDao.save(page, labelMap.get(link.getLabel()));
-                System.out.println(Thread.currentThread().getName() + " " + 47);
                 return Optional.of(page);
             } else if (isDuplicate) {
                 appLogger.info("Skip link {} because crawled before", url);

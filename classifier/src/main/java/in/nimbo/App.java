@@ -39,10 +39,8 @@ import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import scala.Tuple2;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -57,31 +55,36 @@ public class App {
     }
 
     private static void runCrawler(ClassifierConfig classifierConfig, ProjectConfig projectConfig) throws IOException, LangDetectException {
-        System.setOut(new PrintStream(new FileOutputStream("out.txt")));
         DetectorFactory.loadProfile("../conf/profiles");
         Cache<String, LocalDateTime> politenessCache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
                 .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         Cache<String, LocalDateTime> crawlerCache = Caffeine.newBuilder().build();
+
         ElasticConfig elasticConfig = ElasticConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
+
         RestHighLevelClient client = initializeElasticSearchClient(elasticConfig);
         ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, client);
-        ParserService parserService = new ParserService(projectConfig);
+
         ObjectMapper mapper = new ObjectMapper();
         List<Category> categories = loadFeed(mapper);
         Map<String, Integer> labelMap = loadLabels(categories);
         List<String> domains = loadDomains(categories);
-        CrawlerService crawlerService = new CrawlerService(politenessCache, crawlerCache, parserService, elasticDAO, labelMap);
         BlockingQueue<Link> queue = new ArrayBlockingQueue<>(classifierConfig.getCrawlerQueueSize());
         fill(queue, categories);
+
         Producer<String, Link> producer = new KafkaProducer<>(kafkaConfig.getTrainingProducerProperties());
         Consumer<String, Link> consumer = new KafkaConsumer<>(kafkaConfig.getTrainingConsumerProperties());
         consumer.subscribe(Collections.singleton(kafkaConfig.getTrainingTopic()));
+
+        ParserService parserService = new ParserService(projectConfig);
+        CrawlerService crawlerService = new CrawlerService(politenessCache, crawlerCache, parserService, elasticDAO, labelMap);
         KafkaConsumerService consumerService = new KafkaConsumerService(queue, kafkaConfig, consumer);
         KafkaProducerService producerService = new KafkaProducerService(kafkaConfig, producer);
         SampleExtractor sampleExtractor = new SampleExtractor(crawlerService, queue, domains, classifierConfig, producerService);
         ScheduleService scheduleService = new ScheduleService(sampleExtractor, consumerService, classifierConfig);
         scheduleService.schedule();
+
         Runtime.getRuntime().addShutdownHook(new Thread(scheduleService::stop));
     }
 
