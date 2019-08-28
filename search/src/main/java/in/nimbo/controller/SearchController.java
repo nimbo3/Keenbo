@@ -1,5 +1,7 @@
 package in.nimbo.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.*;
@@ -16,10 +18,12 @@ public class SearchController {
     private static final String SEARCH_QUERY_REGEX = "^(.*?)(\\s+site:(.*))?$";
     private ElasticDAO elasticDAO;
     private SparkConfig config;
+    private ObjectMapper mapper;
 
-    public SearchController(ElasticDAO elasticDAO, SparkConfig config) {
+    public SearchController(ElasticDAO elasticDAO, SparkConfig config, ObjectMapper mapper) {
         this.elasticDAO = elasticDAO;
         this.config = config;
+        this.mapper = mapper;
     }
 
     public List<Page> search(String query) {
@@ -35,49 +39,19 @@ public class SearchController {
         throw new AssertionError();
     }
 
-    public SiteGraphResponse siteGraph() throws FileNotFoundException {
+    public SiteGraphResponse siteGraph() throws FileNotFoundException, JsonProcessingException {
         InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("site-graph");
         Scanner scanner = new Scanner(stream);
-        Set<Node> nodes = new HashSet<>();
-        List<Edge> edges = new ArrayList<>();
+        StringBuilder jsonBuilder = new StringBuilder("");
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
-            int commaIndex = line.indexOf(",");
-            String domain = line.substring(2, commaIndex);
-            line = line.substring(commaIndex + 1);
-            commaIndex = line.indexOf(",");
-            String rankString = line.substring(0, commaIndex);
-            double rank = Double.valueOf(rankString);
-            line = line.substring(commaIndex + 1);
-            int closeIndex = line.indexOf("]");
-            String countString = line.substring(0, closeIndex);
-            int count = Integer.valueOf(countString);
-            Font font = new Font(rank);
-            Node node = new Node(domain, font, count);
-            nodes.add(node);
-            line = line.substring(closeIndex + 3);
-            commaIndex = line.indexOf(",");
-            domain = line.substring(0, commaIndex);
-            line = line.substring(commaIndex + 1);
-            commaIndex = line.indexOf(",");
-            rankString = line.substring(0, commaIndex);
-            rank = Double.valueOf(rankString);
-            line = line.substring(commaIndex + 1);
-            closeIndex = line.indexOf("]");
-            countString = line.substring(0, closeIndex);
-            count = Integer.valueOf(countString);
-            font = new Font(rank);
-            Node node2 = new Node(domain, font, count);
-            nodes.add(node2);
-            line = line.substring(closeIndex + 1);
-            closeIndex = line.indexOf("]");
-            String weightString = line.substring(1, closeIndex);
-            int weight = Integer.valueOf(weightString);
-            Edge edge = new Edge(node.getDomain(), node2.getDomain(), weight);
-            edges.add(edge);
+            jsonBuilder.append(line);
         }
-        List<Node> nodeList = new ArrayList<>(nodes);
+        String json = jsonBuilder.toString();
+        SiteGraphResponse siteGraphResponse = mapper.readValue(json, SiteGraphResponse.class);
+        List<Node> nodeList = siteGraphResponse.getNodes();
         List<Node> filteredNodes = nodeList.stream().filter(node -> node.getFont().getSize() > config.getFilterNode()).collect(Collectors.toList());
+        List<Edge> edges = siteGraphResponse.getEdges();
         DoubleSummaryStatistics nodesSummary = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize()).summaryStatistics();
         double maxNode = nodesSummary.getMax();
         double minNode = nodesSummary.getMin();

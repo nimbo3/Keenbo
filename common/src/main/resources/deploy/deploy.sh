@@ -10,16 +10,16 @@ cd Keenbo;
 echo "packaging ...";
 mvn package -DskipTests > /dev/null;
 echo "packaged";
-cp -r target /root/Keenbo
-cd /root
+rm -r /root/Keenbo;
+cp -r target /root/Keenbo;
+cd /root;
 source bin/init/keenbo-env.sh
 echo "uploading";
+chmod 777 bin/*;
 for host in "${hosts[@]}"
 do
+    ssh -p 3031 root@$host "cd /root; rm -r Keenbo 2>/dev/null";
 	scp -r -P 3031 Keenbo root@$host:/root/Keenbo;
 	echo "uploaded to $host";
-	ssh -p 3031 root@$host "cd /root/Keenbo; chmod 777 bin/*";
 done
-cd Keenbo;
-chmod 777 bin/*;
 '
