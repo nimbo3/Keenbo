@@ -66,15 +66,14 @@ public class App {
         ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, client);
         ParserService parserService = new ParserService(projectConfig);
         ObjectMapper mapper = new ObjectMapper();
-        ObjectWriter writer = mapper.writer();
         List<Category> categories = loadFeed(mapper);
         Map<String, Integer> labelMap = loadLabels(categories);
         List<String> domains = loadDomains(categories);
         CrawlerService crawlerService = new CrawlerService(politenessCache, crawlerCache, parserService, elasticDAO, labelMap);
         BlockingQueue<Link> queue = new ArrayBlockingQueue<>(classifierConfig.getCrawlerQueueSize());
-        fill(queue, categories);
         Producer<String, Link> producer = new KafkaProducer<>(kafkaConfig.getTrainingProducerProperties());
         Consumer<String, Link> consumer = new KafkaConsumer<>(kafkaConfig.getTrainingConsumerProperties());
+        consumer.subscribe(Collections.singleton(kafkaConfig.getTrainingTopic()));
         KafkaConsumerService consumerService = new KafkaConsumerService(queue, kafkaConfig, consumer);
         KafkaProducerService producerService = new KafkaProducerService(kafkaConfig, producer);
         SampleExtractor sampleExtractor = new SampleExtractor(crawlerService, queue, domains, classifierConfig, producerService);
