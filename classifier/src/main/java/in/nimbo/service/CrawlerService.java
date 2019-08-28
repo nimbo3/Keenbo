@@ -40,9 +40,11 @@ public class CrawlerService {
                 LocalDateTime now = LocalDateTime.now();
                 politenessCache.put(domain, now);
                 crawlerCache.put(url, now);
-                System.out.println(url);
+                System.out.println(Thread.currentThread().getName() + " " + 43);
                 Page page = parserService.getPage(url);
+                System.out.println(Thread.currentThread().getName() + " " + 45);
                 elasticDao.save(page, labelMap.get(link.getLabel()));
+                System.out.println(Thread.currentThread().getName() + " " + 47);
                 return Optional.of(page);
             } else if (isDuplicate) {
                 appLogger.info("Skip link {} because crawled before", url);

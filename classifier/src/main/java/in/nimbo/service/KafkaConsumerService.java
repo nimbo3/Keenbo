@@ -27,7 +27,7 @@ public class KafkaConsumerService {
         try {
             while (true) {
                 ConsumerRecords<String, Link> records = consumer.poll(Duration.ofMillis(config.getMaxPollDuration()));
-                System.out.println(records.count());
+                System.out.println(Thread.currentThread().getName() + " extract " + 30 + " " + records.count());
                 for (ConsumerRecord<String, Link> record : records) {
                     Link link = record.value();
                     queue.put(link);
@@ -41,7 +41,7 @@ public class KafkaConsumerService {
                         Thread.currentThread().interrupt();
                     }
                 }
-                System.out.println(queue.size());
+                System.out.println(Thread.currentThread().getName() + " extract " + 44 + " " + queue.size());
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
