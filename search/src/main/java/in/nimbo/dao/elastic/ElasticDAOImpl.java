@@ -8,10 +8,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.text.Text;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.MultiMatchQueryBuilder;
-import org.elasticsearch.index.query.Operator;
-import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
@@ -69,8 +66,8 @@ public class ElasticDAOImpl implements ElasticDAO {
                 boolQueryBuilder.mustNot(multiMatchQueryBuilder);
             }
             if (!site.equals("")) {
-                MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(site, "link");
-                boolQueryBuilder.must(multiMatchQueryBuilder);
+                MatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.matchQuery("link", site);
+                boolQueryBuilder.filter(multiMatchQueryBuilder);
             }
             MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(query, "title", "link", "content", "meta", "anchors");
             multiMatchQueryBuilder.field("title", 5);
