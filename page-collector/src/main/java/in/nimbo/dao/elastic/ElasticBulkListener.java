@@ -9,13 +9,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ElasticBulkListener implements BulkProcessor.Listener {
     private Logger logger = LoggerFactory.getLogger("collector");
     private ElasticDAO elasticDAO;
-    private List<Page> backupPages;
+    private CopyOnWriteArrayList<Page> backupPages;
 
-    public ElasticBulkListener(List<Page> backupPages) {
+    public ElasticBulkListener(CopyOnWriteArrayList<Page> backupPages) {
         this.backupPages = backupPages;
     }
 
