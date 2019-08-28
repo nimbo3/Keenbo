@@ -27,8 +27,8 @@ import java.net.UnknownHostException;
 import java.util.*;
 
 public class ParserService {
-    private Logger logger = LoggerFactory.getLogger("parser");
-    private Logger appLogger = LoggerFactory.getLogger("app");
+    private Logger parserLogger = LoggerFactory.getLogger("parser");
+    private Logger appLogger = LoggerFactory.getLogger("crawler");
     private ProjectConfig projectConfig;
 
     public ParserService(ProjectConfig projectConfig) {
@@ -56,17 +56,17 @@ public class ParserService {
                 return Optional.of(response.parse());
             }
         } catch (SSLHandshakeException e) {
-            logger.warn("Server certificate verification failed: {}", link);
+            parserLogger.warn("Server certificate verification failed: {}", link);
         } catch (UnknownHostException e) {
-            logger.warn("Could not resolve host: {}", link);
+            parserLogger.warn("Could not resolve host: {}", link);
         } catch (MalformedURLException | IllegalArgumentException e) {
-            logger.warn("Illegal url format: {}", link);
+            parserLogger.warn("Illegal url format: {}", link);
         } catch (HttpStatusException e) {
-            logger.warn("Response is not OK. Url: \"{}\" StatusCode: {}", e.getUrl(), e.getStatusCode());
+            parserLogger.warn("Response is not OK. Url: \"{}\" StatusCode: {}", e.getUrl(), e.getStatusCode());
         } catch (SocketTimeoutException e) {
-            logger.warn("Connection time out with jsoup: {}", link);
-        } catch (IOException e) {
-            logger.warn("Unable to parse page with jsoup: {}", link);
+            parserLogger.warn("Connection time out with jsoup: {}", link);
+        } catch (StringIndexOutOfBoundsException | IOException e) {
+            parserLogger.warn("Unable to parse page with jsoup: {}", link);
         }
         return Optional.empty();
     }
@@ -75,7 +75,7 @@ public class ParserService {
      * @param document document contain a site contents
      * @return list of all anchors in a document
      */
-    Set<Anchor> getAnchors(Document document) {
+    private Set<Anchor> getAnchors(Document document) {
         Set<Anchor> anchors = new HashSet<>();
         Elements linkElements = document.getElementsByTag("a");
         Map<String, Integer> map = new HashMap<>();
@@ -91,7 +91,7 @@ public class ParserService {
                     }
                     anchors.add(new Anchor(normalizedUrl, linkElement.text().toLowerCase()));
                 } catch (MalformedURLException e) {
-                    logger.warn("Unable to normalize link: {}", absUrl);
+                    parserLogger.warn("Unable to normalize link: {}", absUrl);
                 }
             }
         }
@@ -160,7 +160,7 @@ public class ParserService {
             Document document = documentOptional.get();
             String pageContentWithoutTag = document.text().replace("\n", " ");
             if (pageContentWithoutTag.isEmpty()) {
-                logger.warn("There is no content for site: {}", link);
+                parserLogger.warn("There is no content for site: {}", link);
             } else if (isEnglishLanguage(pageContentWithoutTag)) {
                 Set<Anchor> anchors = getAnchors(document);
                 List<Meta> metas = getMetas(document);
@@ -173,9 +173,7 @@ public class ParserService {
         } catch (MalformedURLException e) {
             appLogger.warn("Unable to reverse link: {}", link);
         } catch (LanguageDetectException e) {
-            logger.warn("Cannot detect language of site: {}", link);
-        } catch (Exception e) {
-            appLogger.error(e.getMessage(), e);
+            parserLogger.warn("Cannot detect language of site: {}", link);
         }
         throw new ParseLinkException();
     }

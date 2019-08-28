@@ -18,15 +18,12 @@ import org.slf4j.LoggerFactory;
 import spark.Spark;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Scanner;
 
 public class App {
     private static Logger backendLogger = LoggerFactory.getLogger("backend");
-    private static Logger appLogger = LoggerFactory.getLogger("stdout");
+    private static Logger appLogger = LoggerFactory.getLogger("cli");
     private SearchController searchController;
     private SparkConfig sparkConfig;
     private JsonTransformer transformer;
@@ -43,18 +40,11 @@ public class App {
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer = mapper.writer();
         JsonTransformer transformer = new JsonTransformer(writer);
-        InputStream inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("violence-words");
-        Scanner scanner = new Scanner(inputStream);
-        List<String> violenceWords = new ArrayList<>();
-        while (scanner.hasNextLine()) {
-            violenceWords.addAll(Arrays.asList(scanner.nextLine().split(" ")));
-        }
-
         ElasticConfig elasticConfig = ElasticConfig.load();
         SparkConfig sparkConfig = SparkConfig.load();
 
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
-        ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig, violenceWords);
+        ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         SearchController searchController = new SearchController(elasticDAO, sparkConfig);
 
         App app = new App(searchController, sparkConfig, transformer, restHighLevelClient);
@@ -69,8 +59,7 @@ public class App {
             Spark.before("/*", (request, response) -> backendLogger.info("New request for uri: {}", request.uri()));
             Spark.get("/search", ((request, response) -> {
                 String query = request.queryParams("query");
-                String site = request.queryParams("site");
-                List<Page> result = searchController.search(query != null ? query : "", site != null ? site : "");
+                List<Page> result = searchController.search(query != null ? query : "");
                 response.type("application/json");
                 return result;
             }), transformer);

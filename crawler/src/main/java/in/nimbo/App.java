@@ -10,6 +10,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.config.RedisConfig;
+import in.nimbo.common.utility.CloseUtility;
 import in.nimbo.dao.redis.RedisDAOImpl;
 import in.nimbo.service.CrawlerService;
 import in.nimbo.service.ParserService;
@@ -19,15 +20,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import redis.clients.jedis.JedisCluster;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.time.LocalDateTime;
 import java.util.Scanner;
-import java.util.concurrent.*;
+import java.util.concurrent.TimeUnit;
 
 public class App {
-    private static Logger appLogger = LoggerFactory.getLogger("app");
     private static Logger cliLogger = LoggerFactory.getLogger("cli");
+    private static Logger appLogger = LoggerFactory.getLogger("crawler");
     private KafkaService kafkaService;
 
     public App(KafkaService kafkaService) {
@@ -96,17 +95,12 @@ public class App {
 
     private void stopApp() {
         kafkaService.stopSchedule();
+        appLogger.info("Application stopped");
     }
 
     private static void initReporter(ProjectConfig projectConfig) {
-        String hostName = projectConfig.getReportName();
-        try {
-            hostName = InetAddress.getLocalHost().getHostName();
-        } catch (UnknownHostException e) {
-            appLogger.warn("Unable to detect host name. Use default value");
-        }
         MetricRegistry metricRegistry = SharedMetricRegistries.setDefault(projectConfig.getReportName());
-        JmxReporter reporter = JmxReporter.forRegistry(metricRegistry).inDomain(hostName)
+        JmxReporter reporter = JmxReporter.forRegistry(metricRegistry)
                 .convertDurationsTo(TimeUnit.MILLISECONDS)
                 .convertRatesTo(TimeUnit.MILLISECONDS)
                 .build();

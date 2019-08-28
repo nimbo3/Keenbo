@@ -15,9 +15,10 @@
         <module>crawler</module>
         <module>page-collector</module>
         <module>search</module>
-        <module>forward-extractor</module>
+        <module>backward-extractor</module>
         <module>site-graph</module>
         <module>pagerank</module>
+        <module>shuffler</module>
     </modules>
 
     <properties>
@@ -26,7 +27,6 @@
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <junit.version>4.11</junit.version>
-        <embedded.elasticsearch.version>2.7.0</embedded.elasticsearch.version>
 
         <slf4j.version>1.7.26</slf4j.version>
         <log4j.version>1.2.17</log4j.version>
@@ -57,14 +57,6 @@
             <groupId>org.apache.kafka</groupId>
             <artifactId>kafka-clients</artifactId>
             <version>${kafka.version}</version>
-        </dependency>
-
-        <!--Embedded Elasticsearch for unit test -->
-        <dependency>
-            <groupId>pl.allegro.tech</groupId>
-            <artifactId>embedded-elasticsearch</artifactId>
-            <version>${embedded.elasticsearch.version}</version>
-            <scope>test</scope>
         </dependency>
 
         <!-- slf4j for logging -->
@@ -114,12 +106,12 @@
         <!--driver for HBase-->
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-client</artifactId>
+            <artifactId>hbase-shaded-client</artifactId>
             <version>${hbase.version}</version>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
-            <artifactId>hbase-server</artifactId>
+            <artifactId>hbase-shaded-server</artifactId>
             <version>${hbase.server.version}</version>
         </dependency>
 
@@ -183,6 +175,7 @@
                                     <directory>src/main/resources/</directory>
                                     <includes>
                                         <include>*.sh</include>
+                                        <include>init/*</include>
                                     </includes>
                                 </resource>
                             </resources>
@@ -204,6 +197,7 @@
                                         <include>*.yaml</include>
                                         <include>*.xml</include>
                                         <include>profiles/*</include>
+                                        <include>kafka/*</include>
                                     </includes>
                                 </resource>
                             </resources>

@@ -1,6 +1,5 @@
 package in.nimbo.service;
 
-import com.codahale.metrics.SharedMetricRegistries;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.TestUtility;
@@ -32,7 +31,6 @@ import static org.mockito.Mockito.*;
 public class CrawlerServiceTest {
     private static RedisDAO redisDAO;
     private static ParserService parserService;
-    private static Document document;
     private static Document documentWithoutTitle;
     private static ProjectConfig projectConfig;
     private static Cache<String, LocalDateTime> cache;
@@ -69,7 +67,7 @@ public class CrawlerServiceTest {
         redisDAO = mock(RedisDAO.class);
         String input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
         String inputWithoutTitle = TestUtility.getFileContent(Paths.get(FILE_WITHOUT_TITLE_ADDRESS));
-        document = Jsoup.parse(input, "UTF-8");
+        Document document = Jsoup.parse(input, "UTF-8");
         documentWithoutTitle = Jsoup.parse(inputWithoutTitle, "UTF-8");
         when(parserService.getDocument(link)).thenReturn(Optional.of(document));
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
@@ -96,21 +94,21 @@ public class CrawlerServiceTest {
         when(redisDAO.contains(link)).thenReturn(false);
         try {
             cache.put(LinkUtility.getMainDomain(link), LocalDateTime.now());
-        } catch (URISyntaxException e) {
+        } catch (MalformedURLException e) {
             Assert.fail();
         }
         Optional<Page> returnedPage = crawlerService.crawl(link);
         Assert.assertFalse(returnedPage.isPresent());
     }
 
-    @Test (expected = InvalidLinkException.class)
+    @Test(expected = InvalidLinkException.class)
     public void crawlRepeatedLinkTest() {
         when(redisDAO.contains(anyString())).thenReturn(true);
         Optional<Page> returnedPage = crawlerService.crawl(link);
         Assert.fail();
     }
 
-    @Test (expected = InvalidLinkException.class)
+    @Test(expected = InvalidLinkException.class)
     public void crawlInvalidLink() {
         Optional<Page> returnedPage = crawlerService.crawl("http://");
         Assert.fail();
@@ -139,21 +137,21 @@ public class CrawlerServiceTest {
         Assert.assertEquals(metas, returnedPage.getMetas());
     }
 
-    @Test (expected = ParseLinkException.class)
+    @Test(expected = ParseLinkException.class)
     public void getPageWithEmptyDocumentTest() {
         when(parserService.getDocument(link)).thenReturn(Optional.empty());
         Page returnedPage = parserService.getPage(link);
         Assert.fail();
     }
 
-    @Test (expected = ParseLinkException.class)
+    @Test(expected = ParseLinkException.class)
     public void getPageMalformedURLExceptionTest() {
         when(parserService.getDocument(invalidLink)).thenThrow(MalformedURLException.class);
         Page returnedPage = parserService.getPage(invalidLink);
         Assert.fail();
     }
 
-    @Test (expected = ParseLinkException.class)
+    @Test(expected = ParseLinkException.class)
     public void getPageLanguageDetectExceptionTest() {
         doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString());
         Page returnedPage = parserService.getPage(link);

@@ -1,5 +1,6 @@
 package in.nimbo.service.kafka;
 
+import in.nimbo.TestUtility;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
@@ -28,6 +29,7 @@ public class ConsumerServiceImplTest {
 
     @BeforeClass
     public static void init() {
+        TestUtility.setMetricRegistry();
         kafkaConfig = KafkaConfig.load();
     }
 
@@ -37,7 +39,7 @@ public class ConsumerServiceImplTest {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         MockConsumer<String, Page> kafkaConsumer = new MockConsumer<>(OffsetResetStrategy.EARLIEST);
         kafkaConsumer.subscribe(Collections.singletonList(kafkaConfig.getPageTopic()));
-        ConsumerService consumerService = new ConsumerServiceImpl(kafkaConsumer, queue, countDownLatch);
+        ConsumerService consumerService = new ConsumerServiceImpl(kafkaConfig, kafkaConsumer, queue, countDownLatch);
         
         kafkaConsumer.rebalance(
                 Collections.singleton(new TopicPartition(kafkaConfig.getPageTopic(), 0)));
@@ -61,15 +63,19 @@ public class ConsumerServiceImplTest {
                     kafkaConfig.getPageTopic(), 0, i, "producer", crawledLinks.get(i)));
         }
 
+        Thread consumerServiceThread = new Thread(consumerService);
+        consumerServiceThread.start();
         new Thread(() -> {
             try {
                 TimeUnit.SECONDS.sleep(2);
                 consumerService.close();
+                consumerServiceThread.interrupt();
             } catch (InterruptedException e) {
                 // ignored
             }
         }).start();
-        consumerService.run();
+        consumerServiceThread.join();
+
         assertEquals(2, queue.size());
         for (Page page : crawledLinks) {
             Page returnedPage = queue.poll(1, TimeUnit.MILLISECONDS);

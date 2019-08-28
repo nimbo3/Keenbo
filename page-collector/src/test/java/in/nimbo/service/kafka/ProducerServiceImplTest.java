@@ -1,5 +1,6 @@
 package in.nimbo.service.kafka;
 
+import in.nimbo.TestUtility;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
@@ -16,6 +17,7 @@ import org.junit.Test;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -35,7 +37,8 @@ public class ProducerServiceImplTest {
 
     @Before
     public void beforeEachTest() {
-        messageQueue = spy(new LinkedBlockingQueue<>());
+        TestUtility.setMetricRegistry();
+        messageQueue = new LinkedBlockingQueue<>();
         countDownLatch = new CountDownLatch(1);
         collectorService = mock(CollectorService.class);
         KafkaConfig kafkaConfig = KafkaConfig.load();
@@ -45,24 +48,27 @@ public class ProducerServiceImplTest {
     }
 
     @Test
-    public void producerTest() throws MalformedURLException {
+    public void producerTest() throws MalformedURLException, InterruptedException {
         Set<Anchor> anchors = new HashSet<>();
         anchors.add(new Anchor("https://stackoverflow.com", "stackoverflow"));
         anchors.add(new Anchor("https://google.com", "google"));
         Page page = new Page("http://nimbo.in", "nimbo", "sahab internship", anchors, new ArrayList<Meta>(), 1.0);
         messageQueue.add(page);
-        when(collectorService.handle(page)).thenReturn(false);
+        when(collectorService.processList(any(List.class))).thenReturn(false);
+
+        Thread producerServiceThread = new Thread(producerService);
+        producerServiceThread.start();
         new Thread(() -> {
             try {
                 TimeUnit.SECONDS.sleep(2);
                 producerService.close();
+                producerServiceThread.interrupt();
             } catch (InterruptedException e) {
                 // ignored
             }
         }).start();
-        producerService.run();
+        producerServiceThread.join();
         for (ProducerRecord<String, Page> record : kafkaProducer.history()) {
-            assertEquals(record.key(), record.value().getLink());
             Page returnedPage = record.value();
             assertNotNull(returnedPage);
             Assert.assertEquals(page.getLink(), returnedPage.getLink());

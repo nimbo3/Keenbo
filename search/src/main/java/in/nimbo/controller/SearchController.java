@@ -11,8 +11,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.DoubleStream;
 import java.util.stream.IntStream;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class SearchController {
+    private static final String SEARCH_QUERY_REGEX = "^(.*?)(\\s+site:(.*))?$";
     private ElasticDAO elasticDAO;
     private SparkConfig config;
 
@@ -21,8 +25,17 @@ public class SearchController {
         this.config = config;
     }
 
-    public List<Page> search(String query, String site) {
-        return elasticDAO.search(query, site);
+    public List<Page> search(String query) {
+        Pattern pattern = Pattern.compile(SEARCH_QUERY_REGEX);
+        Matcher matcher = pattern.matcher(query);
+        if (matcher.find()) {
+            String extractedQuery = matcher.group(1);
+            String site = matcher.group(3);
+            if (site == null)
+                site = "";
+            return elasticDAO.search(extractedQuery, site);
+        }
+        throw new AssertionError();
     }
 
     public SiteGraphResponse siteGraph() throws FileNotFoundException {

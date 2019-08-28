@@ -8,19 +8,35 @@ public class SiteGraphConfig {
     private static final String CONFIG_NAME = "site-graph.properties";
     private String appName;
     private String scanBatchSize;
-    private String resultDirectory;
+    private boolean isExtractor;
+    private boolean isGraph;
 
     public static SiteGraphConfig load() {
         SiteGraphConfig appConfig = new SiteGraphConfig();
         try {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
             appConfig.setAppName(config.getString("app.name"));
+            String appMode = config.getString("app.mode");
+            if (appMode.equals("extractor")) {
+                appConfig.isExtractor = true;
+            } else if (appMode.equals("graph")) {
+                appConfig.isGraph = true;
+            } else {
+                throw new ConfigurationException(CONFIG_NAME + ": app mode is illegal");
+            }
             appConfig.setScanBatchSize(config.getString("hbase.scan.batch.size"));
-            appConfig.setResultDirectory(config.getString("result.directory"));
             return appConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public boolean isExtractor() {
+        return isExtractor;
+    }
+
+    public boolean isGraph() {
+        return isGraph;
     }
 
     public String getAppName() {
@@ -37,13 +53,5 @@ public class SiteGraphConfig {
 
     public void setScanBatchSize(String scanBatchSize) {
         this.scanBatchSize = scanBatchSize;
-    }
-
-    public String getResultDirectory() {
-        return resultDirectory;
-    }
-
-    public void setResultDirectory(String resultDirectory) {
-        this.resultDirectory = resultDirectory;
     }
 }

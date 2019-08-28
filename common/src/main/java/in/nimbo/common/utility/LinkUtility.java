@@ -8,10 +8,9 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
-import java.util.Collections;
 
 public class LinkUtility {
 
@@ -62,17 +61,45 @@ public class LinkUtility {
      *
      * @param link link
      * @return domain of url without it's subdomains
-     * @throws URISyntaxException if link is not a illegal url
+     * @throws MalformedURLException if link is not a illegal url
      */
-    public static String getMainDomain(String link) throws URISyntaxException {
+    public static String getMainDomain(String link) throws MalformedURLException {
         try {
-            URI uri = new URI(link);
-            String host = uri.getHost();
-            String[] hostParts = host.split("\\.");
-            return hostParts[hostParts.length - 2] + "." + hostParts[hostParts.length - 1];
+            String domain = getDomain(link);
+            int lastDot = domain.lastIndexOf('.');
+            int beforeLastDot = domain.substring(0, lastDot).lastIndexOf('.');
+            return beforeLastDot == -1 ? domain : domain.substring(beforeLastDot + 1);
         } catch (IndexOutOfBoundsException | NullPointerException e) {
-            throw new URISyntaxException(link, "unable to detect host of url");
+            throw new MalformedURLException("unable to detect domain of url");
         }
+    }
+
+    public static String getMainDomainForReversed(String link) throws MalformedURLException {
+        try {
+            String domain = getDomain(link);
+            int firstDot = domain.indexOf('.');
+            int afterFirstDot = domain.indexOf('.', firstDot + 1);
+            if (afterFirstDot != -1) {
+                domain = domain.substring(0, afterFirstDot);
+            }
+            return domain.substring(firstDot + 1) + "." + domain.substring(0, firstDot);
+        } catch (IndexOutOfBoundsException | NullPointerException e) {
+            throw new MalformedURLException("unable to detect domain of url");
+        }
+    }
+
+    private static String getDomain(String link) {
+        int indexOfProtocol = link.indexOf('/') + 1;
+        int indexOfEndDomain = link.indexOf('/', indexOfProtocol + 1);
+        if (indexOfEndDomain < 0) {
+            indexOfEndDomain = link.length();
+        }
+        String domain = link.substring(indexOfProtocol + 1, indexOfEndDomain);
+        int colonIndex = domain.indexOf(':');
+        if (colonIndex > -1) {
+            domain = domain.substring(0, colonIndex);
+        }
+        return domain;
     }
 
     /**
@@ -92,8 +119,8 @@ public class LinkUtility {
 
     public static String normalize(String link) throws MalformedURLException {
         URL url = new URL(link);
-        String protocol = url.getProtocol();
-        String host = url.getHost();
+        String protocol = url.getProtocol().toLowerCase();
+        String host = url.getHost().toLowerCase();
         int port = url.getPort();
         String uri = url.getPath();
         String newLink = protocol + "://" + host;
@@ -131,8 +158,17 @@ public class LinkUtility {
         }
     }
 
+    public static String hashLinkCompressed(String url) {
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            byte[] digest = md5.digest(url.getBytes());
+            return new String(digest, StandardCharsets.UTF_8);
+        } catch (NoSuchAlgorithmException e) {
+            throw new HashException(e);
+        }
+    }
+
     /**
-     *
      * @param link link which must be normalized
      * @return depth of a uri in url
      * @throws MalformedURLException if link is illegal

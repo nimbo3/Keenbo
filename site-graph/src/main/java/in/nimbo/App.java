@@ -1,41 +1,20 @@
 package in.nimbo;
 
-import in.nimbo.common.config.HBaseConfig;
+import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseSiteConfig;
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.SiteGraphConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import in.nimbo.service.GraphExtractor;
+import in.nimbo.service.SiteExtractor;
 import org.apache.spark.sql.SparkSession;
-import org.apache.spark.sql.functions;
-import org.graphframes.GraphFrame;
-import scala.Tuple2;
-
-import java.util.Arrays;
-import java.util.Date;
 
 public class App {
     public static void main(String[] args) {
         SiteGraphConfig siteGraphConfig = SiteGraphConfig.load();
-        HBaseConfig hBaseConfig = HBaseConfig.load();
-
-        byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
-        byte[] rankColumn = hBaseConfig.getRankColumnFamily();
-
-        Configuration hBaseConfiguration = HBaseConfiguration.create();
-        hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
-        hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBaseConfig.getLinksTable());
-        hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, siteGraphConfig.getScanBatchSize());
+        HBaseSiteConfig hBaseSiteConfig = HBaseSiteConfig.load();
+        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
 
         SparkSession spark = SparkSession.builder()
                 .appName(siteGraphConfig.getAppName())
@@ -43,74 +22,27 @@ public class App {
         spark.sparkContext().conf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         spark.sparkContext().conf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
         spark.sparkContext().conf().set("spark.kryo.registrationRequired", "true");
+        spark.sparkContext().conf().set("spark.speculation", "false");
+        spark.sparkContext().conf().set("spark.hadoop.mapreduce.map.speculative", "false");
+        spark.sparkContext().conf().set("spark.hadoop.mapreduce.reduce.speculative", "false");
 
-        JavaRDD<Result> hBaseRDD = spark.sparkContext()
-                .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
-                        , ImmutableBytesWritable.class, Result.class).toJavaRDD()
-                .map(tuple -> tuple._2);
+        spark.sparkContext().conf().registerKryoClasses(new Class[]{in.nimbo.common.entity.Meta.class,
+                in.nimbo.common.exception.LoadConfigurationException.class, HBasePageConfig.class,
+                in.nimbo.common.config.ElasticConfig.class, in.nimbo.common.entity.Anchor.class,
+                in.nimbo.common.exception.LanguageDetectException.class, in.nimbo.common.config.ProjectConfig.class,
+                in.nimbo.common.utility.CloseUtility.class, in.nimbo.common.exception.HBaseException.class,
+                LinkUtility.class, in.nimbo.common.config.KafkaConfig.class,
+                in.nimbo.common.entity.Page.class, in.nimbo.common.exception.ReverseLinkException.class,
+                in.nimbo.common.exception.ElasticException.class, in.nimbo.common.exception.ParseLinkException.class,
+                in.nimbo.common.serializer.PageSerializer.class, in.nimbo.common.exception.HashException.class,
+                in.nimbo.common.config.Config.class, in.nimbo.common.config.RedisConfig.class,
+                in.nimbo.common.serializer.PageDeserializer.class, in.nimbo.common.exception.InvalidLinkException.class,
+                Edge.class, Node.class, in.nimbo.App.class, SiteGraphConfig.class});
 
-        JavaRDD<Node> nodes = hBaseRDD
-                .map(result -> {
-                    double rank = 0;
-                    String rankString = Bytes.toString(result.getValue(rankColumn, rankColumn));
-                    if (rankString != null)
-                        rank = Double.parseDouble(rankString);
-                    return new Node(getMainDomainForReversed(Bytes.toString(result.getRow())), rank);
-                });
-        JavaPairRDD<String, String> links = hBaseRDD.flatMap(result -> result.listCells().iterator()).
-                filter(cell -> Arrays.equals(CellUtil.cloneFamily(cell), anchorColumnFamily)).
-                mapToPair(cell -> {
-                    String destination = Bytes.toString(CellUtil.cloneQualifier(cell));
-                    int index = destination.indexOf('#');
-                    if (index != -1)
-                        destination = destination.substring(0, index);
-                    return new Tuple2<>(Bytes.toString(CellUtil.cloneRow(cell)), destination);
-                });
-
-        JavaRDD<Edge> edges = links.
-                mapToPair(link -> new Tuple2<>(getMainDomainForReversed(link._1), getMainDomain(link._2))).
-                filter(domain -> !domain._1.equals(domain._2)).
-                map(link -> new Edge(link._1, link._2));
-
-        Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class)
-                .groupBy("id")
-                .agg(functions.avg("rank"), functions.sum("numOfPages"));
-        verDF.show(false);
-
-        Dataset<Row> edgDF = spark.createDataFrame(edges, Edge.class);
-        edgDF.show(false);
-
-        GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
-        Dataset<Row> edgesWithWeight = graphFrame
-                .triplets()
-                .groupBy("src", "dst")
-                .agg(functions.sum("edge.numOfAnchors"));
-        edgesWithWeight.show(false);
-        edgesWithWeight.toJavaRDD().repartition(1).saveAsTextFile(siteGraphConfig.getResultDirectory() + new Date().getTime());
-        spark.stop();
-    }
-
-    private static String getMainDomain(String link) {
-        String linkWithoutProtocol = link.substring(link.indexOf('/') + 2);
-        int indexOfSlash = linkWithoutProtocol.indexOf('/');
-        if (indexOfSlash != -1) {
-            linkWithoutProtocol = linkWithoutProtocol.substring(0, indexOfSlash);
+        if (siteGraphConfig.isExtractor()) {
+            SiteExtractor.extract(hBasePageConfig, hBaseSiteConfig, siteGraphConfig, spark);
+        } else if (siteGraphConfig.isGraph()) {
+            GraphExtractor.extract(hBaseSiteConfig, siteGraphConfig, spark);
         }
-        int lastDot = linkWithoutProtocol.lastIndexOf('.');
-        int beforeLastDot = linkWithoutProtocol.substring(0, lastDot).lastIndexOf('.');
-        return beforeLastDot == -1 ? linkWithoutProtocol : linkWithoutProtocol.substring(beforeLastDot + 1);
-    }
-
-    private static String getMainDomainForReversed(String link) {
-        String linkWithoutProtocol = link.substring(link.indexOf('/') + 2);
-        int indexOfSlash = linkWithoutProtocol.indexOf('/');
-        if (indexOfSlash != -1) {
-            linkWithoutProtocol = linkWithoutProtocol.substring(0, indexOfSlash);
-        }
-        int firstDot = linkWithoutProtocol.indexOf('.');
-        int afterFirstDot = linkWithoutProtocol.indexOf('.', firstDot + 1);
-        if (afterFirstDot != -1)
-            linkWithoutProtocol = linkWithoutProtocol.substring(0, afterFirstDot + firstDot + 1);
-        return linkWithoutProtocol.substring(firstDot + 1) + "." + linkWithoutProtocol.substring(0, firstDot);
     }
 }
