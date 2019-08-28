@@ -8,12 +8,12 @@ public class Edge {
     @JsonProperty("to")
     private String dst;
     @JsonProperty("width")
-    private int weight;
+    private int width;
 
-    public Edge(String src, String dst, int weight) {
+    public Edge(String src, String dst, int width) {
         this.src = src;
         this.dst = dst;
-        this.weight = weight;
+        this.width = width;
     }
 
     public String getSrc() {
@@ -32,12 +32,12 @@ public class Edge {
         this.dst = dst;
     }
 
-    public int getWeight() {
-        return weight;
+    public int getWidth() {
+        return width;
     }
 
-    public void setWeight(int weight) {
-        this.weight = weight;
+    public void setWidth(int width) {
+        this.width = width;
     }
 
     @Override
@@ -63,7 +63,7 @@ public class Edge {
         return "Edge{" +
                 "src='" + src + '\'' +
                 ", dst='" + dst + '\'' +
-                ", weight=" + weight +
+                ", width=" + width +
                 '}';
     }
 }

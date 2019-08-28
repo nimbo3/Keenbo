@@ -4,13 +4,10 @@ import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.*;
 
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.DoubleStream;
-import java.util.stream.IntStream;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -81,15 +78,22 @@ public class SearchController {
         }
         List<Node> nodeList = new ArrayList<>(nodes);
         List<Node> filteredNodes = nodeList.stream().filter(node -> node.getFont().getSize() > config.getFilterNode()).collect(Collectors.toList());
-        OptionalDouble minNode = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize()).min();
-        OptionalDouble maxNode = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize()).max();
-        filteredNodes.forEach(node -> node.getFont().setSize((node.getFont().getSize() - minNode.getAsDouble()) / (maxNode.getAsDouble() - minNode.getAsDouble()) * (config.getMaxNode() - config.getMinNode()) + config.getMinNode()));
-        List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWeight() > config.getFilterEdge()).collect(Collectors.toList());
+        DoubleSummaryStatistics nodesSummary = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize()).summaryStatistics();
+        double maxNode = nodesSummary.getMax();
+        double minNode = nodesSummary.getMin();
+        filteredNodes.forEach(node -> node.getFont().setSize((node.getFont().getSize() - minNode) / (maxNode - minNode) * (config.getMaxNode() - config.getMinNode()) + config.getMinNode()));
+        List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWidth() > config.getFilterEdge()).collect(Collectors.toList());
         filteredEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getDomain().equals(edge.getDst()) &&
                 filteredNodes.stream().anyMatch(src -> src.getDomain().equals(edge.getSrc()) && (!dst.getDomain().equals(src.getDomain()))))).collect(Collectors.toList());
-        OptionalInt minEdge = filteredEdges.stream().mapToInt(Edge::getWeight).min();
-        OptionalInt maxEdge = filteredEdges.stream().mapToInt(Edge::getWeight).max();
-        filteredEdges.forEach(edge -> edge.setWeight((int) (((double) edge.getWeight() - minEdge.getAsInt()) * (config.getMaxEdge() - config.getMinEdge()) / (maxEdge.getAsInt() - minEdge.getAsInt()) + config.getMinEdge())));
+        IntSummaryStatistics edgesSummary = filteredEdges.stream().mapToInt(Edge::getWidth).summaryStatistics();
+        int maxEdge = edgesSummary.getMax();
+        int minEdge = edgesSummary.getMin();
+        filteredEdges.forEach(edge -> scaleEdge(edge, minEdge, maxEdge));
         return new SiteGraphResponse(filteredNodes, filteredEdges);
+    }
+
+    private void scaleEdge(Edge edge, int minEdge, int maxEdge) {
+        int weight = ((int) (((double) edge.getWidth() - minEdge) * (config.getMaxEdge() - config.getMinEdge()) / (maxEdge - minEdge) + config.getMinEdge()));
+        edge.setWidth(weight);
     }
 }

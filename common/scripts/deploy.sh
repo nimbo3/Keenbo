@@ -10,18 +10,16 @@ cd Keenbo;
 echo "packaging ...";
 mvn package -DskipTests > /dev/null;
 echo "packaged";
-i=1
-while [ $i -lt 4 ];
-do
-	ssh -p 3031 root@slave-$i "cd project/ehsan/Keenbo; rm -r target 2>/dev/null"
-	let i=i+1
-done
+cp -r target /root/Keenbo
+cd /root
+source bin/init/keenbo-env.sh
 echo "uploading";
-let i=1
-while [ $i -lt 4 ];
+for host in "${hosts[@]}"
 do
-	scp -r -P 3031 target root@slave-$i:/root/project/ehsan/Keenbo/
-	echo "uploaded to slave-$i"
-        let i=i+1
+	scp -r -P 3031 Keenbo root@$host:/root/Keenbo;
+	echo "uploaded to $host";
+	ssh -p 3031 root@$host "cd /root/Keenbo; chmod 777 bin/*";
 done
+cd Keenbo;
+chmod 777 bin/*;
 '
