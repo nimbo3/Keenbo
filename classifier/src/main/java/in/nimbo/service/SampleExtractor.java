@@ -45,7 +45,6 @@ public class SampleExtractor {
                         for (Link link : collect) {
                             // TODO check domain *if needed*
                             producerService.produce(link);
-                            System.out.println(link);
                         }
                     } else {
                         producerService.produce(poll);

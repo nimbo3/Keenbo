@@ -24,10 +24,6 @@ public class ScheduleService {
         this.threads = new ArrayList<>();
     }
 
-    public List<Thread> getThreads() {
-        return threads;
-    }
-
     public void schedule() {
         for (int i = 0; i < config.getCrawlerThreads(); i++) {
             Thread thread = new Thread(() -> sampleExtractor.extract());
@@ -38,6 +34,7 @@ public class ScheduleService {
             try {
                 consumerService.consume();
             } catch (IOException e) {
+                e.printStackTrace();
             }
         });
         threads.add(consumerThread);

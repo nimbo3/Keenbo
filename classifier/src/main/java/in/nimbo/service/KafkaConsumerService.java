@@ -35,10 +35,12 @@ public class KafkaConsumerService {
                             consumer.commitSync();
                         }
                     } catch (TimeoutException | CommitFailedException e) {
+                        e.printStackTrace();
                     } catch (org.apache.kafka.common.errors.InterruptException e) {
                         Thread.currentThread().interrupt();
                     }
                 }
+                System.out.println(queue.size());
             }
         } catch (InterruptedException e) {
             e.printStackTrace();
