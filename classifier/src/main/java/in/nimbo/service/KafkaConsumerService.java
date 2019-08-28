@@ -27,6 +27,7 @@ public class KafkaConsumerService {
         try {
             while (true) {
                 ConsumerRecords<String, Link> records = consumer.poll(Duration.ofMillis(config.getMaxPollDuration()));
+                System.out.println(records.count());
                 for (ConsumerRecord<String, Link> record : records) {
                     Link link = record.value();
                     queue.put(link);

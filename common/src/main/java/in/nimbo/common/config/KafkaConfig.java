@@ -37,8 +37,8 @@ public class KafkaConfig {
             config.setLinkProducerProperties(Config.loadProperties("kafka/link-producer.properties"));
             config.setPageProducerProperties(Config.loadProperties("kafka/page-producer.properties"));
             config.setShufflerConsumerProperties(Config.loadProperties("kafka/shuffler-consumer.properties"));
-            config.setTrainingConsumerProperties(Config.loadProperties("kafka/shuffler-consumer.properties"));
-            config.setShufflerProducerProperties(Config.loadProperties("kafka/training-producer.properties"));
+            config.setTrainingConsumerProperties(Config.loadProperties("kafka/training-consumer.properties"));
+            config.setShufflerProducerProperties(Config.loadProperties("kafka/shuffler-producer.properties"));
             config.setTrainingProducerProperties(Config.loadProperties("kafka/training-producer.properties"));
             config.setServiceName(configuration.getString("service.name"));
             config.setLinkTopic(configuration.getString("link.topic.name"));
