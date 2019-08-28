@@ -71,6 +71,7 @@ public class App {
         List<String> domains = loadDomains(categories);
         CrawlerService crawlerService = new CrawlerService(politenessCache, crawlerCache, parserService, elasticDAO, labelMap);
         BlockingQueue<Link> queue = new ArrayBlockingQueue<>(classifierConfig.getCrawlerQueueSize());
+        fill(queue, categories);
         Producer<String, Link> producer = new KafkaProducer<>(kafkaConfig.getTrainingProducerProperties());
         Consumer<String, Link> consumer = new KafkaConsumer<>(kafkaConfig.getTrainingConsumerProperties());
         consumer.subscribe(Collections.singleton(kafkaConfig.getTrainingTopic()));
