@@ -96,7 +96,7 @@ public class KafkaServiceImpl implements KafkaService {
                     producer.send(new ProducerRecord<>(config.getPageTopic(), page));
                 }
                 for (List<Page> bufferList : bufferLists) {
-                    logger.info("Start sending {} messages from local buffer list to kafka", messageQueue.size())
+                    logger.info("Start sending {} messages from local buffer list to kafka", messageQueue.size());
                     for (Page page : bufferList) {
                         producer.send(new ProducerRecord<>(config.getPageTopic(), page));
                     }

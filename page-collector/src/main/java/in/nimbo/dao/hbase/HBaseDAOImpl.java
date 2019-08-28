@@ -11,6 +11,8 @@ import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 
 public class HBaseDAOImpl implements HBaseDAO {
+    private Logger logger = LoggerFactory.getLogger("collector");
     private HBasePageConfig config;
     private Connection connection;
 
@@ -37,7 +40,9 @@ public class HBaseDAOImpl implements HBaseDAO {
             for (Page page : pages) {
                 puts.add(getPut(page));
             }
+            logger.info("Start sending bulk put to HBase");
             table.put(puts);
+            logger.info("Finish sending bulk put to HBase");
         } catch (IllegalArgumentException | IOException e) {
             throw new HBaseException(e);
         }
