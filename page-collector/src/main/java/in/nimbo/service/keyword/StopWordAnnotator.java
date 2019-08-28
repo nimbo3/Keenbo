@@ -29,7 +29,7 @@ public class StopWordAnnotator implements Annotator {
                 "my", "both", "most", "she", "once", "herself", "since", "who", "however", "here", "no", "some",
                 "rather", "for", "why", "we", "hers", "nor", "can", "not", "and", "now", "of", "themselves", "every",
                 "just", "on", "over", "or", "will", "again", "yet", "say", "also", "any", "with", "what", "there",
-                "neither", "until", "further", "he", "ago");
+                "neither", "until", "further", "he", "ago", "use");
     }
 
     @Override
