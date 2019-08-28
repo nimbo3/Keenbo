@@ -37,6 +37,7 @@ public class ScheduleService {
                 e.printStackTrace();
             }
         });
+        consumerThread.start();
         threads.add(consumerThread);
         startThreadsMonitoring();
     }
