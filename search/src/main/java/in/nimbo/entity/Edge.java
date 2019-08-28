@@ -10,6 +10,8 @@ public class Edge {
     @JsonProperty("width")
     private int width;
 
+    public Edge(){}
+
     public Edge(String src, String dst, int width) {
         this.src = src;
         this.dst = dst;
