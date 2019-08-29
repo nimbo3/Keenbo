@@ -13,6 +13,7 @@ public class SparkConfig {
     private double minNode;
     private double maxNode;
     private double filterNode;
+    private int minPasswordLength;
 
     public static SparkConfig load() {
         SparkConfig sparkConfig = new SparkConfig();
@@ -25,10 +26,19 @@ public class SparkConfig {
             sparkConfig.setMinEdge(config.getInt("graph.sites.edges.min"));
             sparkConfig.setMaxEdge(config.getInt("graph.sites.edges.max"));
             sparkConfig.setFilterEdge(config.getInt("graph.sites.edges.filter"));
+            sparkConfig.setMinPasswordLength(config.getInt("auth.password.min"));
             return sparkConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public int getMinPasswordLength() {
+        return minPasswordLength;
+    }
+
+    public void setMinPasswordLength(int minPasswordLength) {
+        this.minPasswordLength = minPasswordLength;
     }
 
     public int getMinEdge() {
