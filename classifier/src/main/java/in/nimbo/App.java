@@ -105,7 +105,7 @@ public class App {
                 classifierConfig.getEsIndex() + "/" + classifierConfig.getEsType());
 
         JavaRDD<Data> dataRDD = esRDD.map(tuple2 ->
-                new Data((Integer) tuple2._2.get("label"), (String) tuple2._2.get("content")));
+                new Data((Long) tuple2._2.get("label"), (String) tuple2._2.get("content")));
 
         Dataset<Row> dataset = spark.createDataFrame(dataRDD, Data.class);
         dataset.show(false);
