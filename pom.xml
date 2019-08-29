@@ -176,6 +176,8 @@
                                     <includes>
                                         <include>*.sh</include>
                                         <include>init/*</include>
+                                        <include>deploy/*</include>
+                                        <include>sql/*</include>
                                     </includes>
                                 </resource>
                             </resources>
