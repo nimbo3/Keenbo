@@ -7,6 +7,8 @@ import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
+import in.nimbo.service.KeywordExtractorServiceTest;
+import in.nimbo.service.keyword.KeywordExtractorService;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -33,6 +35,7 @@ public class HBaseDAOTest {
 
     @BeforeClass
     public static void init() throws IOException {
+        KeywordExtractorService extractorService = new KeywordExtractorService();
         hBasePageConfig = HBasePageConfig.load();
         connection = ConnectionFactory.createConnection();
         TableName tableName = TableName.valueOf(hBasePageConfig.getPageTable());
@@ -40,7 +43,7 @@ public class HBaseDAOTest {
         descriptor.addFamily(new HColumnDescriptor(hBasePageConfig.getAnchorColumnFamily()));
         descriptor.addFamily(new HColumnDescriptor(hBasePageConfig.getDataColumnFamily()));
         connection.getAdmin().createTable(descriptor);
-        hBaseDAO = new HBaseDAOImpl(connection, hBasePageConfig);
+        hBaseDAO = new HBaseDAOImpl(connection, hBasePageConfig, extractorService);
     }
 
     @Before
