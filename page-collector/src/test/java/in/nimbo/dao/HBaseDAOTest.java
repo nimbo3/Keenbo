@@ -31,10 +31,11 @@ public class HBaseDAOTest {
     private static HBaseDAO hBaseDAO;
     private static HBasePageConfig hBasePageConfig;
     private static Connection connection;
+    private static KeywordExtractorService extractorService;
 
     @BeforeClass
     public static void init() throws IOException {
-        KeywordExtractorService extractorService = new KeywordExtractorService();
+        extractorService = new KeywordExtractorService();
         hBasePageConfig = HBasePageConfig.load();
         connection = ConnectionFactory.createConnection();
         TableName tableName = TableName.valueOf(hBasePageConfig.getPageTable());
@@ -42,7 +43,7 @@ public class HBaseDAOTest {
         descriptor.addFamily(new HColumnDescriptor(hBasePageConfig.getAnchorColumnFamily()));
         descriptor.addFamily(new HColumnDescriptor(hBasePageConfig.getDataColumnFamily()));
         connection.getAdmin().createTable(descriptor);
-        hBaseDAO = new HBaseDAOImpl(connection, hBasePageConfig, extractorService);
+        hBaseDAO = new HBaseDAOImpl(connection, hBasePageConfig);
     }
 
     @Before
@@ -65,7 +66,7 @@ public class HBaseDAOTest {
         Page page = new Page("http://www.google.com/", "Google", "content", anchors, metas, 100.0);
         List<Page> pages = new ArrayList<>();
         pages.add(page);
-        hBaseDAO.add(pages);
+        hBaseDAO.add(pages, extractorService);
         assertTrue(hBaseDAO.contains(LinkUtility.reverseLink(page.getLink())));
     }
 
