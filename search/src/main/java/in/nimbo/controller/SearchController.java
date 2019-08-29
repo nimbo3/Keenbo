@@ -3,6 +3,7 @@ package in.nimbo.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.nimbo.config.SparkConfig;
+import in.nimbo.dao.cache.LabelDAO;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.*;
 
@@ -19,11 +20,13 @@ public class SearchController {
     private ElasticDAO elasticDAO;
     private SparkConfig config;
     private ObjectMapper mapper;
+    private LabelDAO labelDAO;
 
-    public SearchController(ElasticDAO elasticDAO, SparkConfig config, ObjectMapper mapper) {
+    public SearchController(ElasticDAO elasticDAO, SparkConfig config, ObjectMapper mapper, LabelDAO labelDAO) {
         this.elasticDAO = elasticDAO;
         this.config = config;
         this.mapper = mapper;
+        this.labelDAO = labelDAO;
     }
 
     public List<Page> search(String query) {
@@ -32,9 +35,12 @@ public class SearchController {
         if (matcher.find()) {
             String extractedQuery = matcher.group(1);
             String site = matcher.group(3);
-            if (site == null)
+            if (site == null) {
                 site = "";
-            return elasticDAO.search(extractedQuery, site);
+            }
+            List<Page> pages = elasticDAO.search(extractedQuery, site);
+            pages.forEach(page -> labelDAO.add(page.getLink(), page.getLabel()));
+            return pages;
         }
         throw new AssertionError();
     }

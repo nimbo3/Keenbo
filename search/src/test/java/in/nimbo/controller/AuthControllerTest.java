@@ -23,7 +23,7 @@ public class AuthControllerTest {
         config = SparkConfig.load();
         dao = mock(AuthDAO.class);
         Random random = new Random();
-        controller = new AuthController(dao, config, random);
+        controller = new AuthController(dao, config, random, labelDAO);
     }
 
     @Test

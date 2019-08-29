@@ -3,6 +3,7 @@ package in.nimbo.controller;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.auth.AuthDAO;
+import in.nimbo.dao.cache.LabelDAO;
 import in.nimbo.entity.User;
 import in.nimbo.response.ActionResult;
 
@@ -12,11 +13,13 @@ public class AuthController {
     private AuthDAO authDAO;
     private SparkConfig config;
     private Random random;
+    private LabelDAO labelDAO;
 
-    public AuthController(AuthDAO authDAO, SparkConfig config, Random random) {
+    public AuthController(AuthDAO authDAO, SparkConfig config, Random random, LabelDAO labelDAO) {
         this.authDAO = authDAO;
         this.config = config;
         this.random = random;
+        this.labelDAO = labelDAO;
     }
 
     public ActionResult<User> login(String username, String password) {
@@ -61,8 +64,11 @@ public class AuthController {
     public ActionResult<Boolean> click(User user, String destination) {
         ActionResult<Boolean> result = new ActionResult<>();
         if (user != null) {
-            authDAO.saveClick(user, destination);
-            result.setSuccess(true);
+            Integer label = labelDAO.get(destination);
+            if (label != null) {
+                authDAO.saveClick(user, destination, label);
+                result.setSuccess(true);
+            }
         }
         return result;
     }

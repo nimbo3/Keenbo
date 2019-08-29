@@ -1,5 +1,6 @@
 package in.nimbo.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Page {
@@ -9,6 +10,8 @@ public class Page {
     private String title;
     @JsonProperty("content")
     private String content;
+    @JsonIgnore
+    private int label;
 
     public Page() {
     }
@@ -17,6 +20,14 @@ public class Page {
         this.title = title;
         this.content = content;
         this.link = link;
+    }
+
+    public int getLabel() {
+        return label;
+    }
+
+    public void setLabel(long label) {
+        this.label = (int)label;
     }
 
     public String getTitle() {

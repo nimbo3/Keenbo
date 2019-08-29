@@ -8,6 +8,8 @@ import in.nimbo.controller.AuthController;
 import in.nimbo.controller.SearchController;
 import in.nimbo.dao.auth.AuthDAO;
 import in.nimbo.dao.auth.MySqlAuthDAO;
+import in.nimbo.dao.cache.LabelDAO;
+import in.nimbo.dao.cache.RedisLabelDAO;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
 import in.nimbo.entity.Page;
@@ -19,6 +21,7 @@ import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import redis.clients.jedis.Jedis;
 import spark.Spark;
 
 import java.io.IOException;
@@ -62,10 +65,14 @@ public class App {
         Class.forName(sparkConfig.getDatabaseDriver());
         Connection mySqlConnection = DriverManager.getConnection(sparkConfig.getDatabaseURL(), sparkConfig.getDatabaseUser(), sparkConfig.getDatabasePassword());
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
+        Jedis jedis = new Jedis();
+
         AuthDAO authDAO = new MySqlAuthDAO(mySqlConnection);
-        AuthController authController = new AuthController(authDAO, sparkConfig, random);
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
-        SearchController searchController = new SearchController(elasticDAO, sparkConfig, mapper);
+        LabelDAO labelDAO = new RedisLabelDAO(jedis, sparkConfig);
+
+        SearchController searchController = new SearchController(elasticDAO, sparkConfig, mapper, labelDAO);
+        AuthController authController = new AuthController(authDAO, sparkConfig, random, labelDAO);
 
         App app = new App(searchController, sparkConfig, transformer, restHighLevelClient, authController, authDAO, mySqlConnection);
 

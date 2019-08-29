@@ -26,6 +26,7 @@ public class SparkConfig {
     private String databaseDriver;
     private String databasePassword;
     private String databaseUser;
+    private int cacheExpire;
 
     public static SparkConfig load() {
         SparkConfig sparkConfig = new SparkConfig();
@@ -51,10 +52,19 @@ public class SparkConfig {
             sparkConfig.setDatabasePassword(config.getString("database.password"));
             sparkConfig.setDatabaseURL(config.getString("database.url"));
             sparkConfig.setDatabaseUser(config.getString("database.user"));
+            sparkConfig.setCacheExpire(config.getInt("cache.expire"));
             return sparkConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public int getCacheExpire() {
+        return cacheExpire;
+    }
+
+    public void setCacheExpire(int cacheExpire) {
+        this.cacheExpire = cacheExpire;
     }
 
     public String getDatabaseURL() {
