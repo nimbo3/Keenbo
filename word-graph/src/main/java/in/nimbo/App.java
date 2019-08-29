@@ -99,6 +99,14 @@ public class App {
                     return RowFactory.create(source, LinkUtility.reverseLink(destination));
                 }).filter(domain -> !domain.getString(0).equals(domain.getString(1)));
 
+        JavaRDD<Row> selfEdge = hBaseCellsRDD
+                .map(cell -> {
+                    String link = Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
+                    return RowFactory.create(link, link);
+                });
+
+        JavaRDD<Row> finalEdges = edges.union(selfEdge);
+
         StructType pageNodeSchema = new StructType(new StructField[]{
                 new StructField("id", DataTypes.StringType, false, Metadata.empty()),
                 new StructField("content", DataTypes.StringType, false, Metadata.empty()),
@@ -110,7 +118,7 @@ public class App {
         });
 
         Dataset<Row> pageVertexDF = spark.createDataFrame(pageContentRDD, pageNodeSchema);
-        Dataset<Row> edgeDF = spark.createDataFrame(edges, edgesSchema);
+        Dataset<Row> edgeDF = spark.createDataFrame(finalEdges, edgesSchema);
         edgeDF.repartition(32);
         hBaseCellsRDD.unpersist();
 
@@ -131,7 +139,7 @@ public class App {
                 , greatest("word1", "word2").alias("to"), col("weight"))
                 .groupBy("from", "to")
                 .agg(functions.sum("weight").alias("width"))
-                .sort(desc("width")).limit(1000000);
+                .sort(desc("width")).limit(500000);
 
         Dataset<Row> verticesPart1 = keywords.select(col("from")).dropDuplicates();
         Dataset<Row> verticesPart2 = keywords.select(col("to")).dropDuplicates();
