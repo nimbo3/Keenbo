@@ -6,10 +6,7 @@ import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.service.keyword.KeywordExtractorService;
 import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.Get;
-import org.apache.hadoop.hbase.client.Put;
-import org.apache.hadoop.hbase.client.Table;
+import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,11 +32,20 @@ public class HBaseDAOImpl implements HBaseDAO {
 
     @Override
     public void add(List<Page> pages) {
-        try (Table table = connection.getTable(TableName.valueOf(config.getPageTable()))) {
-            List<Put> puts = new ArrayList<>();
-            for (Page page : pages) {
-                puts.add(getPut(page));
+        List<Put> puts = new ArrayList<>();
+        for (Page page : pages) {
+            puts.add(getPut(page));
+        }
+
+        if (connection.isClosed()) {
+            try {
+                connection = ConnectionFactory.createConnection();
+            } catch (IOException e) {
+                throw new HBaseException(e);
             }
+        }
+
+        try (Table table = connection.getTable(TableName.valueOf(config.getPageTable()))) {
             logger.info("Start sending bulk put to HBase");
             table.put(puts);
             logger.info("Finish sending bulk put to HBase");

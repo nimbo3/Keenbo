@@ -42,7 +42,8 @@ public class KeywordExtractorService {
 
     private static boolean isStopWord(String word) {
         return stopWords.contains(word) || word.length() == 1 ||
-                word.matches("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?")
-                || word.matches("\\d+(-|\\/)\\d+(-|\\/)\\d+");
+                word.matches("[-+]?[0-9]*\\.?[0-9]+([eE][-+]?[0-9]+)?") ||
+                word.matches("\\d+(-|\\/)\\d+(-|\\/)\\d+") ||
+                word.matches("https?:\\/\\/(www\\.)?[-a-zA-Z0-9@:%._\\+~#=]{1,256}\\.[a-zA-Z0-9()]{1,6}\\b([-a-zA-Z0-9()@:%_\\+.~#?&\\/=]*)");
     }
 }
