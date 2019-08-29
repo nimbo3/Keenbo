@@ -3,7 +3,7 @@ package in.nimbo.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.nimbo.config.SparkConfig;
-import in.nimbo.dao.cache.LabelDAO;
+import in.nimbo.dao.redis.LabelDAO;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.*;
 

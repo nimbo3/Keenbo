@@ -3,7 +3,7 @@ package in.nimbo.controller;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.auth.AuthDAO;
-import in.nimbo.dao.cache.LabelDAO;
+import in.nimbo.dao.redis.LabelDAO;
 import in.nimbo.entity.User;
 import in.nimbo.response.ActionResult;
 
