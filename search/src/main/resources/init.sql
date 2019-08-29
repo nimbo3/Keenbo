@@ -16,3 +16,10 @@ CREATE TABLE clicks (
   destination VARCHAR(2048) NOT NULL,
   FOREIGN KEY (username) REFERENCES users(username)
 );
+
+CREATE TABLE searches (
+  id INT(11) PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(100) NOT NULL,
+  text TEXT NOT NULL,
+  FOREIGN KEY (username) REFERENCES users(username)
+);

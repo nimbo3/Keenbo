@@ -67,10 +67,32 @@ public class MySqlAuthDAO implements AuthDAO {
 
     @Override
     public void saveClick(User user, String destination) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO clicks (username, dest) VALUES (?, ?)")){
+        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO clicks (username, destination) VALUES (?, ?)")){
             preparedStatement.setString(1, user.getUsername());
             preparedStatement.setString(2, destination);
             preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new DAOException("Unable to establish database connection", e);
+        }
+    }
+
+    @Override
+    public User authenticate(String token) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT * FROM users WHERE token=?")){
+            preparedStatement.setString(1, token);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                String name = resultSet.getString("name");
+                String email = resultSet.getString("email");
+                String username = resultSet.getString("username");
+                String password = resultSet.getString("password");
+                User user = new User(name, email, username, password, token);
+                resultSet.close();
+                return user;
+            } else {
+                resultSet.close();
+                return null;
+            }
         } catch (SQLException e) {
             throw new DAOException("Unable to establish database connection", e);
         }

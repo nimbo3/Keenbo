@@ -11,4 +11,6 @@ public interface AuthDAO {
     User register(String username, String password, String email, String name, String token);
 
     void saveClick(User user, String destination);
+
+    User authenticate(String token);
 }

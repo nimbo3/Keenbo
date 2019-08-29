@@ -22,6 +22,10 @@ public class SparkConfig {
     private String passwordUnlikeError;
     private String nameError;
     private int tokenLength;
+    private String databaseURL;
+    private String databaseDriver;
+    private String databasePassword;
+    private String databaseUser;
 
     public static SparkConfig load() {
         SparkConfig sparkConfig = new SparkConfig();
@@ -43,10 +47,46 @@ public class SparkConfig {
             sparkConfig.setPasswordUnlikeError(config.getString("auth.error.register.password.unlike"));
             sparkConfig.setNameError(config.getString("auth.error.register.name"));
             sparkConfig.setTokenLength(config.getInt("auth.token.length"));
+            sparkConfig.setDatabaseDriver(config.getString("database.driver"));
+            sparkConfig.setDatabasePassword(config.getString("database.password"));
+            sparkConfig.setDatabaseURL(config.getString("database.url"));
+            sparkConfig.setDatabaseUser(config.getString("database.user"));
             return sparkConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public String getDatabaseURL() {
+        return databaseURL;
+    }
+
+    public void setDatabaseURL(String databaseURL) {
+        this.databaseURL = databaseURL;
+    }
+
+    public String getDatabaseDriver() {
+        return databaseDriver;
+    }
+
+    public void setDatabaseDriver(String databaseDriver) {
+        this.databaseDriver = databaseDriver;
+    }
+
+    public String getDatabasePassword() {
+        return databasePassword;
+    }
+
+    public void setDatabasePassword(String databasePassword) {
+        this.databasePassword = databasePassword;
+    }
+
+    public String getDatabaseUser() {
+        return databaseUser;
+    }
+
+    public void setDatabaseUser(String databaseUser) {
+        this.databaseUser = databaseUser;
     }
 
     public int getTokenLength() {
