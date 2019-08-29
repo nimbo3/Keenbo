@@ -7,11 +7,14 @@ import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.service.keyword.KeywordExtractorService;
+import in.nimbo.service.keyword.KeywordExtractorServiceTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -26,6 +29,7 @@ public class CollectorServiceTest {
     private static CollectorService collectorService;
     private static List<Page> pages;
     private static List<Page> pagesWithEmptyAnchor;
+    private KeywordExtractorService extractorService;
 
     @BeforeClass
     public static void init() throws MalformedURLException {
@@ -42,15 +46,16 @@ public class CollectorServiceTest {
     }
 
     @Before
-    public void beforeEachTest() {
+    public void beforeEachTest() throws IOException {
         hBaseDAO = mock(HBaseDAO.class);
         elasticDAO = mock(ElasticDAO.class);
+        extractorService = new KeywordExtractorService();
         collectorService = new CollectorService(hBaseDAO, elasticDAO, extractorService);
     }
 
     @Test
     public void handleTest() {
-        doNothing().when(hBaseDAO).add(pages);
+        doNothing().when(hBaseDAO).add(pages, extractorService);
         for (Page page : pages) {
             doNothing().when(elasticDAO).save(page);
         }
@@ -59,7 +64,7 @@ public class CollectorServiceTest {
 
     @Test
     public void handleWithEmptyAnchorTest() {
-        doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor);
+        doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor, extractorService);
         for (Page page : pagesWithEmptyAnchor) {
             doNothing().when(elasticDAO).save(page);
         }
@@ -68,7 +73,7 @@ public class CollectorServiceTest {
 
     @Test
     public void handleWithoutSaveToHBase() {
-        doThrow(HBaseException.class).when(hBaseDAO).add(pages);
+        doThrow(HBaseException.class).when(hBaseDAO).add(pages, extractorService);
         for (Page page : pages) {
             doNothing().when(elasticDAO).save(page);
         }
@@ -77,7 +82,7 @@ public class CollectorServiceTest {
 
     @Test
     public void handleWithElasticException() {
-        doNothing().when(hBaseDAO).add(pages);
+        doNothing().when(hBaseDAO).add(pages, extractorService);
         for (Page page : pages) {
             doThrow(ElasticException.class).when(elasticDAO).save(page);
         }
