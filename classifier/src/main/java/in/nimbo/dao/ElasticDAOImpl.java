@@ -4,9 +4,12 @@ import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.utility.LinkUtility;
+import org.apache.http.HttpHost;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
@@ -20,6 +23,15 @@ public class ElasticDAOImpl implements ElasticDAO {
     public ElasticDAOImpl(ElasticConfig config, RestHighLevelClient client) {
         this.config = config;
         this.client = client;
+    }
+
+    public static ElasticDAO create(ElasticConfig elasticConfig) {
+        RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
+                .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
+                        .setConnectTimeout(elasticConfig.getConnectTimeout())
+                        .setSocketTimeout(elasticConfig.getSocketTimeout()))
+                .setMaxRetryTimeoutMillis(elasticConfig.getMaxRetryTimeoutMillis());
+        return new ElasticDAOImpl(elasticConfig, new RestHighLevelClient(restClientBuilder));
     }
 
     @Override
