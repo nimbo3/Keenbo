@@ -7,7 +7,6 @@ import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
-import org.elasticsearch.ElasticsearchException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -46,7 +45,7 @@ public class CollectorServiceTest {
     public void beforeEachTest() {
         hBaseDAO = mock(HBaseDAO.class);
         elasticDAO = mock(ElasticDAO.class);
-        collectorService = new CollectorService(hBaseDAO, elasticDAO);
+        collectorService = new CollectorService(hBaseDAO, elasticDAO, extractorService);
     }
 
     @Test

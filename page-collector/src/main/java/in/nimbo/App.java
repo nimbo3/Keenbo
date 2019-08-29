@@ -70,15 +70,6 @@ public class App {
         elasticBulkListener.setElasticDAO(elasticDAO);
         appLogger.info("ElasticSearch started");
 
-        KeywordExtractorService extractorService = null;
-        try {
-            extractorService = new KeywordExtractorService();
-            appLogger.info("Keyword extractor started");
-        } catch (IOException e) {
-            appLogger.error("Unable to load keyword extractor", e);
-            System.exit(1);
-        }
-
         Connection hBaseConnection = null;
         try {
             hBaseConnection = ConnectionFactory.createConnection();
@@ -88,11 +79,10 @@ public class App {
             System.exit(1);
         }
 
-        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBasePageConfig, extractorService);
+        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBasePageConfig);
         appLogger.info("DAO interface created");
 
-        CollectorService collectorService = new CollectorService(hBaseDAO, elasticDAO);
-        KafkaService kafkaService = new KafkaServiceImpl(kafkaConfig, collectorService);
+        KafkaService kafkaService = new KafkaServiceImpl(kafkaConfig, hBaseDAO, elasticDAO);
         appLogger.info("Services started");
 
         appLogger.info("Application started");

@@ -2,6 +2,7 @@ package in.nimbo.dao.hbase;
 
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.common.entity.Page;
+import in.nimbo.service.keyword.KeywordExtractorService;
 
 import java.io.IOException;
 import java.util.List;
@@ -12,10 +13,11 @@ public interface HBaseDAO extends AutoCloseable {
 
     /**
      * add a new page to HBase database
-     * @param page page which is added
+     * @param pages page which is added
+     * @param extractorService keyword extractor
      * @throws HBaseException if any error happen during adding page
      */
-    void add(List<Page> page);
+    void add(List<Page> pages, KeywordExtractorService extractorService);
 
     boolean contains(String link);
 }

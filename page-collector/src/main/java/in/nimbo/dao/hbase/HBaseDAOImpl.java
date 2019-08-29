@@ -20,12 +20,10 @@ public class HBaseDAOImpl implements HBaseDAO {
     private Logger logger = LoggerFactory.getLogger("collector");
     private HBasePageConfig config;
     private Connection connection;
-    private KeywordExtractorService extractorService;
 
-    public HBaseDAOImpl(Connection connection, HBasePageConfig config, KeywordExtractorService extractorService) {
+    public HBaseDAOImpl(Connection connection, HBasePageConfig config) {
         this.connection = connection;
         this.config = config;
-        this.extractorService = extractorService;
     }
 
     public void close() throws IOException {
@@ -33,10 +31,10 @@ public class HBaseDAOImpl implements HBaseDAO {
     }
 
     @Override
-    public void add(List<Page> pages) {
+    public void add(List<Page> pages, KeywordExtractorService extractorService) {
         List<Put> puts = new ArrayList<>();
         for (Page page : pages) {
-            puts.add(getPut(page));
+            puts.add(getPut(page, extractorService));
         }
 
         if (connection.isClosed()) {
@@ -66,7 +64,7 @@ public class HBaseDAOImpl implements HBaseDAO {
         }
     }
 
-    private Put getPut(Page page) {
+    private Put getPut(Page page, KeywordExtractorService extractorService) {
         Put put = new Put(Bytes.toBytes(page.getReversedLink()));
 
         for (Anchor anchor : page.getAnchors()) {
