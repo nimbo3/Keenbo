@@ -42,12 +42,8 @@ public class KeywordExtractorService {
         String[] tokens = text.toLowerCase().replaceAll("\\.|\\?|\\(|\\)|\\-|:|;|&|=|\\+|\\*|'|,|\\/", " ").split("\\s+");
         String[] tags;
         String[] lemma;
-        synchronized (posTagger) {
-            tags = posTagger.tag(tokens);
-        }
-        synchronized (lemmatizer) {
-            lemma = lemmatizer.lemmatize(tokens, tags);
-        }
+        tags = posTagger.tag(tokens);
+        lemma = lemmatizer.lemmatize(tokens, tags);
         Map<String, Integer> lemmas = new HashMap<>();
         for (int i = 0; i < tokens.length; i++) {
             String val;
