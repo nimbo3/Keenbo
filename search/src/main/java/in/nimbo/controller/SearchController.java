@@ -8,6 +8,7 @@ import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.*;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -45,7 +46,7 @@ public class SearchController {
         throw new AssertionError();
     }
 
-    public SiteGraphResponse siteGraph() throws FileNotFoundException, JsonProcessingException {
+    public SiteGraphResponse siteGraph() throws IOException {
         InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("site-graph");
         Scanner scanner = new Scanner(stream);
         StringBuilder jsonBuilder = new StringBuilder("");
