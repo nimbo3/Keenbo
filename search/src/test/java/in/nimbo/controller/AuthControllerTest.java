@@ -3,6 +3,7 @@ package in.nimbo.controller;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.auth.AuthDAO;
+import in.nimbo.dao.cache.LabelDAO;
 import in.nimbo.entity.User;
 import in.nimbo.response.ActionResult;
 import org.junit.BeforeClass;
@@ -17,12 +18,14 @@ public class AuthControllerTest {
     private static AuthController controller;
     private static AuthDAO dao;
     private static SparkConfig config;
+    private static LabelDAO labelDAO;
 
     @BeforeClass
     public static void init() {
         config = SparkConfig.load();
         dao = mock(AuthDAO.class);
         Random random = new Random();
+        labelDAO = mock(LabelDAO.class);
         controller = new AuthController(dao, config, random, labelDAO);
     }
 
@@ -105,7 +108,8 @@ public class AuthControllerTest {
     public void testClick() {
         User user = new User();
         String destination = "https://stackoverflow.com";
-        doNothing().when(dao).saveClick(user, destination);
+        when(labelDAO.get(destination)).thenReturn(1);
+        doNothing().when(dao).saveClick(user, destination, 1);
         ActionResult<Boolean> click = controller.click(user, destination);
         assertTrue(click.isSuccess());
         click = controller.click(null, destination);
