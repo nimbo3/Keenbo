@@ -108,7 +108,6 @@ public class App {
                 new Data((Long) tuple2._2.get("label"), (String) tuple2._2.get("content")));
 
         Dataset<Row> dataset = spark.createDataFrame(dataRDD, Data.class);
-        dataset.show(false);
 
         Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");
         Dataset<Row> wordsData = tokenizer.transform(dataset);
@@ -141,7 +140,6 @@ public class App {
         JavaPairRDD<Double, Double> predictionAndLabel =
                 test.toJavaRDD().mapToPair((Row p) ->
                         new Tuple2<>(model.predict(p.getAs(1)), p.getDouble(0)));
-        test.show(false);
         System.out.println(predictionAndLabel.collect());
 
         double accuracy =
@@ -152,6 +150,7 @@ public class App {
         try {
             model.save(classifierConfig.getNaiveBayesModelSaveLocation());
         } catch (IOException e) {
+            e.printStackTrace();
         }
         NaiveBayesModel loadedModel = NaiveBayesModel.load(classifierConfig.getNaiveBayesModelSaveLocation());
 
