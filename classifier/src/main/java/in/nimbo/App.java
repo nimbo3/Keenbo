@@ -9,6 +9,7 @@ import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.entity.Link;
+import in.nimbo.common.exception.LoadConfigurationException;
 import in.nimbo.config.ClassifierConfig;
 import in.nimbo.dao.ElasticDAO;
 import in.nimbo.dao.ElasticDAOImpl;
@@ -47,8 +48,12 @@ public class App {
     public static void main(String[] args) throws IOException, LangDetectException {
         ProjectConfig projectConfig = ProjectConfig.load();
         ClassifierConfig classifierConfig = ClassifierConfig.load();
-//        runCrawler(classifierConfig, projectConfig);
-        runClassifier(classifierConfig);
+        if (classifierConfig.getAppMode() == ClassifierConfig.MODE.CRAWL) {
+            runCrawler(classifierConfig, projectConfig);
+        }
+        else if (classifierConfig.getAppMode() == ClassifierConfig.MODE.CLASSIFY) {
+            runClassifier(classifierConfig);
+        }
     }
 
     private static void runCrawler(ClassifierConfig classifierConfig, ProjectConfig projectConfig) throws IOException, LangDetectException {
@@ -146,7 +151,8 @@ public class App {
         // Save and load model
         try {
             model.save(classifierConfig.getNaiveBayesModelSaveLocation());
-        } catch (IOException e) {}
+        } catch (IOException e) {
+        }
         NaiveBayesModel loadedModel = NaiveBayesModel.load(classifierConfig.getNaiveBayesModelSaveLocation());
 
         spark.stop();

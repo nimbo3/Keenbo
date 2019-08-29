@@ -5,8 +5,13 @@ import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 
 public class ClassifierConfig {
+    public enum MODE {
+        CRAWL, CLASSIFY
+    }
+
     private static final String CONFIG_NAME = "classifier.properties";
     private String appName;
+    private MODE appMode;
     private String esNodes;
     private String esWriteOperation;
     private String esIndexAutoCreate;
@@ -24,6 +29,15 @@ public class ClassifierConfig {
         try {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
             classifierConfig.setAppName(config.getString("app.name"));
+            if (config.getString("app.mode").equals("crawl")) {
+                classifierConfig.setAppMode(MODE.CRAWL);
+            }
+            else if (config.getString("app.mode").equals("classify")){
+                classifierConfig.setAppMode(MODE.CLASSIFY);
+            }
+            else {
+                throw new ConfigurationException("Invalid App mode");
+            }
             classifierConfig.setEsNodes(config.getString("es.nodes"));
             classifierConfig.setEsWriteOperation(config.getString("es.write.operation"));
             classifierConfig.setEsIndexAutoCreate(config.getString("es.index.auto.create"));
@@ -135,5 +149,13 @@ public class ClassifierConfig {
 
     public void setNaiveBayesModelSaveLocation(String naiveBayesModelSaveLocation) {
         this.naiveBayesModelSaveLocation = naiveBayesModelSaveLocation;
+    }
+
+    public MODE getAppMode() {
+        return appMode;
+    }
+
+    public void setAppMode(MODE appMode) {
+        this.appMode = appMode;
     }
 }
