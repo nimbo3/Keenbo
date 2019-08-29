@@ -21,7 +21,7 @@ public class AuthController {
             result.setData(user);
             result.setSuccess(true);
         } else {
-            result.setMessage("نام کاربری یا پسورد اشتباه است");
+            result.setMessage(config.getLoginError());
         }
         return result;
     }
@@ -35,7 +35,7 @@ public class AuthController {
                 result.setData(authDAO.register(username, password, email, name));
                 result.setSuccess(true);
             } else {
-                result.setMessage("نام کاربری قبلا ثبت شده است");
+                result.setMessage(config.getUsernameDuplicateError());
             }
         } else {
             result.setMessage(errors);
@@ -51,22 +51,22 @@ public class AuthController {
                              String name) {
         StringBuilder error = new StringBuilder("");
         if (username == null || username.isEmpty() || !username.matches("^[a-z]([a-z0-9]|_[a-z0-9]|.[a-z0-9])+$")) {
-            error.append("نام کاربری معتبر نیست");
+            error.append(config.getUsernameInvalidError());
             error.append("\n");
         }
         if (password == null || password.length() < config.getMinPasswordLength()) {
-            error.append("کلمه عبور ضعیف است");
+            error.append(config.getPasswordWeakError());
             error.append("\n");
         } else if (!password.equals(confirmPass)) {
-            error.append("کلمه عبور و تکرار آن باید یکسان باشد");
+            error.append(config.getPasswordUnlikeError());
             error.append("\n");
         }
         if (email == null || !email.matches("^[a-z]([a-z0-9]|_[a-z0-9]|.[a-z0-9])+@[a-z0-9_]+([.][a-z0-9]+)+$")) {
-            error.append("ایمیل معتبر نیست");
+            error.append(config.getEmailInvalidError());
             error.append("\n");
         }
         if (name == null || name.isEmpty()) {
-            error.append("نام خود را وارد نمایید");
+            error.append(config.getNameError());
         }
         return error.toString();
     }

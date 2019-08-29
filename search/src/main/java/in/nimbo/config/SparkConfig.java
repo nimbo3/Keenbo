@@ -14,6 +14,13 @@ public class SparkConfig {
     private double maxNode;
     private double filterNode;
     private int minPasswordLength;
+    private String loginError;
+    private String usernameDuplicateError;
+    private String usernameInvalidError;
+    private String emailInvalidError;
+    private String passwordWeakError;
+    private String passwordUnlikeError;
+    private String nameError;
 
     public static SparkConfig load() {
         SparkConfig sparkConfig = new SparkConfig();
@@ -27,10 +34,73 @@ public class SparkConfig {
             sparkConfig.setMaxEdge(config.getInt("graph.sites.edges.max"));
             sparkConfig.setFilterEdge(config.getInt("graph.sites.edges.filter"));
             sparkConfig.setMinPasswordLength(config.getInt("auth.password.min"));
+            sparkConfig.setLoginError(config.getString("auth.error.login"));
+            sparkConfig.setUsernameDuplicateError(config.getString("auth.error.register.username.duplicate"));
+            sparkConfig.setUsernameInvalidError(config.getString("auth.error.register.username.invalid"));
+            sparkConfig.setEmailInvalidError(config.getString("auth.error.register.email.invalid"));
+            sparkConfig.setPasswordWeakError(config.getString("auth.error.register.password.weak"));
+            sparkConfig.setPasswordUnlikeError(config.getString("auth.error.register.password.unlike"));
+            sparkConfig.setNameError(config.getString("auth.error.register.name"));
             return sparkConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public String getNameError() {
+        return nameError;
+    }
+
+    public void setNameError(String nameError) {
+        this.nameError = nameError;
+    }
+
+    public String getPasswordUnlikeError() {
+        return passwordUnlikeError;
+    }
+
+    public void setPasswordUnlikeError(String passwordUnlikeError) {
+        this.passwordUnlikeError = passwordUnlikeError;
+    }
+
+    public String getPasswordWeakError() {
+        return passwordWeakError;
+    }
+
+    public void setPasswordWeakError(String passwordWeakError) {
+        this.passwordWeakError = passwordWeakError;
+    }
+
+    public String getEmailInvalidError() {
+        return emailInvalidError;
+    }
+
+    public void setEmailInvalidError(String emailInvalidError) {
+        this.emailInvalidError = emailInvalidError;
+    }
+
+    public String getUsernameInvalidError() {
+        return usernameInvalidError;
+    }
+
+    public void setUsernameInvalidError(String usernameInvalidError) {
+        this.usernameInvalidError = usernameInvalidError;
+    }
+
+    public String getUsernameDuplicateError() {
+        return usernameDuplicateError;
+    }
+
+    public void setUsernameDuplicateError(String usernameDuplicateError) {
+        this.usernameDuplicateError = usernameDuplicateError;
+    }
+
+    public String getLoginError() {
+        return loginError;
+    }
+
+    public void setLoginError(String loginError) {
+        this.loginError = loginError;
     }
 
     public int getMinPasswordLength() {
