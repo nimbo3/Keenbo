@@ -1,21 +1,21 @@
 package in.nimbo.entity;
 
 public class Data {
-    private String label;
+    private int label;
     private String content;
 
     public Data() {}
 
-    public Data(String label, String content) {
+    public Data(int label, String content) {
         this.label = label;
         this.content = content;
     }
 
-    public String getLabel() {
+    public int getLabel() {
         return label;
     }
 
-    public void setLabel(String label) {
+    public void setLabel(int label) {
         this.label = label;
     }
 
