@@ -16,6 +16,7 @@ import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.service.CollectorService;
 import in.nimbo.service.kafka.KafkaService;
 import in.nimbo.service.kafka.KafkaServiceImpl;
+import in.nimbo.service.keyword.KeywordExtractorService;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.http.HttpHost;
@@ -69,6 +70,15 @@ public class App {
         elasticBulkListener.setElasticDAO(elasticDAO);
         appLogger.info("ElasticSearch started");
 
+        KeywordExtractorService extractorService = null;
+        try {
+            extractorService = new KeywordExtractorService();
+            appLogger.info("Keyword extractor started");
+        } catch (IOException e) {
+            appLogger.error("Unable to load keyword extractor", e);
+            System.exit(1);
+        }
+
         Connection hBaseConnection = null;
         try {
             hBaseConnection = ConnectionFactory.createConnection();
@@ -78,7 +88,7 @@ public class App {
             System.exit(1);
         }
 
-        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBasePageConfig);
+        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBasePageConfig, extractorService);
         appLogger.info("DAO interface created");
 
         CollectorService collectorService = new CollectorService(hBaseDAO, elasticDAO);

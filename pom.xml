@@ -146,6 +146,12 @@
             <artifactId>metrics-jmx</artifactId>
             <version>${dropwizard-metrics.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.apache.opennlp</groupId>
+            <artifactId>opennlp-tools</artifactId>
+            <version>1.9.1</version>
+        </dependency>
     </dependencies>
 
     <repositories>
@@ -198,6 +204,7 @@
                                         <include>*.xml</include>
                                         <include>profiles/*</include>
                                         <include>kafka/*</include>
+                                        <include>data/*</include>
                                     </includes>
                                 </resource>
                             </resources>

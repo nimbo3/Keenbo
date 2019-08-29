@@ -20,10 +20,12 @@ public class HBaseDAOImpl implements HBaseDAO {
     private Logger logger = LoggerFactory.getLogger("collector");
     private HBasePageConfig config;
     private Connection connection;
+    private KeywordExtractorService extractorService;
 
-    public HBaseDAOImpl(Connection connection, HBasePageConfig config) {
+    public HBaseDAOImpl(Connection connection, HBasePageConfig config, KeywordExtractorService extractorService) {
         this.connection = connection;
         this.config = config;
+        this.extractorService = extractorService;
     }
 
     public void close() throws IOException {
@@ -72,7 +74,7 @@ public class HBaseDAOImpl implements HBaseDAO {
                     Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getContent()));
         }
 
-        Map<String, Integer> keywords = KeywordExtractorService.extractKeywords(page.getContent());
+        Map<String, Integer> keywords = extractorService.extractKeywords(page.getContent());
         for (Map.Entry<String, Integer> keyword : keywords.entrySet()) {
             put.addColumn(config.getDataColumnFamily(),
                     Bytes.toBytes(keyword.getKey()), Bytes.toBytes(Integer.toString(keyword.getValue())));
