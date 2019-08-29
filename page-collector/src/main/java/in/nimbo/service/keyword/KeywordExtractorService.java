@@ -14,8 +14,8 @@ import static java.util.stream.Collectors.toMap;
 
 public class KeywordExtractorService {
     private List<String> stopWords;
-    private POSTaggerME posTagger;
-    private DictionaryLemmatizer lemmatizer;
+    private final POSTaggerME posTagger;
+    private final DictionaryLemmatizer lemmatizer;
 
     public KeywordExtractorService() throws IOException {
         stopWords = Arrays.asList("january", "february", "march", "april", "may", "june", "july", "much", "their", "our", "seem",
@@ -40,8 +40,14 @@ public class KeywordExtractorService {
 
     public Map<String, Integer> extractKeywords(String text) {
         String[] tokens = text.toLowerCase().replaceAll("\\.|\\?|\\(|\\)|\\-|:|;|&|=|\\+|\\*|'|,|\\/", " ").split("\\s+");
-        String[] tags = posTagger.tag(tokens);
-        String[] lemma = lemmatizer.lemmatize(tokens, tags);
+        String[] tags;
+        String[] lemma;
+        synchronized (posTagger) {
+            tags = posTagger.tag(tokens);
+        }
+        synchronized (lemmatizer) {
+            lemma = lemmatizer.lemmatize(tokens, tags);
+        }
         Map<String, Integer> lemmas = new HashMap<>();
         for (int i = 0; i < tokens.length; i++) {
             String val;

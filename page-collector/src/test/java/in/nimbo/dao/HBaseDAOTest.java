@@ -7,7 +7,6 @@ import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
-import in.nimbo.service.KeywordExtractorServiceTest;
 import in.nimbo.service.keyword.KeywordExtractorService;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
