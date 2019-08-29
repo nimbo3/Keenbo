@@ -2,28 +2,43 @@
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <parent>
-        <artifactId>search-engine</artifactId>
-        <groupId>in.nimbo</groupId>
-        <version>1.0</version>
-    </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>backward-extractor</artifactId>
+    <groupId>in.nimbo</groupId>
+    <artifactId>word-graph</artifactId>
+    <version>1.0</version>
 
-    <name>backward-extractor</name>
+    <name>word-graph</name>
+
 
     <properties>
-        <main.basedir>${project.parent.basedir}</main.basedir>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
         <maven.compiler.target>1.8</maven.compiler.target>
         <spark.version>2.3.3</spark.version>
         <elastic.version>6.6.2</elastic.version>
-        <graphframes.version>0.7.0-spark2.4-s_2.11</graphframes.version>
+        <assembly-plugin.version>3.1.1</assembly-plugin.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.11</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.10</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>in.nimbo</groupId>
+            <artifactId>common</artifactId>
+            <version>1.0</version>
+            <scope>compile</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-core_2.11</artifactId>
@@ -34,6 +49,7 @@
             <artifactId>spark-graphx_2.11</artifactId>
             <version>${spark.version}</version>
         </dependency>
+
         <dependency>
             <groupId>org.apache.spark</groupId>
             <artifactId>spark-sql_2.11</artifactId>
@@ -45,15 +61,12 @@
             <artifactId>elasticsearch-spark-20_2.11</artifactId>
             <version>${elastic.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>in.nimbo</groupId>
-            <artifactId>common</artifactId>
-            <version>1.0</version>
-        </dependency>
     </dependencies>
 
     <build>
+        <pluginManagement>
+
+        </pluginManagement>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
