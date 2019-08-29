@@ -40,13 +40,12 @@ public class App {
         ObjectMapper mapper = new ObjectMapper();
         ObjectWriter writer = mapper.writer();
         JsonTransformer transformer = new JsonTransformer(writer);
-
         ElasticConfig elasticConfig = ElasticConfig.load();
         SparkConfig sparkConfig = SparkConfig.load();
 
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
-        SearchController searchController = new SearchController(elasticDAO);
+        SearchController searchController = new SearchController(elasticDAO, sparkConfig, mapper);
 
         App app = new App(searchController, sparkConfig, transformer, restHighLevelClient);
 
@@ -60,11 +59,18 @@ public class App {
             Spark.before("/*", (request, response) -> backendLogger.info("New request for uri: {}", request.uri()));
             Spark.get("/search", ((request, response) -> {
                 String query = request.queryParams("query");
-                String site = request.queryParams("site");
-                List<Page> result = searchController.search(query != null ? query : "", site != null ? site : "");
+                List<Page> result = searchController.search(query != null ? query : "");
                 response.type("application/json");
                 return result;
             }), transformer);
+            Spark.get("/site-graph", (request, response) -> {
+                response.type("application/json");
+                return searchController.siteGraph();
+            }, transformer);
+            Spark.exception(Exception.class, (e, request, response) -> {
+                backendLogger.error(e.getMessage(), e);
+                response.type("text/html");
+            });
             Spark.after("/*", (request, response) -> {
                 response.header("Access-Control-Allow-Origin", "*");
                 backendLogger.info("Response sent successfully: {}", request.uri());

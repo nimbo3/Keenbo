@@ -17,6 +17,7 @@
         <module>search</module>
         <module>backward-extractor</module>
         <module>site-graph</module>
+        <module>word-graph</module>
         <module>pagerank</module>
         <module>shuffler</module>
     </modules>
@@ -43,6 +44,8 @@
         <dropwizard-metrics.version>4.1.0</dropwizard-metrics.version>
         <kafka.version>2.3.0</kafka.version>
         <openNLP.version>1.9.1</openNLP.version>
+        <graphframes.version>0.7.0-spark2.4-s_2.11</graphframes.version>
+        <jackson.version>2.8.8</jackson.version>
     </properties>
 
     <dependencies>
@@ -51,6 +54,28 @@
             <artifactId>junit</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- jackson for create json -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-scala_2.11</artifactId>
+            <version>${jackson.version}</version>
         </dependency>
 
         <!--Producer/Consumer API of Apache Kafka-->
@@ -148,11 +173,16 @@
             <version>${dropwizard-metrics.version}</version>
         </dependency>
 
-        <!--Detect keywords-->
         <dependency>
             <groupId>org.apache.opennlp</groupId>
             <artifactId>opennlp-tools</artifactId>
             <version>${openNLP.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>graphframes</groupId>
+            <artifactId>graphframes</artifactId>
+            <version>${graphframes.version}</version>
         </dependency>
     </dependencies>
 
@@ -162,6 +192,7 @@
             <url>http://dl.bintray.com/spark-packages/maven</url>
         </repository>
     </repositories>
+
 
     <build>
         <plugins>
