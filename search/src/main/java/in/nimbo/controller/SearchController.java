@@ -96,13 +96,14 @@ public class SearchController {
         List<Edge> edges = graphResponse.getEdges();
         filteredNodes.forEach(node -> node.getFont().setSize(config.getMinNode()));
         List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWidth() > config.getFilterEdge()).collect(Collectors.toList());
-        filteredEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getId().equals(edge.getDst()) &&
+        List<Edge> filteredBadEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getId().equals(edge.getDst()) &&
                 filteredNodes.stream().anyMatch(src -> src.getId().equals(edge.getSrc()) && (!dst.getId().equals(src.getId()))))).collect(Collectors.toList());
+        List<Node> filteredBadNodes = filteredNodes.stream().filter(node -> filteredBadEdges.stream().anyMatch(edge -> edge.getSrc().equals(node.getId()) || edge.getDst().equals(node.getId()))).collect(Collectors.toList());
         IntSummaryStatistics edgesSummary = filteredEdges.stream().mapToInt(Edge::getWidth).summaryStatistics();
         int maxEdge = edgesSummary.getMax();
         int minEdge = edgesSummary.getMin();
         filteredEdges.forEach(edge -> scaleEdge(edge, minEdge, maxEdge));
-        return wordGraph = new GraphResponse(filteredNodes, filteredEdges);
+        return wordGraph = new GraphResponse(filteredBadNodes, filteredBadEdges);
     }
 
     private void scaleEdge(Edge edge, int minEdge, int maxEdge) {
