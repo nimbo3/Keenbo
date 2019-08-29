@@ -8,7 +8,6 @@ import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.service.keyword.KeywordExtractorService;
-import in.nimbo.service.keyword.KeywordExtractorServiceTest;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
