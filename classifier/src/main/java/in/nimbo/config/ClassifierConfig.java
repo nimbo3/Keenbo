@@ -15,24 +15,54 @@ public class ClassifierConfig {
     private String naiveBayesModelType;
     private String naiveBayesModelSaveLocation;
     private int hashingNumFeatures;
+    private int crawlerThreads;
+    private int crawlerLevel;
+    private int crawlerQueueSize;
 
     public static ClassifierConfig load() {
-        ClassifierConfig pageRankConfig = new ClassifierConfig();
+        ClassifierConfig classifierConfig = new ClassifierConfig();
         try {
             PropertiesConfiguration config = new PropertiesConfiguration(CONFIG_NAME);
-            pageRankConfig.setAppName(config.getString("app.name"));
-            pageRankConfig.setEsNodes(config.getString("es.nodes"));
-            pageRankConfig.setEsWriteOperation(config.getString("es.write.operation"));
-            pageRankConfig.setEsIndexAutoCreate(config.getString("es.index.auto.create"));
-            pageRankConfig.setEsIndex(config.getString("es.index"));
-            pageRankConfig.setEsType(config.getString("es.type"));
-            pageRankConfig.setNaiveBayesModelType(config.getString("naive.bayes.model.type"));
-            pageRankConfig.setHashingNumFeatures(config.getInt("hashing.num.features"));
-            pageRankConfig.setNaiveBayesModelSaveLocation(config.getString("naive.bayes.model.save.location"));
-            return pageRankConfig;
+            classifierConfig.setAppName(config.getString("app.name"));
+            classifierConfig.setEsNodes(config.getString("es.nodes"));
+            classifierConfig.setEsWriteOperation(config.getString("es.write.operation"));
+            classifierConfig.setEsIndexAutoCreate(config.getString("es.index.auto.create"));
+            classifierConfig.setEsIndex(config.getString("es.index"));
+            classifierConfig.setEsType(config.getString("es.type"));
+            classifierConfig.setNaiveBayesModelType(config.getString("naive.bayes.model.type"));
+            classifierConfig.setHashingNumFeatures(config.getInt("hashing.num.features"));
+            classifierConfig.setNaiveBayesModelSaveLocation(config.getString("naive.bayes.model.save.location"));
+            classifierConfig.setCrawlerLevel(config.getInt("crawler.level"));
+            classifierConfig.setCrawlerThreads(config.getInt("crawler.threads"));
+            classifierConfig.setCrawlerQueueSize(config.getInt("crawler.queue.size"));
+            return classifierConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public int getCrawlerQueueSize() {
+        return crawlerQueueSize;
+    }
+
+    public void setCrawlerQueueSize(int crawlerQueueSize) {
+        this.crawlerQueueSize = crawlerQueueSize;
+    }
+
+    public int getCrawlerThreads() {
+        return crawlerThreads;
+    }
+
+    public void setCrawlerThreads(int crawlerThreads) {
+        this.crawlerThreads = crawlerThreads;
+    }
+
+    public int getCrawlerLevel() {
+        return crawlerLevel;
+    }
+
+    public void setCrawlerLevel(int crawlerLevel) {
+        this.crawlerLevel = crawlerLevel;
     }
 
     public String getAppName() {

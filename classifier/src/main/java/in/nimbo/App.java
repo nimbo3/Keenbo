@@ -1,7 +1,26 @@
 package in.nimbo;
 
+import com.cybozu.labs.langdetect.DetectorFactory;
+import com.cybozu.labs.langdetect.LangDetectException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import in.nimbo.common.config.ElasticConfig;
+import in.nimbo.common.config.KafkaConfig;
+import in.nimbo.common.config.ProjectConfig;
+import in.nimbo.common.entity.Link;
 import in.nimbo.config.ClassifierConfig;
+import in.nimbo.dao.ElasticDAO;
+import in.nimbo.dao.ElasticDAOImpl;
+import in.nimbo.entity.Category;
 import in.nimbo.entity.Data;
+import in.nimbo.service.*;
+import org.apache.http.HttpHost;
+import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -14,16 +33,111 @@ import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.elasticsearch.client.RestClient;
+import org.elasticsearch.client.RestClientBuilder;
+import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import scala.Tuple2;
 
 import java.io.IOException;
-import java.util.Map;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class App {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException, LangDetectException {
+        ProjectConfig projectConfig = ProjectConfig.load();
         ClassifierConfig classifierConfig = ClassifierConfig.load();
+        runCrawler(classifierConfig, projectConfig);
+    }
 
+    private static void runCrawler(ClassifierConfig classifierConfig, ProjectConfig projectConfig) throws IOException, LangDetectException {
+        DetectorFactory.loadProfile("../conf/profiles");
+        Cache<String, LocalDateTime> politenessCache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
+                .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
+        Cache<String, LocalDateTime> crawlerCache = Caffeine.newBuilder().build();
+
+        ElasticConfig elasticConfig = ElasticConfig.load();
+        KafkaConfig kafkaConfig = KafkaConfig.load();
+
+        RestHighLevelClient client = initializeElasticSearchClient(elasticConfig);
+        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, client);
+
+        ObjectMapper mapper = new ObjectMapper();
+        List<Category> categories = loadFeed(mapper);
+        Map<String, Integer> labelMap = loadLabels(categories);
+        List<String> domains = loadDomains(categories);
+        BlockingQueue<Link> queue = new ArrayBlockingQueue<>(classifierConfig.getCrawlerQueueSize());
+        fill(queue, categories);
+
+        Producer<String, Link> producer = new KafkaProducer<>(kafkaConfig.getTrainingProducerProperties());
+        Consumer<String, Link> consumer = new KafkaConsumer<>(kafkaConfig.getTrainingConsumerProperties());
+        consumer.subscribe(Collections.singleton(kafkaConfig.getTrainingTopic()));
+
+        ParserService parserService = new ParserService(projectConfig);
+        CrawlerService crawlerService = new CrawlerService(politenessCache, crawlerCache, parserService, elasticDAO, labelMap);
+        KafkaConsumerService consumerService = new KafkaConsumerService(queue, kafkaConfig, consumer);
+        KafkaProducerService producerService = new KafkaProducerService(kafkaConfig, producer);
+        SampleExtractor sampleExtractor = new SampleExtractor(crawlerService, queue, domains, classifierConfig, producerService);
+        ScheduleService scheduleService = new ScheduleService(sampleExtractor, consumerService, classifierConfig);
+        scheduleService.schedule();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(scheduleService::stop));
+    }
+
+    private static RestHighLevelClient initializeElasticSearchClient(ElasticConfig elasticConfig) {
+        RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
+                .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
+                        .setConnectTimeout(elasticConfig.getConnectTimeout())
+                        .setSocketTimeout(elasticConfig.getSocketTimeout()))
+                .setMaxRetryTimeoutMillis(elasticConfig.getMaxRetryTimeoutMillis());
+        return new RestHighLevelClient(restClientBuilder);
+    }
+
+    private static void fill(BlockingQueue<Link> queue, List<Category> categories) {
+        for (Category category : categories) {
+            for (String site : category.getSites()) {
+                try {
+                    queue.put(new Link("https://" + site, category.getName(), 0));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    private static List<Category> loadFeed(ObjectMapper mapper) throws IOException {
+        InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("first-feed.json");
+        Scanner scanner = new Scanner(resourceAsStream);
+        StringBuilder stringBuilder = new StringBuilder("");
+        while (scanner.hasNextLine()) {
+            stringBuilder.append(scanner.nextLine());
+        }
+        String json = stringBuilder.toString();
+        CollectionType collectionType = mapper.getTypeFactory().constructCollectionType(List.class, Category.class);
+        return mapper.readValue(json, collectionType);
+    }
+
+    private static List<String> loadDomains(List<Category> categories) {
+        List<String> domains = new ArrayList<>();
+        for (Category category : categories) {
+            domains.addAll(category.getSites());
+        }
+        return domains;
+    }
+
+    private static Map<String, Integer> loadLabels(List<Category> categories) {
+        Map<String, Integer> map = new HashMap<>();
+        for (Category category : categories) {
+            map.put(category.getName(), map.size());
+        }
+        return map;
+    }
+
+    private static void runClassifier(ClassifierConfig classifierConfig) {
         SparkSession spark = SparkSession.builder()
                 .appName(classifierConfig.getAppName())
                 .master("local")
@@ -65,7 +179,7 @@ public class App {
                 .setLabelCol("label")
                 .setFeaturesCol("feature");
 
-        Dataset<Row>[] tmp = features.randomSplit(new double[]{0.5, 0.5});
+        Dataset<Row>[] tmp = features.randomSplit(new double[]{0.8, 0.2});
         Dataset<Row> training = tmp[0]; // training set
         Dataset<Row> test = tmp[1]; // test set
 

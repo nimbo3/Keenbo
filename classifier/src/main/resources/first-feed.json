@@ -1,0 +1,78 @@
+[
+  {
+    "name": "art",
+    "sites": [
+      "imdb.com",
+      "spotify.com",
+      "soundcloud.com"
+    ]
+  },
+  {
+    "name": "science",
+    "sites": [
+      "wordpress.com",
+      "dropbox.com",
+      "linkedin.com",
+      "github.com",
+      "trello.com",
+      "stackoverflow.com",
+      "udemy.com",
+      "udacity.com",
+      "goodreads.com",
+      "coursera.com",
+      "geeksforgeeks.org",
+      "redis.io",
+      "elastic.co",
+      "apache.org"
+    ]
+  },
+  {
+    "name": "health",
+    "sites": [
+      "drugs.com",
+      "nhs.uk",
+      "medscape.com",
+      "verywellhealth.com",
+      "heart.org",
+      "cancer.org"
+    ]
+  },
+  {
+    "name": "news",
+    "sites": [
+      "reddit.com",
+      "cnn.com",
+      "news.yahoo.com",
+      "bbc.com"
+    ]
+  },
+  {
+    "name": "shopping",
+    "sites": [
+      "amazon.com",
+      "netflix.com",
+      "ebay.com",
+      "amazon.co.uk",
+      "cars.com"
+    ]
+  },
+  {
+    "name": "sports",
+    "sites": [
+      "espn.com",
+      "sports.yahoo.com",
+      "premierleague.com",
+      "livescore.com",
+      "goal.com",
+      "nba.com",
+      "fifa.com",
+      "liverpoolfc.com",
+      "wwe.com",
+      "olympic.org",
+      "european-athletics.org",
+      "mlb.com",
+      "iaaf.org",
+      "skysports.com"
+    ]
+  }
+]

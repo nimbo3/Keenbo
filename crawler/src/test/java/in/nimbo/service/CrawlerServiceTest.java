@@ -31,7 +31,6 @@ import static org.mockito.Mockito.*;
 public class CrawlerServiceTest {
     private static RedisDAO redisDAO;
     private static ParserService parserService;
-    private static Document document;
     private static Document documentWithoutTitle;
     private static ProjectConfig projectConfig;
     private static Cache<String, LocalDateTime> cache;
@@ -68,7 +67,7 @@ public class CrawlerServiceTest {
         redisDAO = mock(RedisDAO.class);
         String input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
         String inputWithoutTitle = TestUtility.getFileContent(Paths.get(FILE_WITHOUT_TITLE_ADDRESS));
-        document = Jsoup.parse(input, "UTF-8");
+        Document document = Jsoup.parse(input, "UTF-8");
         documentWithoutTitle = Jsoup.parse(inputWithoutTitle, "UTF-8");
         when(parserService.getDocument(link)).thenReturn(Optional.of(document));
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
