@@ -1,22 +1,27 @@
 package in.nimbo.controller;
 
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.auth.AuthDAO;
 import in.nimbo.entity.User;
 import in.nimbo.response.ActionResult;
 
+import java.util.Random;
+
 public class AuthController {
     private AuthDAO authDAO;
     private SparkConfig config;
+    private Random random;
 
-    public AuthController(AuthDAO authDAO, SparkConfig config) {
+    public AuthController(AuthDAO authDAO, SparkConfig config, Random random) {
         this.authDAO = authDAO;
         this.config = config;
+        this.random = random;
     }
 
     public ActionResult<User> login(String username, String password) {
         ActionResult<User> result = new ActionResult<>();
-        User user = authDAO.authenticate(username, password);
+        User user = authDAO.authenticate(username.toLowerCase(), LinkUtility.hashLink(password));
         if (user != null) {
             result.setData(user);
             result.setSuccess(true);
@@ -31,8 +36,9 @@ public class AuthController {
         ActionResult<User> result = new ActionResult<>();
         String errors = checkFields(username, password, confirmPass, email, name);
         if (errors.isEmpty()) {
-            if (!authDAO.containsUserName(username)) {
-                result.setData(authDAO.register(username, password, email, name));
+            if (!authDAO.containsUserName(username.toLowerCase())) {
+                result.setData(authDAO.register(username.toLowerCase(), LinkUtility.hashLink(password),
+                        email, name, generateToken()));
                 result.setSuccess(true);
             } else {
                 result.setMessage(config.getUsernameDuplicateError());
@@ -41,6 +47,15 @@ public class AuthController {
             result.setMessage(errors);
         }
         return result;
+    }
+
+    private String generateToken() {
+        StringBuilder tokenBuilder = new StringBuilder("");
+        for (int i = 0; i < config.getTokenLength(); i++) {
+            char ch = (char) (random.nextInt(26) + 'a');
+            tokenBuilder.append(ch);
+        }
+        return tokenBuilder.toString();
     }
 
     public ActionResult<Boolean> click(User user, String destination) {

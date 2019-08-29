@@ -1,11 +1,14 @@
 package in.nimbo.controller;
 
+import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.auth.AuthDAO;
 import in.nimbo.entity.User;
 import in.nimbo.response.ActionResult;
 import org.junit.BeforeClass;
 import org.junit.Test;
+
+import java.util.Random;
 
 import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
@@ -19,7 +22,8 @@ public class AuthControllerTest {
     public static void init() {
         config = SparkConfig.load();
         dao = mock(AuthDAO.class);
-        controller = new AuthController(dao, config);
+        Random random = new Random();
+        controller = new AuthController(dao, config, random);
     }
 
     @Test
@@ -31,7 +35,7 @@ public class AuthControllerTest {
         String token = "token";
         String name = "name";
         User user = new User(name, email, username, email, token);
-        when(dao.register(username, password, email, name)).thenReturn(user);
+        when(dao.register(anyString(), anyString(), anyString(), anyString(), anyString())).thenReturn(user);
         when(dao.containsUserName(username)).thenReturn(false);
         ActionResult<User> register = controller.register(username, password, confirmPass, email, name);
         assertTrue(register.isSuccess());
@@ -86,11 +90,11 @@ public class AuthControllerTest {
         String username = "admin";
         String password = "password";
         User user = new User("name", "email", username, password, "token");
-        when(dao.authenticate(username, password)).thenReturn(user);
+        when(dao.authenticate(username, LinkUtility.hashLink(password))).thenReturn(user);
         ActionResult<User> login = controller.login(username, password);
         assertTrue(login.isSuccess());
         assertEquals(login.getData(), user);
-        when(dao.authenticate(username, password)).thenReturn(null);
+        when(dao.authenticate(username, LinkUtility.hashLink(password))).thenReturn(null);
         login = controller.login(username, password);
         assertFalse(login.isSuccess());
         assertNull(login.getData());

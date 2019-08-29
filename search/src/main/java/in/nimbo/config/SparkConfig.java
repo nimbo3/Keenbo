@@ -21,6 +21,7 @@ public class SparkConfig {
     private String passwordWeakError;
     private String passwordUnlikeError;
     private String nameError;
+    private int tokenLength;
 
     public static SparkConfig load() {
         SparkConfig sparkConfig = new SparkConfig();
@@ -41,10 +42,19 @@ public class SparkConfig {
             sparkConfig.setPasswordWeakError(config.getString("auth.error.register.password.weak"));
             sparkConfig.setPasswordUnlikeError(config.getString("auth.error.register.password.unlike"));
             sparkConfig.setNameError(config.getString("auth.error.register.name"));
+            sparkConfig.setTokenLength(config.getInt("auth.token.length"));
             return sparkConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public int getTokenLength() {
+        return tokenLength;
+    }
+
+    public void setTokenLength(int tokenLength) {
+        this.tokenLength = tokenLength;
     }
 
     public String getNameError() {
