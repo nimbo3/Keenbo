@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class Node {
     @JsonProperty("id")
-    private String domain;
+    private String id;
     @JsonProperty("font")
     private Font font;
     @JsonIgnore
@@ -13,18 +13,18 @@ public class Node {
 
     public Node(){}
 
-    public Node(String domain, Font font, int pageCount) {
-        this.domain = domain;
+    public Node(String id, Font font, int pageCount) {
+        this.id = id;
         this.font = font;
         this.pageCount = pageCount;
     }
 
-    public String getDomain() {
-        return domain;
+    public String getId() {
+        return id;
     }
 
-    public void setDomain(String domain) {
-        this.domain = domain;
+    public void setId(String id) {
+        this.id = id;
     }
 
     public Font getFont() {
@@ -50,11 +50,11 @@ public class Node {
 
         Node node = (Node) o;
 
-        return domain != null ? domain.equals(node.domain) : node.domain == null;
+        return id != null ? id.equals(node.id) : node.id == null;
     }
 
     @Override
     public int hashCode() {
-        return domain != null ? domain.hashCode() : 0;
+        return id != null ? id.hashCode() : 0;
     }
 }

@@ -1,15 +1,15 @@
 package in.nimbo.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import emoji4j.EmojiUtils;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.redis.LabelDAO;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.*;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.List;
@@ -22,6 +22,8 @@ public class SearchController {
     private SparkConfig config;
     private ObjectMapper mapper;
     private LabelDAO labelDAO;
+    private GraphResponse wordGraph;
+    private GraphResponse siteGraph;
 
     public SearchController(ElasticDAO elasticDAO, SparkConfig config, ObjectMapper mapper, LabelDAO labelDAO) {
         this.elasticDAO = elasticDAO;
@@ -46,7 +48,10 @@ public class SearchController {
         throw new AssertionError();
     }
 
-    public SiteGraphResponse siteGraph() throws IOException {
+    public GraphResponse siteGraph() throws IOException {
+        if (siteGraph != null) {
+            return siteGraph;
+        }
         InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("site-graph");
         Scanner scanner = new Scanner(stream);
         StringBuilder jsonBuilder = new StringBuilder("");
@@ -55,22 +60,49 @@ public class SearchController {
             jsonBuilder.append(line);
         }
         String json = jsonBuilder.toString();
-        SiteGraphResponse siteGraphResponse = mapper.readValue(json, SiteGraphResponse.class);
-        List<Node> nodeList = siteGraphResponse.getNodes();
+        GraphResponse graphResponse = mapper.readValue(json, GraphResponse.class);
+        List<Node> nodeList = graphResponse.getNodes();
         List<Node> filteredNodes = nodeList.stream().filter(node -> node.getFont().getSize() > config.getFilterNode()).collect(Collectors.toList());
-        List<Edge> edges = siteGraphResponse.getEdges();
+        List<Edge> edges = graphResponse.getEdges();
         DoubleSummaryStatistics nodesSummary = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize()).summaryStatistics();
         double maxNode = nodesSummary.getMax();
         double minNode = nodesSummary.getMin();
         filteredNodes.forEach(node -> node.getFont().setSize((node.getFont().getSize() - minNode) / (maxNode - minNode) * (config.getMaxNode() - config.getMinNode()) + config.getMinNode()));
         List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWidth() > config.getFilterEdge()).collect(Collectors.toList());
-        filteredEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getDomain().equals(edge.getDst()) &&
-                filteredNodes.stream().anyMatch(src -> src.getDomain().equals(edge.getSrc()) && (!dst.getDomain().equals(src.getDomain()))))).collect(Collectors.toList());
+        filteredEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getId().equals(edge.getDst()) &&
+                filteredNodes.stream().anyMatch(src -> src.getId().equals(edge.getSrc()) && (!dst.getId().equals(src.getId()))))).collect(Collectors.toList());
         IntSummaryStatistics edgesSummary = filteredEdges.stream().mapToInt(Edge::getWidth).summaryStatistics();
         int maxEdge = edgesSummary.getMax();
         int minEdge = edgesSummary.getMin();
         filteredEdges.forEach(edge -> scaleEdge(edge, minEdge, maxEdge));
-        return new SiteGraphResponse(filteredNodes, filteredEdges);
+        return siteGraph = new GraphResponse(filteredNodes, filteredEdges);
+    }
+
+    public GraphResponse wordGraph() throws IOException {
+        if (wordGraph != null) {
+            return wordGraph;
+        }
+        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("word-graph");
+        Scanner scanner = new Scanner(stream);
+        StringBuilder jsonBuilder = new StringBuilder("");
+        while (scanner.hasNextLine()) {
+            String line = scanner.nextLine();
+            jsonBuilder.append(line);
+        }
+        String json = jsonBuilder.toString();
+        GraphResponse graphResponse = mapper.readValue(json, GraphResponse.class);
+        List<Node> nodeList = graphResponse.getNodes();
+        List<Node> filteredNodes = nodeList.stream().filter(node -> !EmojiUtils.isEmoji(node.getId())).collect(Collectors.toList());
+        List<Edge> edges = graphResponse.getEdges();
+        filteredNodes.forEach(node -> node.getFont().setSize(config.getMinNode()));
+        List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWidth() > config.getFilterEdge()).collect(Collectors.toList());
+        filteredEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getId().equals(edge.getDst()) &&
+                filteredNodes.stream().anyMatch(src -> src.getId().equals(edge.getSrc()) && (!dst.getId().equals(src.getId()))))).collect(Collectors.toList());
+        IntSummaryStatistics edgesSummary = filteredEdges.stream().mapToInt(Edge::getWidth).summaryStatistics();
+        int maxEdge = edgesSummary.getMax();
+        int minEdge = edgesSummary.getMin();
+        filteredEdges.forEach(edge -> scaleEdge(edge, minEdge, maxEdge));
+        return wordGraph = new GraphResponse(filteredNodes, filteredEdges);
     }
 
     private void scaleEdge(Edge edge, int minEdge, int maxEdge) {

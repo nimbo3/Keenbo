@@ -116,9 +116,14 @@ public class App {
                 return authController.click(user, destination);
             }), transformer);
 
-            Spark.get("/site-graph", (request, response) -> {
+            Spark.get("/word-graph", (request, response) -> {
                 response.type("application/json");
                 return searchController.siteGraph();
+            }, transformer);
+
+            Spark.get("/site-graph", (request, response) -> {
+                response.type("application/json");
+                return searchController.wordGraph();
             }, transformer);
 
             Spark.exception(Exception.class, (e, request, response) -> {
