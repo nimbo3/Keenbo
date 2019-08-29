@@ -85,34 +85,34 @@
 
     <build>
         <plugins>
-            <plugin>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.0.2</version>
-                <configuration>
-                    <outputDirectory>target/</outputDirectory>
-                    <archive>
-                        <manifest>
-                            <mainClass>in.nimbo.App</mainClass>
-                            <addClasspath>true</addClasspath>
-                        </manifest>
-                        <manifestEntries>
-                            <Built-By>Me</Built-By>
-                            <Class-Path>../lib/*</Class-Path>
-                        </manifestEntries>
-                    </archive>
-                    <excludes>
-                        <exclude>*.properties</exclude>
-                        <exclude>*.xml</exclude>
-                        <exclude>*.sh</exclude>
-                        <exclude>*.yaml</exclude>
-                        <exclude>*.json</exclude>
-                    </excludes>
-                </configuration>
-            </plugin>
+<!--            <plugin>-->
+<!--                <artifactId>maven-jar-plugin</artifactId>-->
+<!--                <version>3.0.2</version>-->
+<!--                <configuration>-->
+<!--                    <outputDirectory>target/</outputDirectory>-->
+<!--                    <archive>-->
+<!--                        <manifest>-->
+<!--                            <mainClass>in.nimbo.App</mainClass>-->
+<!--                            <addClasspath>true</addClasspath>-->
+<!--                        </manifest>-->
+<!--                        <manifestEntries>-->
+<!--                            <Built-By>Me</Built-By>-->
+<!--                            <Class-Path>../lib/*</Class-Path>-->
+<!--                        </manifestEntries>-->
+<!--                    </archive>-->
+<!--                    <excludes>-->
+<!--                        <exclude>*.properties</exclude>-->
+<!--                        <exclude>*.xml</exclude>-->
+<!--                        <exclude>*.sh</exclude>-->
+<!--                        <exclude>*.yaml</exclude>-->
+<!--                        <exclude>*.json</exclude>-->
+<!--                    </excludes>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
 
             <plugin>
                 <artifactId>maven-shade-plugin</artifactId>
-                <version>3.2.1</version>
+                <version>2.4.1</version>
                 <executions>
                     <execution>
                         <phase>package</phase>
