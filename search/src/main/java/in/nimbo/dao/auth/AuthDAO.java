@@ -9,4 +9,6 @@ public interface AuthDAO {
     boolean containsUserName(String username);
 
     User register(String username, String password, String email, String name);
+
+    void saveClick(User user, String destination);
 }

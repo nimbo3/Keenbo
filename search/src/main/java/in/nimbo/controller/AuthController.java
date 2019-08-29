@@ -43,8 +43,13 @@ public class AuthController {
         return result;
     }
 
-    public void click(User user, String destination) {
-
+    public ActionResult<Boolean> click(User user, String destination) {
+        ActionResult<Boolean> result = new ActionResult<>();
+        if (user != null) {
+            authDAO.saveClick(user, destination);
+            result.setSuccess(true);
+        }
+        return result;
     }
 
     private String checkFields(String username, String password, String confirmPass, String email,
