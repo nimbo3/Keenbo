@@ -23,7 +23,7 @@ public class App {
         String esIndex = pageRankConfig.getEsIndex();
         String esType = pageRankConfig.getEsType();
 
-        SparkSession spark = loadSpark(pageRankConfig.getAppName(), true);
+        SparkSession spark = loadSpark(pageRankConfig.getAppName(), false);
         spark.sparkContext().conf().set("es.nodes", esIndex);
         spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
         spark.sparkContext().conf().set("es.mapping.id", "id");
