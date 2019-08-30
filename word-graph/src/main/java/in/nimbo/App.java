@@ -51,6 +51,7 @@ public class App {
                 .config("spark.hadoop.validateOutputSpecs", false)
                 .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
                 .config("spark.kryoserializer.buffer", "1024k")
+                .master("local")
                 .getOrCreate();
 
         spark.sparkContext().conf().registerKryoClasses(new Class[]{
@@ -145,7 +146,7 @@ public class App {
         Dataset<Row> verticesPart2 = keywords.select(col("to")).dropDuplicates();
         Dataset<Row> vertices = verticesPart1.union(verticesPart2)
                 .select(col("from").as("id")).dropDuplicates();
-        vertices.withColumn("font", lit(1));
+        vertices = vertices.withColumn("font", struct(lit(1.0)));
 
         StructType verticesSchema = new StructType(new StructField[]{
                 new StructField("id", DataTypes.StringType, false, Metadata.empty()),
@@ -156,8 +157,8 @@ public class App {
                 ), false, Metadata.empty())});
         Dataset<Row> vertexDF = spark.createDataFrame(vertices.toJavaRDD(), verticesSchema);
 
-        saveAsJson(keywords, "/wordGraphEdges");
-        saveAsJson(vertexDF, "/wordGraphVertices");
+        saveAsJson(keywords, "wordGraphEdges");
+        saveAsJson(vertexDF, "wordGraphVertices");
 
         spark.stop();
     }
