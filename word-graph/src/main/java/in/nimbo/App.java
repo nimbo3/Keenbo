@@ -51,7 +51,6 @@ public class App {
                 .config("spark.hadoop.validateOutputSpecs", false)
                 .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
                 .config("spark.kryoserializer.buffer", "1024k")
-                .master("local")
                 .getOrCreate();
 
         spark.sparkContext().conf().registerKryoClasses(new Class[]{
