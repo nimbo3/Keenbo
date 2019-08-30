@@ -31,10 +31,10 @@ public class HBaseDAOImpl implements HBaseDAO {
     }
 
     @Override
-    public void add(List<Page> pages, KeywordExtractorService extractorService) {
+    public void add(List<Page> pages, boolean extractKeyword) {
         List<Put> puts = new ArrayList<>();
         for (Page page : pages) {
-            puts.add(getPut(page, extractorService));
+            puts.add(getPut(page, extractKeyword));
         }
 
         if (connection.isClosed()) {
@@ -64,7 +64,7 @@ public class HBaseDAOImpl implements HBaseDAO {
         }
     }
 
-    private Put getPut(Page page, KeywordExtractorService extractorService) {
+    private Put getPut(Page page, boolean extractKeyword) {
         Put put = new Put(Bytes.toBytes(page.getReversedLink()));
 
         for (Anchor anchor : page.getAnchors()) {
@@ -72,10 +72,12 @@ public class HBaseDAOImpl implements HBaseDAO {
                     Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getContent()));
         }
 
-        Map<String, Integer> keywords = extractorService.extractKeywords(page.getContent());
-        for (Map.Entry<String, Integer> keyword : keywords.entrySet()) {
-            put.addColumn(config.getDataColumnFamily(),
-                    Bytes.toBytes(keyword.getKey()), Bytes.toBytes(Integer.toString(keyword.getValue())));
+        if (extractKeyword) {
+            Map<String, Integer> keywords = KeywordExtractorService.extractKeywords(page.getContent());
+            for (Map.Entry<String, Integer> keyword : keywords.entrySet()) {
+                put.addColumn(config.getDataColumnFamily(),
+                        Bytes.toBytes(keyword.getKey()), Bytes.toBytes(Integer.toString(keyword.getValue())));
+            }
         }
 
         put.addColumn(config.getDataColumnFamily(), config.getRankColumn(), Bytes.toBytes("1"));

@@ -6,17 +6,13 @@ import com.codahale.metrics.SharedMetricRegistries;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.monitoring.ThreadsMonitor;
-import in.nimbo.dao.elastic.ElasticDAO;
-import in.nimbo.dao.hbase.HBaseDAO;
 import in.nimbo.service.CollectorService;
-import in.nimbo.service.keyword.KeywordExtractorService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,8 +22,7 @@ public class KafkaServiceImpl implements KafkaService {
     private Logger logger = LoggerFactory.getLogger("collector");
     private ScheduledExecutorService threadMonitorService;
     private KafkaConfig config;
-    private HBaseDAO hBaseDAO;
-    private ElasticDAO elasticDAO;
+    private CollectorService collectorService;
 
     private BlockingQueue<Page> messageQueue;
     private ConsumerService consumerService;
@@ -37,10 +32,9 @@ public class KafkaServiceImpl implements KafkaService {
     private List<List<Page>> bufferLists;
     private CountDownLatch countDownLatch;
 
-    public KafkaServiceImpl(KafkaConfig kafkaConfig, HBaseDAO hBaseDAO, ElasticDAO elasticDAO) {
+    public KafkaServiceImpl(KafkaConfig kafkaConfig, CollectorService collectorService) {
         this.config = kafkaConfig;
-        this.hBaseDAO = hBaseDAO;
-        this.elasticDAO = elasticDAO;
+        this.collectorService = collectorService;
         producerServices = new ArrayList<>();
         kafkaServices = new ArrayList<>();
         bufferLists = new ArrayList<>();
@@ -69,14 +63,6 @@ public class KafkaServiceImpl implements KafkaService {
         for (int i = 1; i <= config.getPageProducerCount(); i++) {
             List<Page> bufferList = new ArrayList<>();
             KafkaProducer<String, Page> producer = new KafkaProducer<>(config.getPageProducerProperties());
-            KeywordExtractorService extractorService = null;
-            try {
-                extractorService = new KeywordExtractorService();
-            } catch (IOException e) {
-                logger.error("Unable to load keyword extractor", e);
-                System.exit(1);
-            }
-            CollectorService collectorService = new CollectorService(hBaseDAO, elasticDAO, extractorService);
             ProducerService producerService =
                     new ProducerServiceImpl(config, messageQueue, bufferList, producer, collectorService, countDownLatch);
             Thread pageProducerThread = new Thread(producerService, config.getServiceName() + i);
