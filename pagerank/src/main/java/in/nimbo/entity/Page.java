@@ -29,12 +29,4 @@ public class Page implements Serializable {
     public double getRank() {
         return rank;
     }
-
-    @Override
-    public String toString() {
-        return "Page{" +
-                "id='" + id + '\'' +
-                ", rank=" + rank +
-                '}';
-    }
 }

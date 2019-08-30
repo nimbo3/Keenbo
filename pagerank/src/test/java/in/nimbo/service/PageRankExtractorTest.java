@@ -29,7 +29,6 @@ import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class PageRankExtractorTest {
     private static SparkSession sparkSession;
@@ -75,14 +74,7 @@ public class PageRankExtractorTest {
         JavaRDD<Result> hBaseRDD = javaSparkContext.parallelize(resultList);
         Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaRDD<Page>> result =
                 PageRankExtractor.extract(hBasePageConfig, pageRankConfig, sparkSession, hBaseRDD);
-        Collection<Put> pageRankHBase = result._1.repartition(1).collectAsMap().values();
         List<Page> pageRankElastic = result._2.collect();
-        System.out.println(pageRankHBase);
-        System.out.println(pageRankElastic);
-        for (Put node : pageRankHBase) {
-            assertTrue(rows.contains(Bytes.toString(node.getRow())));
-        }
-        assertEquals(1, pageRankHBase.size());
         assertEquals(4, pageRankElastic.size());
     }
 }
