@@ -3,20 +3,13 @@ package in.nimbo.service;
 import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.config.HBaseSiteConfig;
 import in.nimbo.common.utility.LinkUtility;
-import in.nimbo.common.utility.SparkUtility;
-import in.nimbo.config.SiteGraphConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
-import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
-import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -27,7 +20,6 @@ import org.apache.spark.storage.StorageLevel;
 import org.graphframes.GraphFrame;
 import scala.Tuple2;
 
-import java.io.IOException;
 import java.util.Objects;
 
 public class SiteExtractor {

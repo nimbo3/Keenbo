@@ -14,6 +14,7 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.InterruptException;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,14 +98,14 @@ public class ShufflerService implements Runnable, Closeable {
                     Thread.currentThread().interrupt();
                 }
             }
-        } catch (InterruptedException e) {
-            // ignore
-        } catch (Exception e) {
+        }catch (InterruptedException | InterruptException e) {
+            logger.info("Shuffler service interrupted successfully");
+        }  catch (Exception e) {
             logger.error(e.getMessage(), e);
         } finally {
             CloseUtility.closeSafely(shufflerConsumer);
             CloseUtility.closeSafely(linkProducer);
-            logger.info("Shuffler service stopped");
+            logger.info("Shuffler service stopped successfully");
             countDownLatch.countDown();
         }
     }
