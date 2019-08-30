@@ -145,9 +145,19 @@ public class App {
         Dataset<Row> verticesPart2 = keywords.select(col("to")).dropDuplicates();
         Dataset<Row> vertices = verticesPart1.union(verticesPart2)
                 .select(col("from").as("id")).dropDuplicates();
+        vertices.withColumn("font", lit(1));
+
+        StructType verticesSchema = new StructType(new StructField[]{
+                new StructField("id", DataTypes.StringType, false, Metadata.empty()),
+                new StructField("font", DataTypes.createStructType(
+                        new StructField[]{
+                                new StructField("size", DataTypes.DoubleType, false, Metadata.empty())
+                        }
+                ), false, Metadata.empty())});
+        Dataset<Row> vertexDF = spark.createDataFrame(vertices.toJavaRDD(), verticesSchema);
 
         saveAsJson(keywords, "/wordGraphEdges");
-        saveAsJson(vertices, "/wordGraphVertices");
+        saveAsJson(vertexDF, "/wordGraphVertices");
 
         spark.stop();
     }
