@@ -39,9 +39,9 @@ public class App {
                 in.nimbo.common.serializer.PageDeserializer.class, in.nimbo.common.exception.InvalidLinkException.class,
                 Edge.class, Node.class, in.nimbo.App.class, SiteGraphConfig.class});
 
-        if (siteGraphConfig.isExtractor()) {
+        if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.EXTRACTOR) {
             SiteExtractor.extract(hBasePageConfig, hBaseSiteConfig, siteGraphConfig, spark);
-        } else if (siteGraphConfig.isGraph()) {
+        } else if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.GRAPH) {
             GraphExtractor.extract(hBaseSiteConfig, siteGraphConfig, spark);
         }
     }
