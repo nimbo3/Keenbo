@@ -10,7 +10,6 @@ public class SiteGraphConfig {
     private static final String CONFIG_NAME = "site-graph.properties";
     private String appName;
     private MODE appMode;
-    private String scanBatchSize;
 
     public static SiteGraphConfig load() {
         SiteGraphConfig appConfig = new SiteGraphConfig();
@@ -25,7 +24,6 @@ public class SiteGraphConfig {
             } else {
                 throw new ConfigurationException(CONFIG_NAME + ": app mode is illegal");
             }
-            appConfig.setScanBatchSize(config.getString("hbase.scan.batch.size"));
             return appConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
@@ -48,11 +46,4 @@ public class SiteGraphConfig {
         this.appName = appName;
     }
 
-    public String getScanBatchSize() {
-        return scanBatchSize;
-    }
-
-    public void setScanBatchSize(String scanBatchSize) {
-        this.scanBatchSize = scanBatchSize;
-    }
 }
