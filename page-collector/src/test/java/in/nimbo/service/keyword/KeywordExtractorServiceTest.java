@@ -1,6 +1,8 @@
-package in.nimbo.service;
+package in.nimbo.service.keyword;
 
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;
@@ -25,7 +27,7 @@ public class KeywordExtractorServiceTest {
 
     @Test
     public void moreThanFiveWordsTest() {
-        String text = "nimbo sahab nimbo keenbo datapirates sahab nimbo jimbo keenbo nimbo datapirates keenbo nimroo jimbo";
+        String text = "nimbo sahab nimbo keenbo datapirate sahab nimbo jimbo keenbo nimbo datapirate keenbo nimroo jimbo";
         Map<String, Integer> keywords = new HashMap<>();
         keywords.put("nimbo", 4);
         keywords.put("keenbo", 3);
@@ -37,7 +39,7 @@ public class KeywordExtractorServiceTest {
 
     @Test
     public void wordRootTest() {
-        String text = "driving drove foots came";
+        String text = "driving drove foot came";
         Map<String, Integer> keywords = new HashMap<>();
         keywords.put("drive", 2);
         keywords.put("come", 1);

@@ -1,6 +1,5 @@
 package in.nimbo.service.kafka;
 
-import edu.stanford.nlp.util.RuntimeInterruptedException;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.utility.CloseUtility;
@@ -12,11 +11,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ProducerServiceImpl implements ProducerService {
@@ -29,15 +26,15 @@ public class ProducerServiceImpl implements ProducerService {
     private CountDownLatch countDownLatch;
     private List<Page> bufferList;
 
-    public ProducerServiceImpl(KafkaConfig kafkaConfig, BlockingQueue<Page> messageQueue, Producer<String, Page> pageProducer,
-                               CollectorService collectorService,
+    public ProducerServiceImpl(KafkaConfig kafkaConfig, BlockingQueue<Page> messageQueue, List<Page> bufferList,
+                               Producer<String, Page> pageProducer, CollectorService collectorService,
                                CountDownLatch countDownLatch) {
         this.config = kafkaConfig;
         this.messageQueue = messageQueue;
         this.pageProducer = pageProducer;
         this.countDownLatch = countDownLatch;
         this.collectorService = collectorService;
-        bufferList = new ArrayList<>();
+        this.bufferList = bufferList;
     }
 
     @Override
@@ -71,7 +68,7 @@ public class ProducerServiceImpl implements ProducerService {
                     logger.error("Illegal url format: {}", page.getLink(), e);
                 }
             }
-        } catch (InterruptedException | RuntimeInterruptedException e) {
+        } catch (InterruptedException e) {
             // ignored
         } finally {
             CloseUtility.closeSafely(pageProducer);
@@ -81,12 +78,14 @@ public class ProducerServiceImpl implements ProducerService {
     }
 
     private void handle() {
+        logger.info("Start collecting {} pages", bufferList.size());
         boolean collected = collectorService.processList(bufferList);
         if (!collected) {
             for (Page page : bufferList) {
                 pageProducer.send(new ProducerRecord<>(config.getPageTopic(), page));
             }
         }
+        logger.info("Finish collecting {} pages", bufferList.size());
         bufferList.clear();
     }
 }

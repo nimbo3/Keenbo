@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ConsumerServiceImpl implements ConsumerService {
@@ -59,7 +58,7 @@ public class ConsumerServiceImpl implements ConsumerService {
                     Thread.currentThread().interrupt();
                 }
             }
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | org.apache.kafka.common.errors.InterruptException e) {
             logger.info("Consumer service stopped successfully");
         } catch (Exception e) {
             logger.error(e.getMessage(), e);

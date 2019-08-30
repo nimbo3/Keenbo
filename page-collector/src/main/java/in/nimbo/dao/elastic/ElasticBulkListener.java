@@ -56,9 +56,11 @@ public class ElasticBulkListener implements BulkProcessor.Listener {
     @Override
     public void afterBulk(long executionId, BulkRequest bulkRequest, Throwable throwable) {
         logger.error("Failed to execute bulk {}", executionId, throwable);
-        for (Page page : backupPages) {
-            elasticDAO.save(page);
+        if (!(throwable instanceof java.lang.InterruptedException)) {
+            for (Page page : backupPages) {
+                elasticDAO.save(page);
+            }
+            logger.info("Retry all {} requests again", bulkRequest.numberOfActions());
         }
-        logger.info("Retry all {} requests again", bulkRequest.numberOfActions());
     }
 }
