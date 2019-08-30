@@ -14,10 +14,9 @@ public interface HBaseDAO extends AutoCloseable {
     /**
      * add a new page to HBase database
      * @param pages page which is added
-     * @param extractorService keyword extractor
      * @throws HBaseException if any error happen during adding page
      */
-    void add(List<Page> pages, KeywordExtractorService extractorService);
+    void add(List<Page> pages, boolean extractKeyword);
 
     boolean contains(String link);
 }

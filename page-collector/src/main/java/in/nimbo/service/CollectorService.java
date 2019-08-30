@@ -16,19 +16,17 @@ public class CollectorService {
     private Logger logger = LoggerFactory.getLogger("collector");
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
-    private KeywordExtractorService extractorService;
 
-    public CollectorService(HBaseDAO hBaseDAO, ElasticDAO elasticDAO, KeywordExtractorService extractorService) {
+    public CollectorService(HBaseDAO hBaseDAO, ElasticDAO elasticDAO) {
         this.hBaseDAO = hBaseDAO;
         this.elasticDAO = elasticDAO;
-        this.extractorService = extractorService;
     }
 
     public boolean processList(List<Page> bufferList) {
         List<Page> filtered = bufferList.stream().filter(page -> !page.getAnchors().isEmpty()).collect(Collectors.toList());
         try {
             logger.info("Start adding {} pages to HBase", filtered.size());
-            hBaseDAO.add(filtered, extractorService);
+            hBaseDAO.add(filtered, true);
             logger.info("Finish adding {} pages to HBase", filtered.size());
             logger.info("Start adding {} pages to Elasticsearch", filtered.size());
             for (Page page : bufferList) {

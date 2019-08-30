@@ -81,8 +81,8 @@ public class App {
 
         HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBasePageConfig);
         appLogger.info("DAO interface created");
-
-        KafkaService kafkaService = new KafkaServiceImpl(kafkaConfig, hBaseDAO, elasticDAO);
+        CollectorService collectorService = new CollectorService(hBaseDAO, elasticDAO);
+        KafkaService kafkaService = new KafkaServiceImpl(kafkaConfig, collectorService);
         appLogger.info("Services started");
 
         appLogger.info("Application started");
