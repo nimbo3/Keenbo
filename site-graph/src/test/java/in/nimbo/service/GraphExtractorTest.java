@@ -12,11 +12,14 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import scala.Tuple2;
@@ -30,10 +33,17 @@ public class GraphExtractorTest {
     private static SparkSession sparkSession;
     private static JavaSparkContext javaSparkContext;
 
+
     @BeforeClass
     public static void init() {
+        LogManager.getLogger("org").setLevel(Level.WARN);
         sparkSession = App.loadSpark("test", true);
         javaSparkContext = SparkUtility.getJavaSparkContext(sparkSession);
+    }
+
+    @AfterClass
+    public static void finish() {
+        sparkSession.stop();
     }
 
     @Test
