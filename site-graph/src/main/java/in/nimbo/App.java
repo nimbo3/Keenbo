@@ -10,11 +10,15 @@ import in.nimbo.entity.Node;
 import in.nimbo.service.GraphExtractor;
 import in.nimbo.common.entity.GraphResult;
 import in.nimbo.service.SiteExtractor;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
+import scala.Tuple2;
 
 public class App {
     public static void main(String[] args) {
@@ -27,7 +31,10 @@ public class App {
         if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.EXTRACTOR) {
             JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBasePageConfig.getPageTable());
             hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
-            SiteExtractor.extract(hBasePageConfig, hBaseSiteConfig, spark, hBaseRDD);
+            Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaPairRDD<ImmutableBytesWritable, Put>> extract =
+                    SiteExtractor.extract(hBasePageConfig, hBaseSiteConfig, spark, hBaseRDD);
+            SparkUtility.saveToHBase(hBaseSiteConfig.getSiteTable(), extract._1);
+            SparkUtility.saveToHBase(hBaseSiteConfig.getSiteTable(), extract._2);
         } else if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.GRAPH) {
             JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBaseSiteConfig.getSiteTable());
             hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());

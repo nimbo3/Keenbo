@@ -2,9 +2,13 @@ package in.nimbo.common.utility;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
+import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
+import org.apache.hadoop.mapreduce.Job;
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
@@ -14,6 +18,8 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+
+import java.io.IOException;
 
 public class SparkUtility {
     private SparkUtility() {
@@ -68,6 +74,19 @@ public class SparkUtility {
                         return val._2 == count - 1 ? val._1 + "\n]" : val._1 + ",";
                     }
                 });
+    }
+
+    public static void saveToHBase(String tableName, JavaPairRDD<ImmutableBytesWritable, Put> put) {
+        try {
+            Job jobConf = Job.getInstance();
+            jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, tableName);
+            jobConf.setOutputFormatClass(TableOutputFormat.class);
+            jobConf.getConfiguration().set("mapreduce.output.fileoutputformat.outputdir", "/tmp");
+            put.saveAsNewAPIHadoopDataset(jobConf.getConfiguration());
+        } catch (IOException e) {
+            System.out.println("Unable to save to HBase");
+            e.printStackTrace(System.out);
+        }
     }
 
     public static StructType getNodeSchema() {
