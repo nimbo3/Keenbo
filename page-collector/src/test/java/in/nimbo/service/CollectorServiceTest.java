@@ -7,13 +7,11 @@ import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.service.keyword.KeywordExtractorService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -47,7 +45,7 @@ public class CollectorServiceTest {
     public void beforeEachTest() {
         hBaseDAO = mock(HBaseDAO.class);
         elasticDAO = mock(ElasticDAO.class);
-        collectorService = new CollectorService(hBaseDAO, elasticDAO);
+        collectorService = new CollectorService(hBaseDAO, elasticDAO, true);
     }
 
     @Test
