@@ -3,20 +3,19 @@ package in.nimbo;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.type.CollectionType;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.entity.Link;
+import in.nimbo.common.exception.LoadConfigurationException;
 import in.nimbo.config.ClassifierConfig;
 import in.nimbo.dao.ElasticDAO;
 import in.nimbo.dao.ElasticDAOImpl;
 import in.nimbo.entity.Category;
 import in.nimbo.entity.Data;
 import in.nimbo.service.*;
-import org.apache.http.HttpHost;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -33,16 +32,14 @@ import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import scala.Tuple2;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -51,7 +48,12 @@ public class App {
     public static void main(String[] args) throws IOException, LangDetectException {
         ProjectConfig projectConfig = ProjectConfig.load();
         ClassifierConfig classifierConfig = ClassifierConfig.load();
-        runCrawler(classifierConfig, projectConfig);
+        if (classifierConfig.getAppMode() == ClassifierConfig.MODE.CRAWL) {
+            runCrawler(classifierConfig, projectConfig);
+        }
+        else if (classifierConfig.getAppMode() == ClassifierConfig.MODE.CLASSIFY) {
+            runClassifier(classifierConfig);
+        }
     }
 
     private static void runCrawler(ClassifierConfig classifierConfig, ProjectConfig projectConfig) throws IOException, LangDetectException {
@@ -63,15 +65,14 @@ public class App {
         ElasticConfig elasticConfig = ElasticConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
 
-        RestHighLevelClient client = initializeElasticSearchClient(elasticConfig);
-        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, client);
+        ElasticDAO elasticDAO = ElasticDAOImpl.create(elasticConfig);
 
         ObjectMapper mapper = new ObjectMapper();
-        List<Category> categories = loadFeed(mapper);
-        Map<String, Integer> labelMap = loadLabels(categories);
-        List<String> domains = loadDomains(categories);
+        List<Category> categories = CrawlerService.loadFeed(mapper);
+        Map<String, Integer> labelMap = CrawlerService.loadLabels(categories);
+        List<String> domains = CrawlerService.loadDomains(categories);
         BlockingQueue<Link> queue = new ArrayBlockingQueue<>(classifierConfig.getCrawlerQueueSize());
-        fill(queue, categories);
+        CrawlerService.fillInitialCrawlQueue(queue, categories);
 
         Producer<String, Link> producer = new KafkaProducer<>(kafkaConfig.getTrainingProducerProperties());
         Consumer<String, Link> consumer = new KafkaConsumer<>(kafkaConfig.getTrainingConsumerProperties());
@@ -86,55 +87,6 @@ public class App {
         scheduleService.schedule();
 
         Runtime.getRuntime().addShutdownHook(new Thread(scheduleService::stop));
-    }
-
-    private static RestHighLevelClient initializeElasticSearchClient(ElasticConfig elasticConfig) {
-        RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
-                .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
-                        .setConnectTimeout(elasticConfig.getConnectTimeout())
-                        .setSocketTimeout(elasticConfig.getSocketTimeout()))
-                .setMaxRetryTimeoutMillis(elasticConfig.getMaxRetryTimeoutMillis());
-        return new RestHighLevelClient(restClientBuilder);
-    }
-
-    private static void fill(BlockingQueue<Link> queue, List<Category> categories) {
-        for (Category category : categories) {
-            for (String site : category.getSites()) {
-                try {
-                    queue.put(new Link("https://" + site, category.getName(), 0));
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
-
-    private static List<Category> loadFeed(ObjectMapper mapper) throws IOException {
-        InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("first-feed.json");
-        Scanner scanner = new Scanner(resourceAsStream);
-        StringBuilder stringBuilder = new StringBuilder("");
-        while (scanner.hasNextLine()) {
-            stringBuilder.append(scanner.nextLine());
-        }
-        String json = stringBuilder.toString();
-        CollectionType collectionType = mapper.getTypeFactory().constructCollectionType(List.class, Category.class);
-        return mapper.readValue(json, collectionType);
-    }
-
-    private static List<String> loadDomains(List<Category> categories) {
-        List<String> domains = new ArrayList<>();
-        for (Category category : categories) {
-            domains.addAll(category.getSites());
-        }
-        return domains;
-    }
-
-    private static Map<String, Integer> loadLabels(List<Category> categories) {
-        Map<String, Integer> map = new HashMap<>();
-        for (Category category : categories) {
-            map.put(category.getName(), map.size());
-        }
-        return map;
     }
 
     private static void runClassifier(ClassifierConfig classifierConfig) {
@@ -153,10 +105,9 @@ public class App {
                 classifierConfig.getEsIndex() + "/" + classifierConfig.getEsType());
 
         JavaRDD<Data> dataRDD = esRDD.map(tuple2 ->
-                new Data((String) tuple2._2.get("label"), (String) tuple2._2.get("content")));
+                new Data((Long) tuple2._2.get("label"), (String) tuple2._2.get("content")));
 
         Dataset<Row> dataset = spark.createDataFrame(dataRDD, Data.class);
-        dataset.show(false);
 
         Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");
         Dataset<Row> wordsData = tokenizer.transform(dataset);
@@ -189,7 +140,6 @@ public class App {
         JavaPairRDD<Double, Double> predictionAndLabel =
                 test.toJavaRDD().mapToPair((Row p) ->
                         new Tuple2<>(model.predict(p.getAs(1)), p.getDouble(0)));
-        test.show(false);
         System.out.println(predictionAndLabel.collect());
 
         double accuracy =
@@ -197,10 +147,12 @@ public class App {
         System.out.println(accuracy);
 
         // Save and load model
-//        try {
-//            model.save(classifierConfig.getNaiveBayesModelSaveLocation());
-//        } catch (IOException e) {}
-//        NaiveBayesModel loadedModel = NaiveBayesModel.load(classifierConfig.getNaiveBayesModelSaveLocation());
+        try {
+            model.save(classifierConfig.getNaiveBayesModelSaveLocation());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        NaiveBayesModel loadedModel = NaiveBayesModel.load(classifierConfig.getNaiveBayesModelSaveLocation());
 
         spark.stop();
     }

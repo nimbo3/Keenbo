@@ -1,22 +1,22 @@
 package in.nimbo.entity;
 
 public class Data {
-    private String label;
+    private double label;
     private String content;
 
     public Data() {}
 
-    public Data(String label, String content) {
-        this.label = label;
+    public Data(long label, String content) {
+        this.label = (double) label;
         this.content = content;
     }
 
-    public String getLabel() {
+    public double getLabel() {
         return label;
     }
 
-    public void setLabel(String label) {
-        this.label = label;
+    public void setLabel(long label) {
+        this.label = (double)label;
     }
 
     public String getContent() {

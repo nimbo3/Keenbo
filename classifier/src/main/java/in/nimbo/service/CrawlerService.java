@@ -1,18 +1,23 @@
 package in.nimbo.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
 import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.ElasticDAO;
 import in.nimbo.common.entity.Link;
+import in.nimbo.entity.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.time.LocalDateTime;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.BlockingQueue;
 
 public class CrawlerService {
     private Cache<String, LocalDateTime> politenessCache;
@@ -53,5 +58,45 @@ public class CrawlerService {
             appLogger.warn("Illegal URL format: " + url, e);
         }
         throw new InvalidLinkException();
+    }
+
+    public static void fillInitialCrawlQueue(BlockingQueue<Link> queue, List<Category> categories) {
+        for (Category category : categories) {
+            for (String site : category.getSites()) {
+                try {
+                    queue.put(new Link("https://" + site, category.getName(), 0));
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    public static List<Category> loadFeed(ObjectMapper mapper) throws IOException {
+        InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("first-feed.json");
+        Scanner scanner = new Scanner(resourceAsStream);
+        StringBuilder stringBuilder = new StringBuilder("");
+        while (scanner.hasNextLine()) {
+            stringBuilder.append(scanner.nextLine());
+        }
+        String json = stringBuilder.toString();
+        CollectionType collectionType = mapper.getTypeFactory().constructCollectionType(List.class, Category.class);
+        return mapper.readValue(json, collectionType);
+    }
+
+    public static List<String> loadDomains(List<Category> categories) {
+        List<String> domains = new ArrayList<>();
+        for (Category category : categories) {
+            domains.addAll(category.getSites());
+        }
+        return domains;
+    }
+
+    public static Map<String, Integer> loadLabels(List<Category> categories) {
+        Map<String, Integer> map = new HashMap<>();
+        for (Category category : categories) {
+            map.put(category.getName(), map.size());
+        }
+        return map;
     }
 }
