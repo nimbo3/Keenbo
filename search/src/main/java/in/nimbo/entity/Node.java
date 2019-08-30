@@ -1,17 +1,12 @@
 package in.nimbo.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class Node {
-    @JsonProperty("id")
     private String id;
-    @JsonProperty("font")
     private Font font;
-    @JsonIgnore
     private int pageCount;
 
-    public Node(){}
+    public Node() {
+    }
 
     public Node(String id, Font font, int pageCount) {
         this.id = id;
@@ -41,20 +36,5 @@ public class Node {
 
     public void setPageCount(int pageCount) {
         this.pageCount = pageCount;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Node node = (Node) o;
-
-        return id != null ? id.equals(node.id) : node.id == null;
-    }
-
-    @Override
-    public int hashCode() {
-        return id != null ? id.hashCode() : 0;
     }
 }

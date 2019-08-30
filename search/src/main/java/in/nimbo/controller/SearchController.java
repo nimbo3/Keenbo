@@ -1,14 +1,20 @@
 package in.nimbo.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import emoji4j.EmojiUtils;
+import in.nimbo.common.utility.FileUtility;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.redis.LabelDAO;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.entity.*;
 
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,15 +58,8 @@ public class SearchController {
         if (siteGraph != null) {
             return siteGraph;
         }
-        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("site-graph");
-        Scanner scanner = new Scanner(stream);
-        StringBuilder jsonBuilder = new StringBuilder("");
-        while (scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            jsonBuilder.append(line);
-        }
-        String json = jsonBuilder.toString();
-        GraphResponse graphResponse = mapper.readValue(json, GraphResponse.class);
+        String wordGraphJson = FileUtility.readFileFromResource("site-graph");
+        GraphResponse graphResponse = new Gson().fromJson(wordGraphJson, new TypeToken<GraphResponse>(){}.getType());
         List<Node> nodeList = graphResponse.getNodes();
         List<Node> filteredNodes = nodeList.stream().filter(node -> node.getFont().getSize() > config.getFilterNode()).collect(Collectors.toList());
         List<Edge> edges = graphResponse.getEdges();
@@ -69,8 +68,8 @@ public class SearchController {
         double minNode = nodesSummary.getMin();
         filteredNodes.forEach(node -> node.getFont().setSize((node.getFont().getSize() - minNode) / (maxNode - minNode) * (config.getMaxNode() - config.getMinNode()) + config.getMinNode()));
         List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWidth() > config.getFilterEdge()).collect(Collectors.toList());
-        filteredEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getId().equals(edge.getDst()) &&
-                filteredNodes.stream().anyMatch(src -> src.getId().equals(edge.getSrc()) && (!dst.getId().equals(src.getId()))))).collect(Collectors.toList());
+        filteredEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getId().equals(edge.getTo()) &&
+                filteredNodes.stream().anyMatch(src -> src.getId().equals(edge.getFrom()) && (!dst.getId().equals(src.getId()))))).collect(Collectors.toList());
         IntSummaryStatistics edgesSummary = filteredEdges.stream().mapToInt(Edge::getWidth).summaryStatistics();
         int maxEdge = edgesSummary.getMax();
         int minEdge = edgesSummary.getMin();
@@ -78,27 +77,20 @@ public class SearchController {
         return siteGraph = new GraphResponse(filteredNodes, filteredEdges);
     }
 
-    public GraphResponse wordGraph() throws IOException {
+    public GraphResponse wordGraph() {
         if (wordGraph != null) {
             return wordGraph;
         }
-        InputStream stream = Thread.currentThread().getContextClassLoader().getResourceAsStream("word-graph");
-        Scanner scanner = new Scanner(stream);
-        StringBuilder jsonBuilder = new StringBuilder("");
-        while (scanner.hasNextLine()) {
-            String line = scanner.nextLine();
-            jsonBuilder.append(line);
-        }
-        String json = jsonBuilder.toString();
-        GraphResponse graphResponse = mapper.readValue(json, GraphResponse.class);
+        String wordGraphJson = FileUtility.readFileFromResource("word-graph");
+        GraphResponse graphResponse = new Gson().fromJson(wordGraphJson, new TypeToken<GraphResponse>(){}.getType());
         List<Node> nodeList = graphResponse.getNodes();
         List<Node> filteredNodes = nodeList.stream().filter(node -> !EmojiUtils.isEmoji(node.getId())).collect(Collectors.toList());
         List<Edge> edges = graphResponse.getEdges();
         filteredNodes.forEach(node -> node.getFont().setSize(config.getMinNode()));
         List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWidth() > config.getFilterEdge()).collect(Collectors.toList());
-        List<Edge> filteredBadEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getId().equals(edge.getDst()) &&
-                filteredNodes.stream().anyMatch(src -> src.getId().equals(edge.getSrc()) && (!dst.getId().equals(src.getId()))))).collect(Collectors.toList());
-        List<Node> filteredBadNodes = filteredNodes.stream().filter(node -> filteredBadEdges.stream().anyMatch(edge -> edge.getSrc().equals(node.getId()) || edge.getDst().equals(node.getId()))).collect(Collectors.toList());
+        List<Edge> filteredBadEdges = filteredEdges.stream().filter(edge -> filteredNodes.stream().anyMatch(dst -> dst.getId().equals(edge.getTo()) &&
+                filteredNodes.stream().anyMatch(src -> src.getId().equals(edge.getFrom()) && (!dst.getId().equals(src.getId()))))).collect(Collectors.toList());
+        List<Node> filteredBadNodes = filteredNodes.stream().filter(node -> filteredBadEdges.stream().anyMatch(edge -> edge.getFrom().equals(node.getId()) || edge.getTo().equals(node.getId()))).collect(Collectors.toList());
         IntSummaryStatistics edgesSummary = filteredEdges.stream().mapToInt(Edge::getWidth).summaryStatistics();
         int maxEdge = edgesSummary.getMax();
         int minEdge = edgesSummary.getMin();
