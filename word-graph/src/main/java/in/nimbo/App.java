@@ -157,8 +157,8 @@ public class App {
                 ), false, Metadata.empty())});
         Dataset<Row> vertexDF = spark.createDataFrame(vertices.toJavaRDD(), verticesSchema);
 
-        saveAsJson(keywords, "wordGraphEdges");
-        saveAsJson(vertexDF, "wordGraphVertices");
+        saveAsJson(keywords, "/WordGraphEdges");
+        saveAsJson(vertexDF, "/WordGraphVertices");
 
         spark.stop();
     }
