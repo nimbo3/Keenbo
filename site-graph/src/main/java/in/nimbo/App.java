@@ -3,12 +3,18 @@ package in.nimbo;
 import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.config.HBaseSiteConfig;
 import in.nimbo.common.utility.LinkUtility;
+import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.SiteGraphConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
 import in.nimbo.service.GraphExtractor;
+import in.nimbo.common.entity.GraphResult;
 import in.nimbo.service.SiteExtractor;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
+import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 
 public class App {
     public static void main(String[] args) {
@@ -16,17 +22,27 @@ public class App {
         HBaseSiteConfig hBaseSiteConfig = HBaseSiteConfig.load();
         HBasePageConfig hBasePageConfig = HBasePageConfig.load();
 
-        SparkSession spark = SparkSession.builder()
-                .appName(siteGraphConfig.getAppName())
-                .getOrCreate();
-        spark.sparkContext().conf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-        spark.sparkContext().conf().set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-        spark.sparkContext().conf().set("spark.kryo.registrationRequired", "true");
-        spark.sparkContext().conf().set("spark.speculation", "false");
-        spark.sparkContext().conf().set("spark.hadoop.mapreduce.map.speculative", "false");
-        spark.sparkContext().conf().set("spark.hadoop.mapreduce.reduce.speculative", "false");
+        SparkSession spark = loadSpark(siteGraphConfig.getAppName(), true);
 
-        spark.sparkContext().conf().registerKryoClasses(new Class[]{in.nimbo.common.entity.Meta.class,
+        if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.EXTRACTOR) {
+            JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBasePageConfig.getPageTable());
+            hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
+            SiteExtractor.extract(hBasePageConfig, hBaseSiteConfig, spark, hBaseRDD);
+        } else if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.GRAPH) {
+            JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBaseSiteConfig.getSiteTable());
+            hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
+            GraphResult graphResult = GraphExtractor.extract(hBaseSiteConfig, spark, hBaseRDD);
+            JavaRDD<String> nodesJson = SparkUtility.createJson(graphResult.getNodes());
+            JavaRDD<String> edgesJson = SparkUtility.createJson(graphResult.getEdges());
+            nodesJson.saveAsTextFile("/SiteGraphVertices");
+            edgesJson.saveAsTextFile("/SiteGraphEdges");
+        }
+        spark.stop();
+    }
+
+    public static SparkSession loadSpark(String appName, boolean isLocal) {
+        SparkSession spark = SparkUtility.getSpark(appName, isLocal);
+        SparkUtility.registerKryoClasses(spark, new Class[]{in.nimbo.common.entity.Meta.class,
                 in.nimbo.common.exception.LoadConfigurationException.class, HBasePageConfig.class,
                 in.nimbo.common.config.ElasticConfig.class, in.nimbo.common.entity.Anchor.class,
                 in.nimbo.common.exception.LanguageDetectException.class, in.nimbo.common.config.ProjectConfig.class,
@@ -37,12 +53,9 @@ public class App {
                 in.nimbo.common.serializer.PageSerializer.class, in.nimbo.common.exception.HashException.class,
                 in.nimbo.common.config.Config.class, in.nimbo.common.config.RedisConfig.class,
                 in.nimbo.common.serializer.PageDeserializer.class, in.nimbo.common.exception.InvalidLinkException.class,
-                Edge.class, Node.class, in.nimbo.App.class, SiteGraphConfig.class});
-
-        if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.EXTRACTOR) {
-            SiteExtractor.extract(hBasePageConfig, hBaseSiteConfig, siteGraphConfig, spark);
-        } else if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.GRAPH) {
-            GraphExtractor.extract(hBaseSiteConfig, siteGraphConfig, spark);
-        }
+                Edge.class, Node.class, in.nimbo.App.class, SiteGraphConfig.class,
+                org.apache.hadoop.hbase.client.Result.class, org.apache.hadoop.hbase.io.ImmutableBytesWritable.class,
+                TableInputFormat.class, in.nimbo.common.entity.GraphResult.class});
+        return spark;
     }
 }
