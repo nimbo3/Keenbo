@@ -5,6 +5,7 @@ import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.config.HBaseSiteConfig;
 import in.nimbo.common.entity.GraphResult;
 import in.nimbo.common.utility.SparkUtility;
+import in.nimbo.config.SiteGraphConfig;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
@@ -36,8 +37,9 @@ public class GraphExtractorTest {
 
     @BeforeClass
     public static void init() {
+        SiteGraphConfig siteGraphConfig = SiteGraphConfig.load();
         LogManager.getLogger("org").setLevel(Level.WARN);
-        sparkSession = App.loadSpark("test", true);
+        sparkSession = App.loadSpark(siteGraphConfig.getAppName() + " test", true);
         javaSparkContext = SparkUtility.getJavaSparkContext(sparkSession);
     }
 
