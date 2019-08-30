@@ -57,13 +57,11 @@ public class SearchController {
             return siteGraph;
         }
         String siteGraphNodesJson = FileUtility.readFileFromResource("site-graph-vertices");
-        List<Node> nodesList = new Gson().fromJson(siteGraphNodesJson, new TypeToken<List<Node>>(){}.getType());
+        List<Node> nodeList = new Gson().fromJson(siteGraphNodesJson, new TypeToken<List<Node>>(){}.getType());
         String siteGraphEdgesJson = FileUtility.readFileFromResource("site-graph-edges");
-        List<Edge> edgesList = new Gson().fromJson(siteGraphEdgesJson, new TypeToken<List<Node>>(){}.getType());
-        GraphResponse graphResponse = new GraphResponse(nodesList, edgesList);
-        List<Node> nodeList = graphResponse.getNodes();
+        List<Edge> edges = new Gson().fromJson(siteGraphEdgesJson, new TypeToken<List<Edge>>(){}.getType());
+
         List<Node> filteredNodes = nodeList.stream().filter(node -> node.getFont().getSize() > config.getFilterNode()).collect(Collectors.toList());
-        List<Edge> edges = graphResponse.getEdges();
         DoubleSummaryStatistics nodesSummary = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize()).summaryStatistics();
         double maxNode = nodesSummary.getMax();
         double minNode = nodesSummary.getMin();
@@ -83,12 +81,10 @@ public class SearchController {
             return wordGraph;
         }
         String wordGraphNodesJson = FileUtility.readFileFromResource("word-graph-vertices");
-        List<Node> nodesList = new Gson().fromJson(wordGraphNodesJson, new TypeToken<List<Node>>(){}.getType());
+        List<Node> nodeList = new Gson().fromJson(wordGraphNodesJson, new TypeToken<List<Node>>(){}.getType());
         String wordGraphEdgesJson = FileUtility.readFileFromResource("word-graph-edges");
-        List<Edge> edgesList = new Gson().fromJson(wordGraphEdgesJson, new TypeToken<List<Node>>(){}.getType());
-        GraphResponse graphResponse = new GraphResponse(nodesList, edgesList);
-        List<Node> nodeList = graphResponse.getNodes();
-        List<Edge> edges = graphResponse.getEdges();
+        List<Edge> edges = new Gson().fromJson(wordGraphEdgesJson, new TypeToken<List<Edge>>(){}.getType());
+
         nodeList.forEach(node -> node.getFont().setSize(config.getMinNode()));
         List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWidth() > config.getFilterEdge()).collect(Collectors.toList());
         List<Edge> filteredBadEdges = filteredEdges.stream().filter(edge -> nodeList.stream().anyMatch(dst -> dst.getId().equals(edge.getTo()) &&
