@@ -28,4 +28,12 @@ public class Edge {
     public void setDst(String dst) {
         this.dst = dst;
     }
+
+    @Override
+    public String toString() {
+        return "Edge{" +
+                "src='" + src + '\'' +
+                ", dst='" + dst + '\'' +
+                '}';
+    }
 }
