@@ -1,5 +1,6 @@
 package in.nimbo;
 
+import com.vdurmont.emoji.EmojiManager;
 import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.WordGraphConfig;
@@ -26,6 +27,7 @@ import scala.Tuple2;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
@@ -35,6 +37,16 @@ import static org.apache.spark.sql.functions.*;
 
 public class App {
     public static void main(String[] args) {
+        String badWordRegex = ".*\\-.*";
+        String tagRegex = "^<.*?>$";
+        String idRegex = "^@.*$";
+        String linkRegex = "^http[s]?:.*$";
+        String starRegex = "^\\*+$";
+        String numberRegex = ".*[0-9].*";
+        List<String> badWords = Arrays.asList("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
+                "nov", "dec", "use", "ago", "new", "jan.", "feb.", "mar.", "apr.", "may.", "jun.", "jul.", "aug.",
+                "sep.", "oct.", "nov.", "dec.", "==", "!!", "☁️");
+
         HBasePageConfig hBaseConfig = HBasePageConfig.load();
         WordGraphConfig wordGraphConfig = WordGraphConfig.load();
         byte[] rankColumn = hBaseConfig.getRankColumn();
@@ -44,7 +56,7 @@ public class App {
         Configuration hBaseConfiguration = HBaseConfiguration.create();
         hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
         hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, "fake");
+        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBaseConfig.getPageTable());
 
         SparkSession spark = SparkSession.builder()
                 .appName(wordGraphConfig.getAppName())
@@ -81,11 +93,17 @@ public class App {
         hBaseCellsRDD.persist(StorageLevel.MEMORY_AND_DISK());
 
         JavaRDD<Row> pageContentRDD = hBaseCellsRDD
-                .filter(cell -> CellUtil.matchingFamily(cell, dataColumnFamily))
-                .filter(cell -> !CellUtil.matchingQualifier(cell, rankColumn))
+                .filter(cell -> CellUtil.matchingFamily(cell, dataColumnFamily)
+                        && !CellUtil.matchingQualifier(cell, rankColumn))
                 .map(cell -> RowFactory.create(
                         Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
-                        Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength())));
+                        Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength())))
+                .filter(row -> {
+                    String word = row.getString(1);
+                    return !word.matches(idRegex) && !word.matches(linkRegex) && !word.matches(starRegex)
+                            && !word.matches(tagRegex) && !word.matches(numberRegex) && !word.matches(badWordRegex)
+                            && !badWords.contains(word) && !EmojiManager.isEmoji(word);
+                });
 
         JavaRDD<Row> edges = hBaseCellsRDD
                 .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
