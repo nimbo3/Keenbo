@@ -12,7 +12,9 @@ public class SparkConfig {
     private int filterEdge;
     private double minNode;
     private double maxNode;
+    private double wordNodeSize;
     private double filterNode;
+    private int wordFilterEdge;
     private int minPasswordLength;
     private String loginError;
     private String usernameDuplicateError;
@@ -39,6 +41,8 @@ public class SparkConfig {
             sparkConfig.setMinEdge(config.getInt("graph.sites.edges.min"));
             sparkConfig.setMaxEdge(config.getInt("graph.sites.edges.max"));
             sparkConfig.setFilterEdge(config.getInt("graph.sites.edges.filter"));
+            sparkConfig.setWordFilterEdge(config.getInt("graph.words.edges.filter"));
+            sparkConfig.setWordNodeSize(config.getInt("graph.words.nodes.size"));
             sparkConfig.setMinPasswordLength(config.getInt("auth.password.min"));
             sparkConfig.setLoginError(config.getString("auth.error.login"));
             sparkConfig.setUsernameDuplicateError(config.getString("auth.error.register.username.duplicate"));
@@ -57,6 +61,22 @@ public class SparkConfig {
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public double getWordNodeSize() {
+        return wordNodeSize;
+    }
+
+    public void setWordNodeSize(double wordNodeSize) {
+        this.wordNodeSize = wordNodeSize;
+    }
+
+    public int getWordFilterEdge() {
+        return wordFilterEdge;
+    }
+
+    public void setWordFilterEdge(int wordFilterEdge) {
+        this.wordFilterEdge = wordFilterEdge;
     }
 
     public int getCacheExpire() {

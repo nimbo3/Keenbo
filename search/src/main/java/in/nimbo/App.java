@@ -1,17 +1,16 @@
 package in.nimbo;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.gson.Gson;
 import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.controller.AuthController;
 import in.nimbo.controller.SearchController;
 import in.nimbo.dao.auth.AuthDAO;
 import in.nimbo.dao.auth.MySqlAuthDAO;
-import in.nimbo.dao.redis.LabelDAO;
-import in.nimbo.dao.redis.RedisLabelDAO;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
+import in.nimbo.dao.redis.LabelDAO;
+import in.nimbo.dao.redis.RedisLabelDAO;
 import in.nimbo.entity.Page;
 import in.nimbo.entity.User;
 import in.nimbo.transformer.JsonTransformer;
@@ -54,9 +53,8 @@ public class App {
     }
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException {
-        ObjectMapper mapper = new ObjectMapper();
-        ObjectWriter writer = mapper.writer();
-        JsonTransformer transformer = new JsonTransformer(writer);
+        Gson gson = new Gson();
+        JsonTransformer transformer = new JsonTransformer(gson);
         ElasticConfig elasticConfig = ElasticConfig.load();
         SparkConfig sparkConfig = SparkConfig.load();
 
@@ -71,7 +69,7 @@ public class App {
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         LabelDAO labelDAO = new RedisLabelDAO(jedis, sparkConfig);
 
-        SearchController searchController = new SearchController(elasticDAO, sparkConfig, mapper, labelDAO);
+        SearchController searchController = new SearchController(elasticDAO, sparkConfig, gson, labelDAO);
         AuthController authController = new AuthController(authDAO, sparkConfig, random, labelDAO);
 
         App app = new App(searchController, sparkConfig, transformer, restHighLevelClient, authController, authDAO, mySqlConnection);

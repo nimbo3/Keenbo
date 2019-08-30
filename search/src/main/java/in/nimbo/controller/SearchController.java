@@ -24,15 +24,15 @@ public class SearchController {
     private static final String SEARCH_QUERY_REGEX = "^(.*?)(\\s+site:(.*))?$";
     private ElasticDAO elasticDAO;
     private SparkConfig config;
-    private ObjectMapper mapper;
+    private Gson gson;
     private LabelDAO labelDAO;
     private GraphResponse wordGraph;
     private GraphResponse siteGraph;
 
-    public SearchController(ElasticDAO elasticDAO, SparkConfig config, ObjectMapper mapper, LabelDAO labelDAO) {
+    public SearchController(ElasticDAO elasticDAO, SparkConfig config, Gson gson, LabelDAO labelDAO) {
         this.elasticDAO = elasticDAO;
         this.config = config;
-        this.mapper = mapper;
+        this.gson = gson;
         this.labelDAO = labelDAO;
     }
 
@@ -57,9 +57,9 @@ public class SearchController {
             return siteGraph;
         }
         String siteGraphNodesJson = FileUtility.readFileFromResource("site-graph-vertices");
-        List<Node> nodeList = new Gson().fromJson(siteGraphNodesJson, new TypeToken<List<Node>>(){}.getType());
+        List<Node> nodeList = gson.fromJson(siteGraphNodesJson, new TypeToken<List<Node>>(){}.getType());
         String siteGraphEdgesJson = FileUtility.readFileFromResource("site-graph-edges");
-        List<Edge> edges = new Gson().fromJson(siteGraphEdgesJson, new TypeToken<List<Edge>>(){}.getType());
+        List<Edge> edges = gson.fromJson(siteGraphEdgesJson, new TypeToken<List<Edge>>(){}.getType());
 
         List<Node> filteredNodes = nodeList.stream().filter(node -> node.getFont().getSize() > config.getFilterNode()).collect(Collectors.toList());
         DoubleSummaryStatistics nodesSummary = filteredNodes.stream().mapToDouble(node -> node.getFont().getSize()).summaryStatistics();
@@ -85,8 +85,8 @@ public class SearchController {
         String wordGraphEdgesJson = FileUtility.readFileFromResource("word-graph-edges");
         List<Edge> edges = new Gson().fromJson(wordGraphEdgesJson, new TypeToken<List<Edge>>(){}.getType());
 
-        nodeList.forEach(node -> node.getFont().setSize(config.getMinNode()));
-        List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWidth() > config.getFilterEdge()).collect(Collectors.toList());
+        nodeList.forEach(node -> node.getFont().setSize(config.getWordNodeSize()));
+        List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWidth() > config.getWordFilterEdge()).collect(Collectors.toList());
         List<Edge> filteredBadEdges = filteredEdges.stream().filter(edge -> nodeList.stream().anyMatch(dst -> dst.getId().equals(edge.getTo()) &&
                 nodeList.stream().anyMatch(src -> src.getId().equals(edge.getFrom()) && (!dst.getId().equals(src.getId()))))).collect(Collectors.toList());
         List<Node> filteredBadNodes = nodeList.stream().filter(node -> filteredBadEdges.stream().anyMatch(edge -> edge.getFrom().equals(node.getId()) || edge.getTo().equals(node.getId()))).collect(Collectors.toList());
