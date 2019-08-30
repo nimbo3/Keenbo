@@ -90,7 +90,7 @@ public class KafkaServiceImpl implements KafkaService {
             service.interrupt();
         }
         try {
-            countDownLatch.await(1, TimeUnit.MINUTES);
+            countDownLatch.await();
             logger.info("All service stopped");
             try (KafkaProducer<String, Page> producer = new KafkaProducer<>(config.getPageProducerProperties())) {
                 logger.info("Start sending {} messages from local page queue to kafka", messageQueue.size());
