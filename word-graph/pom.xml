@@ -61,6 +61,12 @@
             <artifactId>elasticsearch-spark-20_2.11</artifactId>
             <version>${elastic.version}</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.vdurmont</groupId>
+            <artifactId>emoji-java</artifactId>
+            <version>5.1.0</version>
+        </dependency>
     </dependencies>
 
     <build>
