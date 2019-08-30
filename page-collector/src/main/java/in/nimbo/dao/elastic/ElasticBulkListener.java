@@ -9,14 +9,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ElasticBulkListener implements BulkProcessor.Listener {
     private Logger logger = LoggerFactory.getLogger("collector");
     private ElasticDAO elasticDAO;
-    private CopyOnWriteArrayList<Page> backupPages;
+    private List<Page> backupPages;
 
-    public ElasticBulkListener(CopyOnWriteArrayList<Page> backupPages) {
+    public ElasticBulkListener(List<Page> backupPages) {
         this.backupPages = backupPages;
     }
 
@@ -57,9 +56,11 @@ public class ElasticBulkListener implements BulkProcessor.Listener {
     @Override
     public void afterBulk(long executionId, BulkRequest bulkRequest, Throwable throwable) {
         logger.error("Failed to execute bulk {}", executionId, throwable);
-        for (Page page : backupPages) {
-            elasticDAO.save(page);
+        if (!(throwable instanceof java.lang.InterruptedException)) {
+            for (Page page : backupPages) {
+                elasticDAO.save(page);
+            }
+            logger.info("Retry all {} requests again", bulkRequest.numberOfActions());
         }
-        logger.info("Retry all {} requests again", bulkRequest.numberOfActions());
     }
 }
