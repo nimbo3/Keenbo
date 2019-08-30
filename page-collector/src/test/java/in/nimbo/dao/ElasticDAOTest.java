@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
@@ -28,7 +29,7 @@ import static org.junit.Assert.assertTrue;
 public class ElasticDAOTest {
     private static ElasticDAO elasticDAO;
     private static RestHighLevelClient client;
-    private static List<Page> backupPages;
+    private static CopyOnWriteArrayList<Page> backupPages;
 
     @BeforeClass
     public static void init() throws IOException {
@@ -38,7 +39,7 @@ public class ElasticDAOTest {
         elasticConfig.setBulkSize(1);
         elasticConfig.setIndexName("test-index");
 
-        backupPages = new ArrayList<>();
+        backupPages = new CopyOnWriteArrayList<>();
         client = App.initializeElasticSearchClient(elasticConfig);
         ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
         BulkProcessor bulkProcessor = App.initializeElasticSearchBulk(elasticConfig, client, elasticBulkListener);

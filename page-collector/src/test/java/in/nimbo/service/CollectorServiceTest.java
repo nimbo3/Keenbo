@@ -7,12 +7,13 @@ import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
-import org.elasticsearch.ElasticsearchException;
+import in.nimbo.service.keyword.KeywordExtractorService;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -51,7 +52,8 @@ public class CollectorServiceTest {
 
     @Test
     public void handleTest() {
-        doNothing().when(hBaseDAO).add(pages);
+        doNothing().when(hBaseDAO).add(pages, true);
+        doNothing().when(hBaseDAO).add(pages, false);
         for (Page page : pages) {
             doNothing().when(elasticDAO).save(page);
         }
@@ -60,7 +62,8 @@ public class CollectorServiceTest {
 
     @Test
     public void handleWithEmptyAnchorTest() {
-        doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor);
+        doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor, true);
+        doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor, false);
         for (Page page : pagesWithEmptyAnchor) {
             doNothing().when(elasticDAO).save(page);
         }
@@ -69,7 +72,8 @@ public class CollectorServiceTest {
 
     @Test
     public void handleWithoutSaveToHBase() {
-        doThrow(HBaseException.class).when(hBaseDAO).add(pages);
+        doThrow(HBaseException.class).when(hBaseDAO).add(pages, true);
+        doThrow(HBaseException.class).when(hBaseDAO).add(pages, false);
         for (Page page : pages) {
             doNothing().when(elasticDAO).save(page);
         }
@@ -78,7 +82,8 @@ public class CollectorServiceTest {
 
     @Test
     public void handleWithElasticException() {
-        doNothing().when(hBaseDAO).add(pages);
+        doNothing().when(hBaseDAO).add(pages, true);
+        doNothing().when(hBaseDAO).add(pages, false);
         for (Page page : pages) {
             doThrow(ElasticException.class).when(elasticDAO).save(page);
         }

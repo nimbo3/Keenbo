@@ -3,6 +3,7 @@ package in.nimbo.service;
 import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.config.HBaseSiteConfig;
 import in.nimbo.common.utility.LinkUtility;
+import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.SiteGraphConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
@@ -33,9 +34,9 @@ public class SiteExtractor {
     private SiteExtractor() {
     }
 
-    public static void extract(HBasePageConfig hBasePageConfig, HBaseSiteConfig hBaseSiteConfig,
-                               SiteGraphConfig siteGraphConfig, SparkSession spark) {
-        String siteTable = hBaseSiteConfig.getSiteTable();
+    public static Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaPairRDD<ImmutableBytesWritable, Put>>
+    extract(HBasePageConfig hBasePageConfig, HBaseSiteConfig hBaseSiteConfig,
+            SparkSession spark, JavaRDD<Result> hBaseRDD) {
         byte[] infoColumnFamily = hBaseSiteConfig.getInfoColumnFamily();
         byte[] domainColumnFamily = hBaseSiteConfig.getDomainColumnFamily();
         byte[] countColumn = hBaseSiteConfig.getCountColumn();
@@ -44,18 +45,6 @@ public class SiteExtractor {
         byte[] dataColumnFamily = hBasePageConfig.getDataColumnFamily();
         byte[] pageRankColumn = hBasePageConfig.getRankColumn();
         byte[] anchorColumnFamily = hBasePageConfig.getAnchorColumnFamily();
-
-        Configuration hBaseConfiguration = HBaseConfiguration.create();
-        hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
-        hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBasePageConfig.getPageTable());
-        hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, siteGraphConfig.getScanBatchSize());
-
-        JavaRDD<Result> hBaseRDD = spark.sparkContext()
-                .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
-                        , ImmutableBytesWritable.class, Result.class).toJavaRDD()
-                .map(tuple -> tuple._2);
-        hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
 
         JavaRDD<Node> nodes = hBaseRDD
                 .map(result -> result.getColumnLatestCell(dataColumnFamily, pageRankColumn))
@@ -116,23 +105,6 @@ public class SiteExtractor {
             return new Tuple2<>(new ImmutableBytesWritable(), put);
         });
 
-        try {
-            Job jobConf = Job.getInstance();
-            jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, siteTable);
-            jobConf.setOutputFormatClass(TableOutputFormat.class);
-            jobConf.getConfiguration().set("mapreduce.output.fileoutputformat.outputdir", "/tmp");
-            verticesPut.saveAsNewAPIHadoopDataset(jobConf.getConfiguration());
-
-            jobConf = Job.getInstance();
-            jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, siteTable);
-            jobConf.setOutputFormatClass(TableOutputFormat.class);
-            jobConf.getConfiguration().set("mapreduce.output.fileoutputformat.outputdir", "/tmp");
-            edgesSCCPut.saveAsNewAPIHadoopDataset(jobConf.getConfiguration());
-        } catch (IOException e) {
-            System.out.println("Unable to save to HBase");
-            e.printStackTrace(System.out);
-        }
-
-        spark.stop();
+        return new Tuple2<>(verticesPut, edgesSCCPut);
     }
 }

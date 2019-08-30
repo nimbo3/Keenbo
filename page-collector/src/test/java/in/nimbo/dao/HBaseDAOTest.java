@@ -7,6 +7,7 @@ import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
+import in.nimbo.service.keyword.KeywordExtractorService;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -63,7 +64,7 @@ public class HBaseDAOTest {
         Page page = new Page("http://www.google.com/", "Google", "content", anchors, metas, 100.0);
         List<Page> pages = new ArrayList<>();
         pages.add(page);
-        hBaseDAO.add(pages);
+        hBaseDAO.add(pages, true);
         assertTrue(hBaseDAO.contains(LinkUtility.reverseLink(page.getLink())));
     }
 
