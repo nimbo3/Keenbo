@@ -56,8 +56,11 @@ public class SearchController {
         if (siteGraph != null) {
             return siteGraph;
         }
-        String wordGraphJson = FileUtility.readFileFromResource("site-graph");
-        GraphResponse graphResponse = new Gson().fromJson(wordGraphJson, new TypeToken<GraphResponse>(){}.getType());
+        String siteGraphNodesJson = FileUtility.readFileFromResource("site-graph-vertices");
+        List<Node> nodesList = new Gson().fromJson(siteGraphNodesJson, new TypeToken<List<Node>>(){}.getType());
+        String siteGraphEdgesJson = FileUtility.readFileFromResource("site-graph-edges");
+        List<Edge> edgesList = new Gson().fromJson(siteGraphEdgesJson, new TypeToken<List<Node>>(){}.getType());
+        GraphResponse graphResponse = new GraphResponse(nodesList, edgesList);
         List<Node> nodeList = graphResponse.getNodes();
         List<Node> filteredNodes = nodeList.stream().filter(node -> node.getFont().getSize() > config.getFilterNode()).collect(Collectors.toList());
         List<Edge> edges = graphResponse.getEdges();
@@ -79,8 +82,11 @@ public class SearchController {
         if (wordGraph != null) {
             return wordGraph;
         }
-        String wordGraphJson = FileUtility.readFileFromResource("word-graph");
-        GraphResponse graphResponse = new Gson().fromJson(wordGraphJson, new TypeToken<GraphResponse>(){}.getType());
+        String wordGraphNodesJson = FileUtility.readFileFromResource("word-graph-vertices");
+        List<Node> nodesList = new Gson().fromJson(wordGraphNodesJson, new TypeToken<List<Node>>(){}.getType());
+        String wordGraphEdgesJson = FileUtility.readFileFromResource("word-graph-edges");
+        List<Edge> edgesList = new Gson().fromJson(wordGraphEdgesJson, new TypeToken<List<Node>>(){}.getType());
+        GraphResponse graphResponse = new GraphResponse(nodesList, edgesList);
         List<Node> nodeList = graphResponse.getNodes();
         List<Edge> edges = graphResponse.getEdges();
         nodeList.forEach(node -> node.getFont().setSize(config.getMinNode()));
