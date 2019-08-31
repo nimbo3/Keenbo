@@ -5,7 +5,6 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.config.ShufflerConfig;
-import in.nimbo.redis.RedisDAO;
 import in.nimbo.service.ShufflerService;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -23,17 +22,15 @@ public class KafkaServiceImpl implements KafkaService {
     private Logger logger = LoggerFactory.getLogger("shuffler");
     private KafkaConfig config;
     private ShufflerConfig shufflerConfig;
-    private RedisDAO redisDAO;
     private List<String> shuffleList;
     private ShufflerService shufflerService;
     private Thread shufflerServiceThread;
 
     private CountDownLatch countDownLatch;
 
-    public KafkaServiceImpl(KafkaConfig kafkaConfig, ShufflerConfig shufflerConfig, RedisDAO redisDAO) {
+    public KafkaServiceImpl(KafkaConfig kafkaConfig, ShufflerConfig shufflerConfig) {
         this.config = kafkaConfig;
         this.shufflerConfig = shufflerConfig;
-        this.redisDAO = redisDAO;
         countDownLatch = new CountDownLatch(1);
         shuffleList = new ArrayList<>();
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
@@ -51,8 +48,7 @@ public class KafkaServiceImpl implements KafkaService {
         KafkaConsumer<String, String> shufflerConsumer = new KafkaConsumer<>(config.getShufflerConsumerProperties());
         KafkaProducer<String, String> linkProducer = new KafkaProducer<>(config.getLinkProducerProperties());
         shufflerConsumer.subscribe(Collections.singletonList(config.getShufflerTopic()));
-        shufflerService = new ShufflerService(config, shufflerConfig, redisDAO,
-                shufflerConsumer, linkProducer, shuffleList, countDownLatch);
+        shufflerService = new ShufflerService(config, shufflerConfig, shufflerConsumer, linkProducer, shuffleList, countDownLatch);
         shufflerServiceThread = new Thread(shufflerService);
         shufflerServiceThread.start();
     }
