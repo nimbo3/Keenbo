@@ -153,7 +153,7 @@ public class CrawlerServiceTest {
 
     @Test(expected = ParseLinkException.class)
     public void getPageLanguageDetectExceptionTest() {
-        doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString());
+        doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString(), anyDouble());
         Page returnedPage = parserService.getPage(link);
         Assert.fail();
     }
