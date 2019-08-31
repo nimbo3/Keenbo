@@ -15,30 +15,14 @@ import in.nimbo.common.service.ParserService;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.ClassifierConfig;
 import in.nimbo.entity.Category;
-import in.nimbo.entity.Data;
-import in.nimbo.service.*;
-import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.Producer;
+import in.nimbo.service.ClassifierService;
+import in.nimbo.service.CrawlerService;
+import in.nimbo.service.kafka.KafkaServiceImpl;
 import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.ml.classification.NaiveBayes;
-import org.apache.spark.ml.classification.NaiveBayesModel;
-import org.apache.spark.ml.feature.HashingTF;
-import org.apache.spark.ml.feature.IDF;
-import org.apache.spark.ml.feature.IDFModel;
-import org.apache.spark.ml.feature.Tokenizer;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
-import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
-import scala.Tuple2;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -76,19 +60,12 @@ public class App {
         BlockingQueue<Link> queue = new ArrayBlockingQueue<>(classifierConfig.getCrawlerQueueSize());
         CrawlerService.fillInitialCrawlQueue(queue, categories);
 
-        Producer<String, Link> producer = new KafkaProducer<>(kafkaConfig.getTrainingProducerProperties());
-        Consumer<String, Link> consumer = new KafkaConsumer<>(kafkaConfig.getTrainingConsumerProperties());
-        consumer.subscribe(Collections.singleton(kafkaConfig.getTrainingTopic()));
-
         ParserService parserService = new ParserService(projectConfig);
         CrawlerService crawlerService = new CrawlerService(politenessCache, crawlerCache, parserService, elasticDAO, labelMap);
-        KafkaConsumerService consumerService = new KafkaConsumerService(queue, kafkaConfig, consumer);
-        KafkaProducerService producerService = new KafkaProducerService(kafkaConfig, producer);
-        SampleExtractor sampleExtractor = new SampleExtractor(crawlerService, queue, domains, classifierConfig, producerService);
-        ScheduleService scheduleService = new ScheduleService(sampleExtractor, consumerService, classifierConfig);
-        scheduleService.schedule();
+        KafkaServiceImpl kafkaService = new KafkaServiceImpl(kafkaConfig, classifierConfig, crawlerService);
+        kafkaService.schedule();
 
-        Runtime.getRuntime().addShutdownHook(new Thread(scheduleService::stop));
+        Runtime.getRuntime().addShutdownHook(new Thread(kafkaService::stopSchedule));
     }
 
     private static void runClassifier(ClassifierConfig classifierConfig) {
