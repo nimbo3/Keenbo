@@ -102,11 +102,6 @@
             <artifactId>elasticsearch-spark-20_2.11</artifactId>
             <version>${spark.elastic.version}</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.spark</groupId>
-            <artifactId>spark-mllib_2.11</artifactId>
-            <version>${spark.version}</version>
-        </dependency>
 
         <!--Producer/Consumer API of Apache Kafka-->
         <dependency>
