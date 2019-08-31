@@ -70,7 +70,7 @@ public class CrawlerServiceTest {
         Document document = Jsoup.parse(input, "UTF-8");
         documentWithoutTitle = Jsoup.parse(inputWithoutTitle, "UTF-8");
         when(parserService.getDocument(link)).thenReturn(Optional.of(document));
-        doReturn(true).when(parserService).isEnglishLanguage(anyString());
+        doReturn(true).when(parserService).isEnglishLanguage(anyString(), anyDouble());
         cache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
                 .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         crawlerService = spy(new CrawlerService(cache, redisDAO, parserService));
