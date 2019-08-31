@@ -8,13 +8,13 @@ import in.nimbo.common.entity.Link;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
 import in.nimbo.common.service.ParserService;
+import in.nimbo.common.utility.FileUtility;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.entity.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -75,15 +75,9 @@ public class CrawlerService {
     }
 
     public static List<Category> loadFeed(ObjectMapper mapper) throws IOException {
-        InputStream resourceAsStream = Thread.currentThread().getContextClassLoader().getResourceAsStream("first-feed.json");
-        Scanner scanner = new Scanner(resourceAsStream);
-        StringBuilder stringBuilder = new StringBuilder("");
-        while (scanner.hasNextLine()) {
-            stringBuilder.append(scanner.nextLine());
-        }
-        String json = stringBuilder.toString();
+        String firstFeed = FileUtility.readFileFromResource("first-feed.json");
         CollectionType collectionType = mapper.getTypeFactory().constructCollectionType(List.class, Category.class);
-        return mapper.readValue(json, collectionType);
+        return mapper.readValue(firstFeed, collectionType);
     }
 
     public static List<String> loadDomains(List<Category> categories) {
