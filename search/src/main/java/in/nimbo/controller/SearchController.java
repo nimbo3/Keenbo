@@ -2,7 +2,6 @@ package in.nimbo.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import in.nimbo.common.utility.FileUtility;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.redis.LabelDAO;
