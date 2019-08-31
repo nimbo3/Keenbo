@@ -90,6 +90,15 @@ public class App {
                 return result;
             }), transformer);
 
+            Spark.post("/alert", (request, response) -> {
+                Process process = Runtime.getRuntime().exec("/root/send.sh");
+                Scanner scanner = new Scanner(process.getInputStream());
+                while (scanner.hasNextLine()) {
+                    System.out.println(scanner.nextLine());
+                }
+                return "ok";
+            });
+
             Spark.post("/auth/login", ((request, response) -> {
                 String username = request.queryParams("username");
                 username = username != null ? username : "";
