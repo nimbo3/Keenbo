@@ -26,7 +26,7 @@ public class App {
         HBaseSiteConfig hBaseSiteConfig = HBaseSiteConfig.load();
         HBasePageConfig hBasePageConfig = HBasePageConfig.load();
 
-        SparkSession spark = loadSpark(siteGraphConfig.getAppName(), true);
+        SparkSession spark = loadSpark(siteGraphConfig.getAppName(), false);
 
         if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.EXTRACTOR) {
             JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBasePageConfig.getPageTable());

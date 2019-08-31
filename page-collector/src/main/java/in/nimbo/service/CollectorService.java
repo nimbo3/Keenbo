@@ -5,7 +5,6 @@ import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.service.keyword.KeywordExtractorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,17 +15,19 @@ public class CollectorService {
     private Logger logger = LoggerFactory.getLogger("collector");
     private HBaseDAO hBaseDAO;
     private ElasticDAO elasticDAO;
+    private boolean extractKeyword;
 
-    public CollectorService(HBaseDAO hBaseDAO, ElasticDAO elasticDAO) {
+    public CollectorService(HBaseDAO hBaseDAO, ElasticDAO elasticDAO, boolean extractKeyword) {
         this.hBaseDAO = hBaseDAO;
         this.elasticDAO = elasticDAO;
+        this.extractKeyword = extractKeyword;
     }
 
     public boolean processList(List<Page> bufferList) {
         List<Page> filtered = bufferList.stream().filter(page -> !page.getAnchors().isEmpty()).collect(Collectors.toList());
         try {
             logger.info("Start adding {} pages to HBase", filtered.size());
-            hBaseDAO.add(filtered, true);
+            hBaseDAO.add(filtered, extractKeyword);
             logger.info("Finish adding {} pages to HBase", filtered.size());
             logger.info("Start adding {} pages to Elasticsearch", filtered.size());
             for (Page page : bufferList) {

@@ -1,32 +1,20 @@
 package in.nimbo;
 
 import in.nimbo.common.config.HBasePageConfig;
-import in.nimbo.common.utility.LinkUtility;
+import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.PageRankConfig;
-import in.nimbo.entity.Edge;
-import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import in.nimbo.service.PageRankExtractor;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
-import org.apache.hadoop.hbase.mapreduce.TableOutputFormat;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.hadoop.mapreduce.Job;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
 import org.apache.spark.storage.StorageLevel;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
-import org.graphframes.GraphFrame;
 import scala.Tuple2;
-
-import java.io.IOException;
 
 public class App {
     public static void main(String[] args) {
@@ -35,23 +23,24 @@ public class App {
         String esIndex = pageRankConfig.getEsIndex();
         String esType = pageRankConfig.getEsType();
 
-        byte[] dataColumnFamily = hBasePageConfig.getDataColumnFamily();
-        byte[] rankColumn = hBasePageConfig.getRankColumn();
-        byte[] anchorColumnFamily = hBasePageConfig.getAnchorColumnFamily();
+        SparkSession spark = loadSpark(pageRankConfig.getAppName(), false);
+        spark.sparkContext().conf().set("es.nodes", esIndex);
+        spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
+        spark.sparkContext().conf().set("es.mapping.id", "id");
+        spark.sparkContext().conf().set("es.index.auto.create", pageRankConfig.getEsIndexAutoCreate());
 
-        Configuration hBaseConfiguration = HBaseConfiguration.create();
-        hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
-        hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBasePageConfig.getPageTable());
+        JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBasePageConfig.getPageTable());
+        hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
+        Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaRDD<Page>> extract =
+                PageRankExtractor.extract(hBasePageConfig, pageRankConfig, spark, hBaseRDD);
+        SparkUtility.saveToHBase(hBasePageConfig.getPageTable(), extract._1);
+        JavaEsSpark.saveToEs(extract._2, esIndex + "/" + esType);
+        spark.stop();
+    }
 
-        SparkSession spark = SparkSession.builder()
-                .config("spark.hadoop.validateOutputSpecs", false)
-                .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-                .config("spark.kryoserializer.buffer", "1024k")
-                .appName(pageRankConfig.getAppName())
-                .getOrCreate();
-
-        spark.sparkContext().conf().registerKryoClasses(new Class[]{
+    public static SparkSession loadSpark(String appName, boolean isLocal) {
+        SparkSession spark = SparkUtility.getSpark(appName, isLocal);
+        SparkUtility.registerKryoClasses(spark, new Class[]{
                 in.nimbo.common.utility.LinkUtility.class, in.nimbo.common.exception.ParseLinkException.class, in.nimbo.common.entity.Anchor.class,
                 in.nimbo.common.config.Config.class, HBasePageConfig.class, in.nimbo.common.utility.CloseUtility.class,
                 in.nimbo.common.config.RedisConfig.class, in.nimbo.common.config.ElasticConfig.class, in.nimbo.common.entity.Page.class,
@@ -61,67 +50,9 @@ public class App {
                 in.nimbo.common.exception.LanguageDetectException.class, in.nimbo.common.exception.ReverseLinkException.class,
                 in.nimbo.common.exception.HBaseException.class, in.nimbo.common.exception.HashException.class,
                 in.nimbo.common.config.KafkaConfig.class, in.nimbo.common.config.ProjectConfig.class, in.nimbo.entity.Edge.class,
-                in.nimbo.entity.Page.class, in.nimbo.entity.Node.class, in.nimbo.App.class, in.nimbo.config.PageRankConfig.class
-        });
-
-        spark.sparkContext().conf().set("spark.speculation", "false");
-        spark.sparkContext().conf().set("spark.hadoop.mapreduce.map.speculative", "false");
-        spark.sparkContext().conf().set("spark.hadoop.mapreduce.reduce.speculative", "false");
-        spark.sparkContext().conf().set("spark.kryo.registrationRequired", "true");
-        spark.sparkContext().conf().set("es.nodes", pageRankConfig.getEsNodes());
-        spark.sparkContext().conf().set("es.write.operation", pageRankConfig.getEsWriteOperation());
-        spark.sparkContext().conf().set("es.mapping.id", "id");
-        spark.sparkContext().conf().set("es.index.auto.create", pageRankConfig.getEsIndexAutoCreate());
-
-        JavaRDD<Result> hBaseRDD = spark.sparkContext()
-                .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class,
-                        ImmutableBytesWritable.class, Result.class).toJavaRDD()
-                .map(tuple -> tuple._2);
-        hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
-
-        JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));
-        JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
-                .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
-                .map(cell -> new Edge(
-                        Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
-                        LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()))
-                ));
-        hBaseRDD.unpersist();
-
-        Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
-        Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
-        edgeDF.repartition(32);
-        GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
-        GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).resetProbability(pageRankConfig.getResetProbability()).run();
-        JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
-        pageRankRdd.persist(StorageLevel.MEMORY_AND_DISK());
-
-        JavaPairRDD<ImmutableBytesWritable, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
-            Put put = new Put(Bytes.toBytes(row.getString(0)));
-            put.addColumn(dataColumnFamily, rankColumn, Bytes.toBytes(String.valueOf(row.getDouble(1))));
-            return new Tuple2<>(new ImmutableBytesWritable(), put);
-        });
-
-        JavaRDD<Page> esPageJavaRDD = pageRankRdd
-                .map(row -> new Page(
-                        LinkUtility.hashLink(LinkUtility.reverseLink(row.getString(0))),
-                        row.getDouble(1)));
-
-        pageRankRdd.unpersist();
-
-        try {
-            Job jobConf = Job.getInstance();
-            jobConf.getConfiguration().set(TableOutputFormat.OUTPUT_TABLE, hBasePageConfig.getPageTable());
-            jobConf.setOutputFormatClass(TableOutputFormat.class);
-            jobConf.getConfiguration().set("mapreduce.output.fileoutputformat.outputdir", "/tmp");
-            javaPairRDD.saveAsNewAPIHadoopDataset(jobConf.getConfiguration());
-        } catch (IOException e) {
-            System.out.println("Unable to save to HBase");
-            e.printStackTrace(System.out);
-        }
-
-        JavaEsSpark.saveToEs(esPageJavaRDD, esIndex + "/" + esType);
-
-        spark.stop();
+                in.nimbo.entity.Page.class, in.nimbo.entity.Node.class, in.nimbo.App.class, in.nimbo.config.PageRankConfig.class,
+                org.apache.hadoop.hbase.client.Result.class, org.apache.hadoop.hbase.io.ImmutableBytesWritable.class,
+                TableInputFormat.class, in.nimbo.common.entity.GraphResult.class});
+        return spark;
     }
 }

@@ -69,7 +69,7 @@ public class ProducerServiceImpl implements ProducerService {
                 }
             }
         } catch (InterruptedException e) {
-            // ignored
+            logger.info("Page Producer service interrupted successfully");
         } finally {
             CloseUtility.closeSafely(pageProducer);
             logger.info("Page Producer service stopped successfully");
