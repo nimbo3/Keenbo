@@ -12,6 +12,7 @@ import in.nimbo.common.utility.CloseUtility;
 import in.nimbo.service.CrawlerService;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.InterruptException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,8 +60,8 @@ public class ProducerServiceImpl implements ProducerService {
                 handleLink(newLink);
                 allLinksCounter.inc();
             }
-        } catch (InterruptedException e) {
-            // ignored
+        } catch (InterruptedException | InterruptException e) {
+            logger.info("Page Producer service interrupted successfully");
         } finally {
             CloseUtility.closeSafely(pageProducer);
             CloseUtility.closeSafely(shufflerProducer);
