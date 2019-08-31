@@ -3,11 +3,12 @@ package in.nimbo.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.github.benmanes.caffeine.cache.Cache;
+import in.nimbo.common.dao.elastic.ElasticDAO;
+import in.nimbo.common.entity.Link;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
+import in.nimbo.common.service.ParserService;
 import in.nimbo.common.utility.LinkUtility;
-import in.nimbo.dao.ElasticDAO;
-import in.nimbo.common.entity.Link;
 import in.nimbo.entity.Category;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,10 +25,11 @@ public class CrawlerService {
     private Cache<String, LocalDateTime> crawlerCache;
     private ParserService parserService;
     private ElasticDAO elasticDao;
-    private Map<String, Integer> labelMap;
+    private Map<String, Double> labelMap;
     private Logger appLogger = LoggerFactory.getLogger("classifier");
 
-    public CrawlerService(Cache<String, LocalDateTime> politenessCache, Cache<String, LocalDateTime> crawlerCache, ParserService parserService, ElasticDAO elasticDao, Map<String, Integer> labelMap) {
+    public CrawlerService(Cache<String, LocalDateTime> politenessCache, Cache<String, LocalDateTime> crawlerCache,
+                          ParserService parserService, ElasticDAO elasticDao, Map<String, Double> labelMap) {
         this.politenessCache = politenessCache;
         this.crawlerCache = crawlerCache;
         this.parserService = parserService;
@@ -46,7 +48,7 @@ public class CrawlerService {
                 politenessCache.put(domain, now);
                 crawlerCache.put(url, now);
                 Page page = parserService.getPage(url);
-                elasticDao.save(page, labelMap.get(link.getLabel()));
+                elasticDao.save(page, labelMap.get(link.getLabel()), false);
                 return Optional.of(page);
             } else if (isDuplicate) {
                 appLogger.info("Skip link {} because crawled before", url);
@@ -92,10 +94,12 @@ public class CrawlerService {
         return domains;
     }
 
-    public static Map<String, Integer> loadLabels(List<Category> categories) {
-        Map<String, Integer> map = new HashMap<>();
+    public static Map<String, Double> loadLabels(List<Category> categories) {
+        Map<String, Double> map = new HashMap<>();
+        double mapId = 0;
         for (Category category : categories) {
-            map.put(category.getName(), map.size());
+            map.put(category.getName(), mapId);
+            mapId++;
         }
         return map;
     }

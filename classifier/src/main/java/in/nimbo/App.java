@@ -8,11 +8,11 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
+import in.nimbo.common.dao.elastic.ElasticDAO;
+import in.nimbo.common.dao.elastic.ElasticDAOImpl;
 import in.nimbo.common.entity.Link;
-import in.nimbo.common.exception.LoadConfigurationException;
+import in.nimbo.common.service.ParserService;
 import in.nimbo.config.ClassifierConfig;
-import in.nimbo.dao.ElasticDAO;
-import in.nimbo.dao.ElasticDAOImpl;
 import in.nimbo.entity.Category;
 import in.nimbo.entity.Data;
 import in.nimbo.service.*;
@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class App {
@@ -65,11 +66,11 @@ public class App {
         ElasticConfig elasticConfig = ElasticConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
 
-        ElasticDAO elasticDAO = ElasticDAOImpl.create(elasticConfig);
+        ElasticDAO elasticDAO = ElasticDAOImpl.createElasticDAO(elasticConfig, new CopyOnWriteArrayList<>());
 
         ObjectMapper mapper = new ObjectMapper();
         List<Category> categories = CrawlerService.loadFeed(mapper);
-        Map<String, Integer> labelMap = CrawlerService.loadLabels(categories);
+        Map<String, Double> labelMap = CrawlerService.loadLabels(categories);
         List<String> domains = CrawlerService.loadDomains(categories);
         BlockingQueue<Link> queue = new ArrayBlockingQueue<>(classifierConfig.getCrawlerQueueSize());
         CrawlerService.fillInitialCrawlQueue(queue, categories);

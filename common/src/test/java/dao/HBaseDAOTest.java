@@ -1,13 +1,12 @@
-package in.nimbo.dao;
+package dao;
 
 import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.utility.LinkUtility;
-import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.dao.hbase.HBaseDAOImpl;
+import in.nimbo.common.dao.hbase.HBaseDAO;
+import in.nimbo.common.dao.hbase.HBaseDAOImpl;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
-import in.nimbo.service.keyword.KeywordExtractorService;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;

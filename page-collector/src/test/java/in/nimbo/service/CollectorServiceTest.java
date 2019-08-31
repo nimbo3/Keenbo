@@ -5,8 +5,8 @@ import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
-import in.nimbo.dao.elastic.ElasticDAO;
-import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.common.dao.elastic.ElasticDAO;
+import in.nimbo.common.dao.hbase.HBaseDAO;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -53,7 +53,7 @@ public class CollectorServiceTest {
         doNothing().when(hBaseDAO).add(pages, true);
         doNothing().when(hBaseDAO).add(pages, false);
         for (Page page : pages) {
-            doNothing().when(elasticDAO).save(page);
+            doNothing().when(elasticDAO).save(page, true);
         }
         Assert.assertTrue(collectorService.processList(pages));
     }
@@ -63,7 +63,7 @@ public class CollectorServiceTest {
         doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor, true);
         doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor, false);
         for (Page page : pagesWithEmptyAnchor) {
-            doNothing().when(elasticDAO).save(page);
+            doNothing().when(elasticDAO).save(page, true);
         }
         Assert.assertTrue(collectorService.processList(pagesWithEmptyAnchor));
     }
@@ -73,7 +73,7 @@ public class CollectorServiceTest {
         doThrow(HBaseException.class).when(hBaseDAO).add(pages, true);
         doThrow(HBaseException.class).when(hBaseDAO).add(pages, false);
         for (Page page : pages) {
-            doNothing().when(elasticDAO).save(page);
+            doNothing().when(elasticDAO).save(page, true);
         }
         Assert.assertFalse(collectorService.processList(pages));
     }
@@ -83,7 +83,7 @@ public class CollectorServiceTest {
         doNothing().when(hBaseDAO).add(pages, true);
         doNothing().when(hBaseDAO).add(pages, false);
         for (Page page : pages) {
-            doThrow(ElasticException.class).when(elasticDAO).save(page);
+            doThrow(ElasticException.class).when(elasticDAO).save(page, true);
         }
         Assert.assertFalse(collectorService.processList(pages));
     }

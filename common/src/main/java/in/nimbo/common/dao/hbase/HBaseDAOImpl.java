@@ -1,10 +1,10 @@
-package in.nimbo.dao.hbase;
+package in.nimbo.common.dao.hbase;
 
 import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.HBaseException;
-import in.nimbo.service.keyword.KeywordExtractorService;
+import in.nimbo.common.service.KeywordExtractorService;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;

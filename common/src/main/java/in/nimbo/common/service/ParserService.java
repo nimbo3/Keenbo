@@ -1,4 +1,4 @@
-package in.nimbo.service;
+package in.nimbo.common.service;
 
 import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;

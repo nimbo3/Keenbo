@@ -3,8 +3,8 @@ package in.nimbo.service;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
-import in.nimbo.dao.elastic.ElasticDAO;
-import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.common.dao.elastic.ElasticDAO;
+import in.nimbo.common.dao.hbase.HBaseDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,7 +31,7 @@ public class CollectorService {
             logger.info("Finish adding {} pages to HBase", filtered.size());
             logger.info("Start adding {} pages to Elasticsearch", filtered.size());
             for (Page page : bufferList) {
-                elasticDAO.save(page);
+                elasticDAO.save(page, true);
             }
             logger.info("Finish adding {} pages to Elasticsearch", filtered.size());
             return true;

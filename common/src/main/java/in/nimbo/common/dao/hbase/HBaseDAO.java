@@ -1,8 +1,7 @@
-package in.nimbo.dao.hbase;
+package in.nimbo.common.dao.hbase;
 
 import in.nimbo.common.exception.HBaseException;
 import in.nimbo.common.entity.Page;
-import in.nimbo.service.keyword.KeywordExtractorService;
 
 import java.io.IOException;
 import java.util.List;

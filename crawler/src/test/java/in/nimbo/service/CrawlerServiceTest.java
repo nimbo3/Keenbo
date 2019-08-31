@@ -10,6 +10,7 @@ import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
 import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.common.exception.ParseLinkException;
+import in.nimbo.common.service.ParserService;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.redis.RedisDAO;
 import org.jsoup.Jsoup;
@@ -20,7 +21,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;

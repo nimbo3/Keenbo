@@ -8,6 +8,7 @@ import com.github.benmanes.caffeine.cache.Cache;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
 import in.nimbo.common.exception.ParseLinkException;
+import in.nimbo.common.service.ParserService;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.redis.RedisDAO;
 import org.slf4j.Logger;

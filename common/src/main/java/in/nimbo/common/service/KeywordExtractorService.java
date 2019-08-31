@@ -1,4 +1,4 @@
-package in.nimbo.service.keyword;
+package in.nimbo.common.service;
 
 import edu.stanford.nlp.simple.Sentence;
 
