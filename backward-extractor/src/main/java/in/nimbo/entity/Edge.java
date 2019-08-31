@@ -36,13 +36,4 @@ public class Edge {
     public void setAnchor(String anchor) {
         this.anchor = anchor;
     }
-
-    @Override
-    public String toString() {
-        return "Edge{" +
-                "src='" + src + '\'' +
-                ", dst='" + dst + '\'' +
-                ", anchor='" + anchor + '\'' +
-                '}';
-    }
 }

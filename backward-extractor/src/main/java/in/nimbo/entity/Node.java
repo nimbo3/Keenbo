@@ -16,11 +16,4 @@ public class Node {
     public void setId(String id) {
         this.id = id;
     }
-
-    @Override
-    public String toString() {
-        return "Node{" +
-                "id='" + id + '\'' +
-                '}';
-    }
 }
