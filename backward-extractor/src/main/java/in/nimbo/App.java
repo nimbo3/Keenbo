@@ -1,86 +1,55 @@
 package in.nimbo;
 
 import in.nimbo.common.config.HBasePageConfig;
-import in.nimbo.common.utility.LinkUtility;
+import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.BackwardExtractorConfig;
-import in.nimbo.entity.Edge;
-import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import in.nimbo.service.BackwardExtractorService;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
-import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.storage.StorageLevel;
 import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
-import org.graphframes.GraphFrame;
-
-import static org.apache.spark.sql.functions.collect_set;
-import static org.apache.spark.sql.functions.count;
-
 
 public class App {
     public static void main(String[] args) {
         BackwardExtractorConfig backwardExtractorConfig = BackwardExtractorConfig.load();
         HBasePageConfig hBasePageConfig = HBasePageConfig.load();
+        String esIndex = backwardExtractorConfig.getEsIndexName();
+        String esType = backwardExtractorConfig.getEsType();
 
-        byte[] anchorColumnFamily = hBasePageConfig.getAnchorColumnFamily();
-
-        Configuration hBaseConfiguration = HBaseConfiguration.create();
-        hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
-        hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBasePageConfig.getPageTable());
-        hBaseConfiguration.set(TableInputFormat.SCAN_BATCHSIZE, backwardExtractorConfig.getScanBatchSize());
-
-        SparkSession spark = SparkSession.builder()
-                .appName(backwardExtractorConfig.getAppName())
-                .getOrCreate();
-        spark.sparkContext().conf().set("es.nodes", backwardExtractorConfig.getNodesIP());
+        SparkSession spark = loadSpark(backwardExtractorConfig.getAppName(), false);
+        spark.sparkContext().conf().set("es.nodes", esIndex);
         spark.sparkContext().conf().set("es.write.operation", "upsert");
         spark.sparkContext().conf().set("es.mapping.id", "id");
-        spark.sparkContext().conf().set("es.index.auto.create", backwardExtractorConfig.getEsCreateIndex());
+        spark.sparkContext().conf().set("es.index.auto.create", "auto");
 
-        JavaRDD<Result> hBaseRDD = spark.sparkContext()
-                .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
-                        , ImmutableBytesWritable.class, Result.class).toJavaRDD()
-                .map(tuple -> tuple._2);
-
-        JavaRDD<Node> nodes = hBaseRDD
-                .map(result -> new Node(Bytes.toString(result.getRow())));
-
-        JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
-                .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
-                .map(cell -> {
-                    String rowKey = Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
-                    String anchorLink = Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength());
-                    int index = anchorLink.indexOf('#');
-                    if (index != -1) {
-                        anchorLink = anchorLink.substring(0, index);
-                    }
-                    String value = Bytes.toString(cell.getValueArray(), cell.getValueOffset(), cell.getValueLength());
-                    return new Edge(rowKey, LinkUtility.reverseLink(anchorLink), value);
-                });
-
-        Dataset<Row> verDF = spark.createDataFrame(nodes, Node.class);
-
-        Dataset<Row> edgDF = spark.createDataFrame(edges, Edge.class);
-
-        GraphFrame graphFrame = new GraphFrame(verDF, edgDF);
-        Dataset<Row> anchors = graphFrame.triplets().groupBy("dst")
-                .agg(collect_set("edge.anchor").alias("anchors"), count("edge.anchor").alias("count"));
-
-        JavaRDD<Page> anchorsRDD = anchors.toJavaRDD()
-                .map(row -> new Page(
-                        LinkUtility.hashLink(LinkUtility.reverseLink(row.getStruct(0).getString(0))),
-                        row.getList(1), row.getLong(2)));
-
-        JavaEsSpark.saveToEs(anchorsRDD, backwardExtractorConfig.getEsIndexName() + "/" + backwardExtractorConfig.getEsType());
-
+        JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBasePageConfig.getPageTable());
+        hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
+        JavaRDD<Page> extract = BackwardExtractorService.extractBackward(hBasePageConfig, spark, hBaseRDD);
+        JavaEsSpark.saveToEs(extract, esIndex + "/" + esType);
         spark.stop();
+    }
+
+    public static SparkSession loadSpark(String appName, boolean isLocal) {
+        SparkSession spark = SparkUtility.getSpark(appName, isLocal);
+        SparkUtility.registerKryoClasses(spark, new Class[]{
+                in.nimbo.common.entity.Anchor.class, in.nimbo.common.utility.SparkUtility.class, in.nimbo.common.config.RedisConfig.class,
+                in.nimbo.common.entity.Meta.class, in.nimbo.common.entity.Page.class, in.nimbo.common.utility.LinkUtility.class,
+                in.nimbo.common.exception.HBaseException.class, in.nimbo.common.config.KafkaConfig.class,
+                in.nimbo.common.config.ElasticConfig.class, in.nimbo.common.serializer.PageDeserializer.class,
+                in.nimbo.common.utility.CloseUtility.class, in.nimbo.common.exception.ElasticException.class,
+                in.nimbo.common.exception.LoadConfigurationException.class, in.nimbo.common.exception.ReverseLinkException.class,
+                in.nimbo.common.config.HBasePageConfig.class, in.nimbo.common.config.ProjectConfig.class,
+                in.nimbo.common.monitoring.ThreadsMonitor.class, in.nimbo.common.serializer.PageSerializer.class,
+                in.nimbo.common.entity.GraphResult.class, in.nimbo.common.exception.ParseLinkException.class,
+                in.nimbo.common.exception.InvalidLinkException.class, in.nimbo.common.exception.LanguageDetectException.class,
+                in.nimbo.common.exception.HashException.class, in.nimbo.common.config.Config.class,
+                in.nimbo.common.config.HBaseSiteConfig.class, in.nimbo.entity.Edge.class, in.nimbo.entity.Page.class,
+                in.nimbo.entity.Node.class, in.nimbo.App.class, in.nimbo.config.BackwardExtractorConfig.class,
+                org.apache.hadoop.hbase.client.Result.class, org.apache.hadoop.hbase.io.ImmutableBytesWritable.class,
+                TableInputFormat.class, in.nimbo.common.entity.GraphResult.class});
+        return spark;
     }
 }
