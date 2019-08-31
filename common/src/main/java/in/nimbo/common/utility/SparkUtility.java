@@ -18,8 +18,10 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 
 import java.io.IOException;
+import java.util.Map;
 
 public class SparkUtility {
     private SparkUtility() {
@@ -56,6 +58,11 @@ public class SparkUtility {
                 .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class
                         , ImmutableBytesWritable.class, Result.class).toJavaRDD()
                 .map(tuple -> tuple._2);
+    }
+
+    public static JavaPairRDD<String, Map<String, Object>> getElasticSearchRDD(SparkSession sparkSession, String indexName, String indexType) {
+        JavaSparkContext javaSparkContext = getJavaSparkContext(sparkSession);
+        return JavaEsSpark.esRDD(javaSparkContext, indexName + "/" + indexType);
     }
 
     public static JavaSparkContext getJavaSparkContext(SparkSession sparkSession) {
