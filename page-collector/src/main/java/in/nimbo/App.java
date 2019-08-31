@@ -32,7 +32,6 @@ public class App {
     private KafkaService kafkaService;
     private HBaseDAO hBaseDAO;
 
-
     public App(KafkaService kafkaService, ElasticDAO elasticDAO, HBaseDAO hBaseDAO) {
         this.kafkaService = kafkaService;
         this.elasticDAO = elasticDAO;
