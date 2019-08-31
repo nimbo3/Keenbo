@@ -38,16 +38,24 @@ public class PageRankExtractor {
                         Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
                         LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()))
                 ));
-        hBaseRDD.unpersist();
 
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
         Dataset<Row> edgeDF = spark.createDataFrame(edges, Edge.class);
         edgeDF.repartition(32);
+        vertexDF.persist(StorageLevel.DISK_ONLY());
+        edgeDF.persist(StorageLevel.DISK_ONLY());
+        hBaseRDD.unpersist();
+
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
+        graphFrame.persist(StorageLevel.DISK_ONLY());
+        vertexDF.unpersist();
+        edgeDF.unpersist();
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).
                 resetProbability(pageRankConfig.getResetProbability()).run();
+        pageRank.persist(StorageLevel.DISK_ONLY());
+        graphFrame.unpersist();
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
-        pageRankRdd.persist(StorageLevel.MEMORY_AND_DISK());
+        pageRankRdd.persist(StorageLevel.DISK_ONLY());
 
         JavaPairRDD<ImmutableBytesWritable, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
             Put put = new Put(Bytes.toBytes(row.getString(0)));
@@ -60,7 +68,6 @@ public class PageRankExtractor {
                         LinkUtility.hashLink(LinkUtility.reverseLink(row.getString(0))),
                         row.getDouble(1)));
 
-        pageRankRdd.unpersist();
         return new Tuple2<>(javaPairRDD, esPageJavaRDD);
     }
 }

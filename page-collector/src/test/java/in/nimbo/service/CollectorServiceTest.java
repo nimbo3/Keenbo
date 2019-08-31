@@ -5,8 +5,8 @@ import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.ElasticException;
 import in.nimbo.common.exception.HBaseException;
-import in.nimbo.dao.elastic.ElasticDAO;
-import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.common.dao.elastic.ElasticDAO;
+import in.nimbo.common.dao.hbase.HBaseDAO;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -50,40 +50,38 @@ public class CollectorServiceTest {
 
     @Test
     public void handleTest() {
-        doNothing().when(hBaseDAO).add(pages, true);
-        doNothing().when(hBaseDAO).add(pages, false);
+        doNothing().when(hBaseDAO).add(pages);
+        doNothing().when(hBaseDAO).add(pages);
         for (Page page : pages) {
-            doNothing().when(elasticDAO).save(page);
+            doNothing().when(elasticDAO).save(page, true);
         }
         Assert.assertTrue(collectorService.processList(pages));
     }
 
     @Test
     public void handleWithEmptyAnchorTest() {
-        doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor, true);
-        doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor, false);
+        doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor);
+        doNothing().when(hBaseDAO).add(pagesWithEmptyAnchor);
         for (Page page : pagesWithEmptyAnchor) {
-            doNothing().when(elasticDAO).save(page);
+            doNothing().when(elasticDAO).save(page, true);
         }
         Assert.assertTrue(collectorService.processList(pagesWithEmptyAnchor));
     }
 
     @Test
     public void handleWithoutSaveToHBase() {
-        doThrow(HBaseException.class).when(hBaseDAO).add(pages, true);
-        doThrow(HBaseException.class).when(hBaseDAO).add(pages, false);
+        doThrow(HBaseException.class).when(hBaseDAO).add(anyList(), anyList());
         for (Page page : pages) {
-            doNothing().when(elasticDAO).save(page);
+            doNothing().when(elasticDAO).save(page, true);
         }
         Assert.assertFalse(collectorService.processList(pages));
     }
 
     @Test
     public void handleWithElasticException() {
-        doNothing().when(hBaseDAO).add(pages, true);
-        doNothing().when(hBaseDAO).add(pages, false);
+        doNothing().when(hBaseDAO).add(pages);
         for (Page page : pages) {
-            doThrow(ElasticException.class).when(elasticDAO).save(page);
+            doThrow(ElasticException.class).when(elasticDAO).save(page, true);
         }
         Assert.assertFalse(collectorService.processList(pages));
     }

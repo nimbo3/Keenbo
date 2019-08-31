@@ -88,7 +88,7 @@ public class LinkUtility {
         }
     }
 
-    private static String getDomain(String link) {
+    public static String getDomain(String link) {
         int indexOfProtocol = link.indexOf('/') + 1;
         int indexOfEndDomain = link.indexOf('/', indexOfProtocol + 1);
         if (indexOfEndDomain < 0) {

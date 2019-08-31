@@ -19,6 +19,7 @@
         <module>site-graph</module>
         <module>word-graph</module>
         <module>pagerank</module>
+        <module>classifier</module>
         <module>shuffler</module>
     </modules>
 
@@ -259,6 +260,7 @@
                                         <include>*.properties</include>
                                         <include>*.yaml</include>
                                         <include>*.xml</include>
+                                        <include>*.json</include>
                                         <include>profiles/*</include>
                                         <include>kafka/*</include>
                                         <include>data/*</include>

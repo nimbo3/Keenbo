@@ -1,0 +1,161 @@
+[
+  {
+    "name": "art",
+    "sites": [
+      "imdb.com",
+      "spotify.com",
+      "soundcloud.com",
+      "xgames.com"
+    ]
+  },
+  {
+    "name": "science",
+    "sites": [
+      "medium.com",
+      "askubuntu.com",
+      "geeksquiz.com",
+      "wordpress.com",
+      "mathoverflow.net",
+      "wpvip.com",
+      "dropbox.com",
+      "linkedin.com",
+      "github.com",
+      "education.github.com",
+      "atlassian.com",
+      "trello.com",
+      "stackoverflow.com",
+      "udemy.com",
+      "udacity.com",
+      "goodreads.com",
+      "coursera.com",
+      "geeksforgeeks.org",
+      "redis.io",
+      "elastic.co",
+      "apache.org",
+      "biology.stackexchange.com",
+      "salesforce.stackexchange.com",
+      "codereview.stackexchange.com",
+      "english.stackexchange.com",
+      "dba.stackexchange.com",
+      "drupal.stackexchange.com",
+      "serverfault.com",
+      "ux.stackexchange.com",
+      "movies.stackexchange.com",
+      "bitcoin.stackexchange.com",
+      "chess.stackexchange.com",
+      "worldbuilding.stackexchange.com",
+      "mathematica.stackexchange.com",
+      "webmasters.stackexchange.com",
+      "psychology.stackexchange.com",
+      "sharepoint.stackexchange.com",
+      "video.stackexchange.com",
+      "superuser.com",
+      "stackapps.com",
+      "lifewire.com"
+    ]
+  },
+  {
+    "name": "health",
+    "sites": [
+      "drugs.com",
+      "healthonnet.org",
+      "voicesforhealthykids.org",
+      "nhs.uk",
+      "medscape.com",
+      "verywellhealth.com",
+      "heart.org",
+      "cancer.org",
+      "southamptonfc.com",
+      "verywellfit.com"
+    ]
+  },
+  {
+    "name": "news",
+    "sites": [
+      "reddit.com",
+      "flipboard.com",
+      "cnn.com",
+      "news.yahoo.com",
+      "bbc.com",
+      "nufc.co.uk",
+      "begambleaware.org"
+    ]
+  },
+  {
+    "name": "shopping",
+    "sites": [
+      "amazon.com",
+      "netflix.com",
+      "ebay.com",
+      "ebay.com.sg",
+      "ebay.ca",
+      "amazon.co.uk",
+      "cars.com",
+      "shopheart.org",
+      "redbubble.com"
+    ]
+  },
+  {
+    "name": "sports",
+    "sites": [
+      "espn.com",
+      "whufc.com",
+      "www.tottenhamhotspur.com",
+      "livescore.com",
+      "easports.com",
+      "arsenal.com",
+      "chelseafc.com",
+      "espncricinfo.com",
+      "sports.yahoo.com",
+      "premierleague.com",
+      "livescore.com",
+      "goal.com",
+      "nba.com",
+      "fifa.com",
+      "liverpoolfc.com",
+      "wwe.com",
+      "olympic.org",
+      "mancity.com",
+      "european-athletics.org",
+      "mlb.com",
+      "iaaf.org",
+      "skysports.com",
+      "goal.com",
+      "european-athletics.org",
+      "afcb.co.uk"
+    ]
+  },
+  {
+    "name": "social",
+    "sites": [
+      "facebook.com",
+      "telegram.org",
+      "instagram.com",
+      "whatsapp.com",
+      "twitter.com",
+      "gap.com",
+      "viber.com",
+      "wechat.com",
+      "QZone.com",
+      "tumblr.com",
+      "skype.com",
+      "line.me",
+      "snapchat.com",
+      "pinterest.com",
+      "reddit.com",
+      "youtube.com"
+    ]
+  },
+  {
+    "name": "other",
+    "sites": [
+      "tripsavvy.com",
+      "advertising.amazon.com",
+      "preferences-mgr.truste.com",
+      "opensource.guide",
+      "thebalance.com",
+      "disneytermsofuse.com",
+      "verywellmind.com"
+    ]
+  }
+]

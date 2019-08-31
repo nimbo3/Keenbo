@@ -1,10 +1,9 @@
-package in.nimbo.dao.hbase;
+package in.nimbo.common.dao.hbase;
 
 import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.HBaseException;
-import in.nimbo.service.keyword.KeywordExtractorService;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
@@ -31,27 +30,13 @@ public class HBaseDAOImpl implements HBaseDAO {
     }
 
     @Override
-    public void add(List<Page> pages, boolean extractKeyword) {
-        List<Put> puts = new ArrayList<>();
-        for (Page page : pages) {
-            puts.add(getPut(page, extractKeyword));
-        }
+    public void add(List<Page> pages) {
+        addToHBase(getListOfPut(pages));
+    }
 
-        if (connection.isClosed()) {
-            try {
-                connection = ConnectionFactory.createConnection();
-            } catch (IOException e) {
-                throw new HBaseException(e);
-            }
-        }
-
-        try (Table table = connection.getTable(TableName.valueOf(config.getPageTable()))) {
-            logger.info("Start sending bulk put to HBase");
-            table.put(puts);
-            logger.info("Finish sending bulk put to HBase");
-        } catch (IllegalArgumentException | IOException e) {
-            throw new HBaseException(e);
-        }
+    @Override
+    public void add(List<Page> pages,  List<Map<String, Integer>> keywords) {
+        addToHBase(getListOfPut(pages, keywords));
     }
 
     @Override
@@ -64,20 +49,47 @@ public class HBaseDAOImpl implements HBaseDAO {
         }
     }
 
-    private Put getPut(Page page, boolean extractKeyword) {
+    private void addToHBase(List<Put> puts) {
+        try (Table table = connection.getTable(TableName.valueOf(config.getPageTable()))) {
+            logger.info("Start sending bulk put to HBase");
+            table.put(puts);
+            logger.info("Finish sending bulk put to HBase");
+        } catch (IllegalArgumentException | IOException e) {
+            throw new HBaseException(e);
+        }
+    }
+
+    private List<Put> getListOfPut(List<Page> pages, List<Map<String, Integer>> keywords) {
+        List<Put> puts = new ArrayList<>();
+        for (int i = 0; i < pages.size(); i++) {
+            puts.add(getPut(pages.get(i), keywords.get(i)));
+        }
+        return puts;
+    }
+
+    private List<Put> getListOfPut(List<Page> pages) {
+        List<Put> puts = new ArrayList<>();
+        for (Page page : pages) {
+            puts.add(getPut(page));
+        }
+        return puts;
+    }
+
+    private Put getPut(Page page, Map<String, Integer> keywords) {
+        Put put = getPut(page);
+        for (Map.Entry<String, Integer> keyword : keywords.entrySet()) {
+            put.addColumn(config.getDataColumnFamily(),
+                    Bytes.toBytes(keyword.getKey()), Bytes.toBytes(Integer.toString(keyword.getValue())));
+        }
+        return put;
+    }
+
+    private Put getPut(Page page) {
         Put put = new Put(Bytes.toBytes(page.getReversedLink()));
 
         for (Anchor anchor : page.getAnchors()) {
             put.addColumn(config.getAnchorColumnFamily(),
                     Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getContent()));
-        }
-
-        if (extractKeyword) {
-            Map<String, Integer> keywords = KeywordExtractorService.extractKeywords(page.getContent());
-            for (Map.Entry<String, Integer> keyword : keywords.entrySet()) {
-                put.addColumn(config.getDataColumnFamily(),
-                        Bytes.toBytes(keyword.getKey()), Bytes.toBytes(Integer.toString(keyword.getValue())));
-            }
         }
 
         put.addColumn(config.getDataColumnFamily(), config.getRankColumn(), Bytes.toBytes("1"));
