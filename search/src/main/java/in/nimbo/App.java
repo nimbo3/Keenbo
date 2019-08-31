@@ -113,6 +113,7 @@ public class App {
                 String confirmPass = request.queryParams("re_password");
                 String email = request.queryParams("email");
                 String name = request.queryParams("name");
+                response.type("application/json");
                 return authController.register(username, password, confirmPass, email, name);
             }), transformer);
 
@@ -120,6 +121,7 @@ public class App {
                 String token = request.headers("token");
                 String destination = request.queryParams("dest");
                 User user = authDAO.authenticate(token);
+                response.type("application/json");
                 return authController.click(user, destination);
             }), transformer);
 
