@@ -1,71 +1,34 @@
 package in.nimbo;
 
-import com.vdurmont.emoji.EmojiManager;
 import in.nimbo.common.config.HBasePageConfig;
-import in.nimbo.common.utility.LinkUtility;
+import in.nimbo.common.entity.GraphResult;
+import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.WordGraphConfig;
-import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.Cell;
-import org.apache.hadoop.hbase.CellUtil;
-import org.apache.hadoop.hbase.HBaseConfiguration;
+import in.nimbo.service.WordGraphExtractorService;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
-import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
-import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.sql.*;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.Metadata;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
-import org.apache.spark.storage.StorageLevel;
-import org.graphframes.GraphFrame;
-import scala.Tuple2;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
-
-import static in.nimbo.common.utility.LinkUtility.*;
-import static org.apache.spark.sql.functions.*;
+import org.apache.spark.sql.SparkSession;
 
 public class App {
     public static void main(String[] args) {
-        String badWordRegex = ".*\\-.*";
-        String tagRegex = "^<.*?>$";
-        String idRegex = "^@.*$";
-        String linkRegex = "^http[s]?:.*$";
-        String starRegex = "^\\*+$";
-        String numberRegex = ".*[0-9].*";
-        List<String> badWords = Arrays.asList("jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct",
-                "nov", "dec", "use", "ago", "new", "jan.", "feb.", "mar.", "apr.", "may.", "jun.", "jul.", "aug.",
-                "sep.", "oct.", "nov.", "dec.", "==", "!!", "☁️");
-
         HBasePageConfig hBaseConfig = HBasePageConfig.load();
         WordGraphConfig wordGraphConfig = WordGraphConfig.load();
-        byte[] rankColumn = hBaseConfig.getRankColumn();
-        byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
-        byte[] dataColumnFamily = hBaseConfig.getDataColumnFamily();
 
-        Configuration hBaseConfiguration = HBaseConfiguration.create();
-        hBaseConfiguration.addResource(System.getenv("HADOOP_HOME") + "/etc/hadoop/core-site.xml");
-        hBaseConfiguration.addResource(System.getenv("HBASE_HOME") + "/conf/hbase-site.xml");
-        hBaseConfiguration.set(TableInputFormat.INPUT_TABLE, hBaseConfig.getPageTable());
+        SparkSession spark = loadSpark(wordGraphConfig.getAppName(), false);
 
-        SparkSession spark = SparkSession.builder()
-                .appName(wordGraphConfig.getAppName())
-                .config("spark.hadoop.validateOutputSpecs", false)
-                .config("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
-                .config("spark.kryoserializer.buffer", "1024k")
-                .getOrCreate();
+        JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBaseConfig.getPageTable());
+        GraphResult graphResult = WordGraphExtractorService.extract(hBaseConfig, spark, hBaseRDD);
+        JavaRDD<String> nodesJson = SparkUtility.createJson(graphResult.getNodes());
+        JavaRDD<String> edgesJson = SparkUtility.createJson(graphResult.getEdges());
+        edgesJson.saveAsTextFile("/WordGraphEdges");
+        nodesJson.saveAsTextFile("/WordGraphVertices");
 
-        spark.sparkContext().conf().registerKryoClasses(new Class[]{
+        spark.stop();
+    }
+
+    public static SparkSession loadSpark(String appName, boolean isLocal) {
+        SparkSession spark = SparkUtility.getSpark(appName, isLocal);
+        SparkUtility.registerKryoClasses(spark, new Class[]{
                 in.nimbo.common.monitoring.ThreadsMonitor.class, in.nimbo.common.entity.Page.class,
                 in.nimbo.common.entity.Anchor.class, in.nimbo.common.entity.Meta.class,
                 in.nimbo.common.utility.LinkUtility.class, in.nimbo.common.utility.CloseUtility.class,
@@ -78,120 +41,8 @@ public class App {
                 in.nimbo.common.config.ElasticConfig.class, in.nimbo.common.config.ProjectConfig.class,
                 in.nimbo.common.config.Config.class, in.nimbo.common.config.HBaseSiteConfig.class,
                 in.nimbo.common.config.HBasePageConfig.class, in.nimbo.App.class, in.nimbo.config.WordGraphConfig.class
+
         });
-
-        spark.sparkContext().conf().set("spark.speculation", "false");
-        spark.sparkContext().conf().set("spark.hadoop.mapreduce.map.speculative", "false");
-        spark.sparkContext().conf().set("spark.hadoop.mapreduce.reduce.speculative", "false");
-        spark.sparkContext().conf().set("spark.kryo.registrationRequired", "true");
-
-        JavaRDD<Cell> hBaseCellsRDD = spark.sparkContext()
-                .newAPIHadoopRDD(hBaseConfiguration, TableInputFormat.class,
-                        ImmutableBytesWritable.class, Result.class).toJavaRDD()
-                .map(tuple -> tuple._2)
-                .flatMap(result -> result.listCells().iterator());
-        hBaseCellsRDD.persist(StorageLevel.MEMORY_AND_DISK());
-
-        JavaRDD<Row> pageContentRDD = hBaseCellsRDD
-                .filter(cell -> CellUtil.matchingFamily(cell, dataColumnFamily)
-                        && !CellUtil.matchingQualifier(cell, rankColumn))
-                .map(cell -> RowFactory.create(
-                        Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
-                        Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength())))
-                .filter(row -> {
-                    String word = row.getString(1);
-                    return !word.matches(idRegex) && !word.matches(linkRegex) && !word.matches(starRegex)
-                            && !word.matches(tagRegex) && !word.matches(numberRegex) && !word.matches(badWordRegex)
-                            && !badWords.contains(word) && !EmojiManager.isEmoji(word);
-                });
-
-        JavaRDD<Row> edges = hBaseCellsRDD
-                .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
-                .map(cell -> {
-                    String source = Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
-                    String destination = Bytes.toString(cell.getQualifierArray()
-                            , cell.getQualifierOffset(), cell.getQualifierLength());
-                    int index = destination.indexOf('#');
-                    if (index != -1)
-                        destination = destination.substring(0, index);
-                    return RowFactory.create(source, LinkUtility.reverseLink(destination));
-                }).filter(domain -> !domain.getString(0).equals(domain.getString(1)));
-
-        JavaRDD<Row> selfEdge = hBaseCellsRDD
-                .map(cell -> {
-                    String link = Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
-                    return RowFactory.create(link, link);
-                });
-
-        JavaRDD<Row> finalEdges = edges.union(selfEdge);
-
-        StructType pageNodeSchema = new StructType(new StructField[]{
-                new StructField("id", DataTypes.StringType, false, Metadata.empty()),
-                new StructField("content", DataTypes.StringType, false, Metadata.empty()),
-        });
-
-        StructType edgesSchema = new StructType(new StructField[]{
-                new StructField("src", DataTypes.StringType, false, Metadata.empty()),
-                new StructField("dst", DataTypes.StringType, false, Metadata.empty()),
-        });
-
-        Dataset<Row> pageVertexDF = spark.createDataFrame(pageContentRDD, pageNodeSchema);
-        Dataset<Row> edgeDF = spark.createDataFrame(finalEdges, edgesSchema);
-        edgeDF.repartition(32);
-        hBaseCellsRDD.unpersist();
-
-        pageVertexDF = pageVertexDF.groupBy(col("id")).agg(collect_list("content").alias("keywords"));
-        GraphFrame graphFrame = new GraphFrame(pageVertexDF, edgeDF);
-        Dataset<Row> keywords = graphFrame
-                .triplets()
-                .groupBy("src", "dst")
-                .agg(functions.count(functions.lit(1)).alias("weight"));
-
-        keywords = keywords.withColumn("word1", explode(col("src.keywords")))
-                .withColumn("word2", explode(col("dst.keywords")))
-                .select("word1", "word2", "weight")
-                .filter(col("word1").notEqual(col("word2")));
-        keywords.repartition(32);
-
-        keywords = keywords.select(least("word1", "word2").alias("from")
-                , greatest("word1", "word2").alias("to"), col("weight"))
-                .groupBy("from", "to")
-                .agg(functions.sum("weight").alias("width"))
-                .sort(desc("width")).limit(500000);
-
-        Dataset<Row> verticesPart1 = keywords.select(col("from")).dropDuplicates();
-        Dataset<Row> verticesPart2 = keywords.select(col("to")).dropDuplicates();
-        Dataset<Row> vertices = verticesPart1.union(verticesPart2)
-                .select(col("from").as("id")).dropDuplicates();
-        vertices = vertices.withColumn("font", struct(lit(1.0)));
-
-        StructType verticesSchema = new StructType(new StructField[]{
-                new StructField("id", DataTypes.StringType, false, Metadata.empty()),
-                new StructField("font", DataTypes.createStructType(
-                        new StructField[]{
-                                new StructField("size", DataTypes.DoubleType, false, Metadata.empty())
-                        }
-                ), false, Metadata.empty())});
-        Dataset<Row> vertexDF = spark.createDataFrame(vertices.toJavaRDD(), verticesSchema);
-
-        saveAsJson(keywords, "/WordGraphEdges");
-        saveAsJson(vertexDF, "/WordGraphVertices");
-
-        spark.stop();
-    }
-
-    private static void saveAsJson(Dataset<Row> dataset, String path) {
-        long count = dataset.count();
-        dataset.toJSON().repartition(1)
-                .javaRDD()
-                .zipWithIndex()
-                .map(val -> {
-                    if (val._2 == 0) {
-                        return "[\n" + val._1 + ",";
-                    } else {
-                        return val._2 == count - 1 ? val._1 + "\n]" : val._1 + ",";
-                    }
-                })
-                .saveAsTextFile(path);
+        return spark;
     }
 }
