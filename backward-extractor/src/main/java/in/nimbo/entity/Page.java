@@ -44,4 +44,13 @@ public class Page implements Serializable {
     public void setAnchorsSize(long anchorsSize) {
         this.anchorsSize = anchorsSize;
     }
+
+    @Override
+    public String toString() {
+        return "Page{" +
+                "id='" + id + '\'' +
+                ", anchors=" + anchors +
+                ", anchorsSize=" + anchorsSize +
+                '}';
+    }
 }
