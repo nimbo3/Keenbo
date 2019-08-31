@@ -70,11 +70,11 @@ public class WordGraphExtractorService {
                     return RowFactory.create(source, LinkUtility.reverseLink(destination));
                 }).filter(domain -> !domain.getString(0).equals(domain.getString(1)));
 
-        JavaRDD<Row> selfEdge = hBaseCellsRDD
-                .map(cell -> {
-                    String link = Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength());
+        JavaRDD<Row> selfEdge = hBaseRDD
+                .map(result -> {
+                    String link = Bytes.toString(result.getRow());
                     return RowFactory.create(link, link);
-                });
+                }).distinct();
 
         JavaRDD<Row> finalEdges = edges.union(selfEdge);
 
@@ -99,6 +99,7 @@ public class WordGraphExtractorService {
                 .triplets()
                 .groupBy("src", "dst")
                 .agg(functions.count(functions.lit(1)).alias("weight"));
+
 
         keywords = keywords.withColumn("word1", explode(col("src.keywords")))
                 .withColumn("word2", explode(col("dst.keywords")))

@@ -6,6 +6,7 @@ import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.WordGraphConfig;
 import in.nimbo.service.WordGraphExtractorService;
 import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.mapreduce.TableInputFormat;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.SparkSession;
 
@@ -40,8 +41,9 @@ public class App {
                 in.nimbo.common.config.RedisConfig.class, in.nimbo.common.config.KafkaConfig.class,
                 in.nimbo.common.config.ElasticConfig.class, in.nimbo.common.config.ProjectConfig.class,
                 in.nimbo.common.config.Config.class, in.nimbo.common.config.HBaseSiteConfig.class,
-                in.nimbo.common.config.HBasePageConfig.class, in.nimbo.App.class, in.nimbo.config.WordGraphConfig.class
-
+                in.nimbo.common.config.HBasePageConfig.class, in.nimbo.App.class, in.nimbo.config.WordGraphConfig.class,
+                org.apache.hadoop.hbase.client.Result.class, org.apache.hadoop.hbase.io.ImmutableBytesWritable.class,
+                TableInputFormat.class, in.nimbo.common.entity.GraphResult.class
         });
         return spark;
     }
