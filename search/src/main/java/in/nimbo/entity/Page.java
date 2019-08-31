@@ -11,7 +11,7 @@ public class Page {
     @JsonProperty("content")
     private String content;
     @JsonIgnore
-    private int label;
+    private double label;
 
     public Page() {
     }
@@ -22,12 +22,12 @@ public class Page {
         this.link = link;
     }
 
-    public int getLabel() {
+    public double getLabel() {
         return label;
     }
 
-    public void setLabel(long label) {
-        this.label = (int)label;
+    public void setLabel(double label) {
+        this.label = label;
     }
 
     public String getTitle() {

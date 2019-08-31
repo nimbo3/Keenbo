@@ -39,7 +39,7 @@ public class ElasticDAOImpl implements ElasticDAO {
                 page.setTitle((String) fields.get("title"));
             }
             if (fields.containsKey("label")) {
-                page.setLabel((Long) fields.get("label"));
+                page.setLabel((Double) fields.get("label"));
             }
             if (hit.getHighlightFields().containsKey("content")) {
                 Text[] texts = hit.getHighlightFields().get("content").getFragments();
