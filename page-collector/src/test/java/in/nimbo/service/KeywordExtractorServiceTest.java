@@ -1,6 +1,5 @@
-package service;
+package in.nimbo.service;
 
-import in.nimbo.common.service.KeywordExtractorService;
 import org.junit.Assert;
 import org.junit.Test;
 

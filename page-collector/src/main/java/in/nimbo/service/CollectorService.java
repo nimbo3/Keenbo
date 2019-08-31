@@ -8,7 +8,9 @@ import in.nimbo.common.dao.hbase.HBaseDAO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class CollectorService {
@@ -27,7 +29,15 @@ public class CollectorService {
         List<Page> filtered = bufferList.stream().filter(page -> !page.getAnchors().isEmpty()).collect(Collectors.toList());
         try {
             logger.info("Start adding {} pages to HBase", filtered.size());
-            hBaseDAO.add(filtered, extractKeyword);
+            if (extractKeyword) {
+                List<Map<String, Integer>> keywords = new ArrayList<>();
+                for (Page page : filtered) {
+                    keywords.add(KeywordExtractorService.extractKeywords(page.getContent()));
+                }
+                hBaseDAO.add(filtered, keywords);
+            } else {
+                hBaseDAO.add(filtered);
+            }
             logger.info("Finish adding {} pages to HBase", filtered.size());
             logger.info("Start adding {} pages to Elasticsearch", filtered.size());
             for (Page page : bufferList) {

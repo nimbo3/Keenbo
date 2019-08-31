@@ -16,7 +16,6 @@
         <main.basedir>${project.parent.basedir}</main.basedir>
         <jsoup.version>1.12.1</jsoup.version>
         <jackson.version>2.10.0.pr1</jackson.version>
-        <edu.stanford.npl.version>3.9.2</edu.stanford.npl.version>
         <langdetect.version>1.1-20120112</langdetect.version>
     </properties>
 
@@ -50,53 +49,6 @@
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
             <version>${jackson.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>edu.stanford.nlp</groupId>
-            <artifactId>stanford-corenlp</artifactId>
-            <version>${edu.stanford.npl.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.lucene</groupId>
-                    <artifactId>lucene-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>edu.stanford.nlp</groupId>
-            <artifactId>stanford-corenlp</artifactId>
-            <version>${edu.stanford.npl.version}</version>
-            <classifier>models</classifier>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.lucene</groupId>
-                    <artifactId>lucene-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>edu.stanford.nlp</groupId>
-            <artifactId>stanford-corenlp</artifactId>
-            <version>${edu.stanford.npl.version}</version>
-            <classifier>models-english</classifier>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.lucene</groupId>
-                    <artifactId>lucene-core</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
-            <groupId>edu.stanford.nlp</groupId>
-            <artifactId>stanford-corenlp</artifactId>
-            <version>${edu.stanford.npl.version}</version>
-            <classifier>models-english-kbp</classifier>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.apache.lucene</groupId>
-                    <artifactId>lucene-core</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
     </dependencies>
 

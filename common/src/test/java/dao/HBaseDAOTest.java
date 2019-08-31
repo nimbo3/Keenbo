@@ -18,10 +18,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -61,9 +58,12 @@ public class HBaseDAOTest {
             metas.add(meta);
         }
         Page page = new Page("http://www.google.com/", "Google", "content", anchors, metas, 100.0);
+        Map<String, Integer> keywords = new HashMap<>();
+        keywords.put("content", 1);
         List<Page> pages = new ArrayList<>();
         pages.add(page);
-        hBaseDAO.add(pages, true);
+        hBaseDAO.add(pages, Collections.singletonList(keywords));
+        hBaseDAO.add(pages);
         assertTrue(hBaseDAO.contains(LinkUtility.reverseLink(page.getLink())));
     }
 
