@@ -47,8 +47,13 @@ public class PageRankExtractor {
         hBaseRDD.unpersist();
 
         GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
+        graphFrame.persist(StorageLevel.DISK_ONLY());
+        vertexDF.unpersist();
+        edgeDF.unpersist();
         GraphFrame pageRank = graphFrame.pageRank().maxIter(pageRankConfig.getMaxIter()).
                 resetProbability(pageRankConfig.getResetProbability()).run();
+        pageRank.persist(StorageLevel.DISK_ONLY());
+        graphFrame.unpersist();
         JavaRDD<Row> pageRankRdd = pageRank.vertices().toJavaRDD();
         pageRankRdd.persist(StorageLevel.DISK_ONLY());
 

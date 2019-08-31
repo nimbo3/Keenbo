@@ -76,13 +76,12 @@ public class ProducerServiceImpl implements ProducerService {
                         .map(anchor -> new Link(anchor.getHref(), link.getLabel(), link.getLevel() + 1))
                         .collect(Collectors.toList());
                 for (Link crawlLink : crawledLinks) {
-                    // TODO check domain *if needed*
                     linkProducer.send(new ProducerRecord<>(kafkaConfig.getTrainingTopic(), crawlLink));
                 }
             } else {
                 linkProducer.send(new ProducerRecord<>(kafkaConfig.getTrainingTopic(), link));
             }
-        } catch (MalformedURLException | ParseLinkException | InvalidLinkException ignored) {
+        } catch (ParseLinkException | InvalidLinkException ignored) {
             logger.info("Skip corrupt link {}", link.getUrl());
         }
     }

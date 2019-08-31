@@ -37,27 +37,26 @@ public class CrawlerService {
         this.labelMap = labelMap;
     }
 
-    public Optional<Page> crawl(Link link) throws MalformedURLException {
-        String url = LinkUtility.normalize(link.getUrl());
+    public Optional<Page> crawl(Link link) {
         try {
-            String domain = LinkUtility.getMainDomain(url);
+            String domain = LinkUtility.getMainDomain(link.getUrl());
             boolean isPolite = politenessCache.getIfPresent(domain) == null;
-            boolean isDuplicate = crawlerCache.getIfPresent(url) != null;
+            boolean isDuplicate = crawlerCache.getIfPresent(link.getUrl()) != null;
             if (isPolite && !isDuplicate) {
                 LocalDateTime now = LocalDateTime.now();
                 politenessCache.put(domain, now);
-                crawlerCache.put(url, now);
-                Page page = parserService.getPage(url);
+                crawlerCache.put(link.getUrl(), now);
+                Page page = parserService.getPage(link.getUrl());
                 elasticDao.save(page, labelMap.get(link.getLabel()), false);
                 return Optional.of(page);
             } else if (isDuplicate) {
-                appLogger.info("Skip link {} because crawled before", url);
-                throw new InvalidLinkException("duplicated link: " + url);
+                appLogger.info("Skip link {} because crawled before", link.getUrl());
+                throw new InvalidLinkException("duplicated link: " + link.getUrl());
             } else {
                 return Optional.empty();
             }
         } catch (MalformedURLException e) {
-            appLogger.warn("Illegal URL format: " + url, e);
+            appLogger.warn("Illegal URL format: " + link, e);
         }
         throw new InvalidLinkException();
     }
