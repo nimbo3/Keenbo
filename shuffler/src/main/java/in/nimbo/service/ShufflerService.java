@@ -5,34 +5,30 @@ import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.utility.CloseUtility;
-import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.ShufflerConfig;
-import in.nimbo.redis.RedisDAO;
 import org.apache.kafka.clients.consumer.CommitFailedException;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.common.errors.InterruptException;
 import org.apache.kafka.common.errors.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 public class ShufflerService implements Runnable, Closeable {
     private Logger logger = LoggerFactory.getLogger("shuffler");
     private KafkaConfig kafkaConfig;
     private ShufflerConfig shufflerConfig;
-    private RedisDAO redisDAO;
     private List<String> shuffleList;
     private Consumer<String, String> shufflerConsumer;
     private Producer<String, String> linkProducer;
@@ -43,12 +39,11 @@ public class ShufflerService implements Runnable, Closeable {
 
     private Timer shuffleLinksTimer;
 
-    public ShufflerService(KafkaConfig kafkaConfig, ShufflerConfig shufflerConfig, RedisDAO redisDAO,
+    public ShufflerService(KafkaConfig kafkaConfig, ShufflerConfig shufflerConfig,
                            Consumer<String, String> shufflerConsumer, Producer<String, String> linkProducer,
                            List<String> shuffleList, CountDownLatch countDownLatch) {
         this.kafkaConfig = kafkaConfig;
         this.shufflerConfig = shufflerConfig;
-        this.redisDAO = redisDAO;
         this.shufflerConsumer = shufflerConsumer;
         this.linkProducer = linkProducer;
         this.shuffleList = shuffleList;
@@ -97,14 +92,14 @@ public class ShufflerService implements Runnable, Closeable {
                     Thread.currentThread().interrupt();
                 }
             }
-        } catch (InterruptedException e) {
-            // ignore
-        } catch (Exception e) {
+        }catch (InterruptedException | InterruptException e) {
+            logger.info("Shuffler service interrupted successfully");
+        }  catch (Exception e) {
             logger.error(e.getMessage(), e);
         } finally {
             CloseUtility.closeSafely(shufflerConsumer);
             CloseUtility.closeSafely(linkProducer);
-            logger.info("Shuffler service stopped");
+            logger.info("Shuffler service stopped successfully");
             countDownLatch.countDown();
         }
     }

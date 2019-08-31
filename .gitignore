@@ -274,4 +274,6 @@ spark-warehouse/
 
 !common/lib/jmx_prometheus.jar
 
+page-collector/src/main/resources/data/*
+
 # End of https://www.gitignore.io/api/java,spark,maven,intellij,intellij+all
