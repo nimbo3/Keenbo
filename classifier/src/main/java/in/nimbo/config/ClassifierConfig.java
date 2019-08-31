@@ -19,6 +19,7 @@ public class ClassifierConfig {
     private String esType;
     private String naiveBayesModelType;
     private String naiveBayesModelSaveLocation;
+    private String naiveBayesIDFSaveLocation;
     private int hashingNumFeatures;
     private int crawlerThreads;
     private int crawlerLevel;
@@ -46,6 +47,7 @@ public class ClassifierConfig {
             classifierConfig.setNaiveBayesModelType(config.getString("naive.bayes.model.type"));
             classifierConfig.setHashingNumFeatures(config.getInt("hashing.num.features"));
             classifierConfig.setNaiveBayesModelSaveLocation(config.getString("naive.bayes.model.save.location"));
+            classifierConfig.setNaiveBayesIDFSaveLocation(config.getString("naive.bayes.idf.save.location"));
             classifierConfig.setCrawlerLevel(config.getInt("crawler.level"));
             classifierConfig.setCrawlerThreads(config.getInt("crawler.threads"));
             classifierConfig.setCrawlerQueueSize(config.getInt("crawler.queue.size"));
@@ -53,6 +55,14 @@ public class ClassifierConfig {
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public String getNaiveBayesIDFSaveLocation() {
+        return naiveBayesIDFSaveLocation;
+    }
+
+    public void setNaiveBayesIDFSaveLocation(String naiveBayesIDFSaveLocation) {
+        this.naiveBayesIDFSaveLocation = naiveBayesIDFSaveLocation;
     }
 
     public int getCrawlerQueueSize() {

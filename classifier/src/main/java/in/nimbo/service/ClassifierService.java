@@ -39,6 +39,11 @@ public class ClassifierService {
 
         IDF idf = new IDF().setInputCol("rawFeatures").setOutputCol("feature");
         IDFModel idfModel = idf.fit(featuredData);
+        try {
+            idf.save(classifierConfig.getNaiveBayesIDFSaveLocation());
+        } catch (IOException e) {
+            System.out.println("Unable to save idf model: " + e.getMessage());
+        }
 
         Dataset<Row> rescaledData = idfModel.transform(featuredData);
         Dataset<Row> features = rescaledData.select("label", "feature");
@@ -65,7 +70,7 @@ public class ClassifierService {
         try {
             model.save(classifierConfig.getNaiveBayesModelSaveLocation());
         } catch (IOException e) {
-            e.printStackTrace();
+            System.out.println("Unable to save naive bayes model: " + e.getMessage());
         }
         NaiveBayesModel loadedModel = NaiveBayesModel.load(classifierConfig.getNaiveBayesModelSaveLocation());
     }
