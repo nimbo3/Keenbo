@@ -29,6 +29,7 @@ public class KafkaServiceImpl implements KafkaService {
 
     private List<ProducerService> producerServices;
     private List<Thread> kafkaServices;
+    private List<List<Page>> bufferLists;
     private CountDownLatch countDownLatch;
 
     public KafkaServiceImpl(KafkaConfig kafkaConfig, CollectorService collectorService) {
@@ -36,6 +37,7 @@ public class KafkaServiceImpl implements KafkaService {
         this.collectorService = collectorService;
         producerServices = new ArrayList<>();
         kafkaServices = new ArrayList<>();
+        bufferLists = new ArrayList<>();
         messageQueue = new ArrayBlockingQueue<>(config.getLocalPageQueueSize());
         countDownLatch = new CountDownLatch(kafkaConfig.getPageProducerCount() + 1);
         MetricRegistry metricRegistry = SharedMetricRegistries.getDefault();
@@ -55,18 +57,22 @@ public class KafkaServiceImpl implements KafkaService {
         KafkaConsumer<String, Page> kafkaConsumer = new KafkaConsumer<>(config.getPageConsumerProperties());
         kafkaConsumer.subscribe(Collections.singletonList(config.getPageTopic()));
         consumerService = new ConsumerServiceImpl(config, kafkaConsumer, messageQueue, countDownLatch);
-        Thread consumerThread = new Thread(consumerService, config.getServiceName());
+        Thread consumerThread = new Thread(consumerService, config.getServiceName() + "0");
         kafkaServices.add(consumerThread);
-        consumerThread.start();
 
-        for (int i = 0; i < config.getPageProducerCount(); i++) {
+        for (int i = 1; i <= config.getPageProducerCount(); i++) {
+            List<Page> bufferList = new ArrayList<>();
             KafkaProducer<String, Page> producer = new KafkaProducer<>(config.getPageProducerProperties());
             ProducerService producerService =
-                    new ProducerServiceImpl(config, messageQueue, producer, collectorService, countDownLatch);
-            Thread pageProducerThread = new Thread(producerService, config.getServiceName());
+                    new ProducerServiceImpl(config, messageQueue, bufferList, producer, collectorService, countDownLatch);
+            Thread pageProducerThread = new Thread(producerService, config.getServiceName() + i);
             kafkaServices.add(pageProducerThread);
             producerServices.add(producerService);
-            pageProducerThread.start();
+            bufferLists.add(bufferList);
+        }
+
+        for (Thread kafkaService : kafkaServices) {
+            kafkaService.start();
         }
     }
 
@@ -90,6 +96,12 @@ public class KafkaServiceImpl implements KafkaService {
                 logger.info("Start sending {} messages from local page queue to kafka", messageQueue.size());
                 for (Page page : messageQueue) {
                     producer.send(new ProducerRecord<>(config.getPageTopic(), page));
+                }
+                for (List<Page> bufferList : bufferLists) {
+                    logger.info("Start sending {} messages from local buffer list to kafka", messageQueue.size());
+                    for (Page page : bufferList) {
+                        producer.send(new ProducerRecord<>(config.getPageTopic(), page));
+                    }
                 }
                 producer.flush();
             }

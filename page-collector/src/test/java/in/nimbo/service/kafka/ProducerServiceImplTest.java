@@ -31,6 +31,7 @@ import static org.mockito.Mockito.*;
 public class ProducerServiceImplTest {
     private MockProducer<String, Page> kafkaProducer;
     private BlockingQueue<Page> messageQueue;
+    private List<Page> bufferList;
     private ProducerService producerService;
     private CountDownLatch countDownLatch;
     private CollectorService collectorService;
@@ -39,11 +40,12 @@ public class ProducerServiceImplTest {
     public void beforeEachTest() {
         TestUtility.setMetricRegistry();
         messageQueue = new LinkedBlockingQueue<>();
+        bufferList = new ArrayList<>();
         countDownLatch = new CountDownLatch(1);
         collectorService = mock(CollectorService.class);
         KafkaConfig kafkaConfig = KafkaConfig.load();
         kafkaProducer = new MockProducer<>(true, new StringSerializer(), new PageSerializer());
-        producerService = new ProducerServiceImpl(kafkaConfig, messageQueue,
+        producerService = new ProducerServiceImpl(kafkaConfig, messageQueue, bufferList,
                 kafkaProducer, collectorService, countDownLatch);
     }
 

@@ -3,14 +3,12 @@ package in.nimbo.service.kafka;
 import in.nimbo.TestUtility;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.entity.Anchor;
-import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.MockConsumer;
 import org.apache.kafka.clients.consumer.OffsetResetStrategy;
 import org.apache.kafka.common.TopicPartition;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 

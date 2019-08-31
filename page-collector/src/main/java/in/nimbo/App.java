@@ -8,6 +8,7 @@ import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.entity.Page;
+import in.nimbo.config.CollectorConfig;
 import in.nimbo.dao.elastic.ElasticBulkListener;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
@@ -32,8 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 public class App {
@@ -55,12 +55,13 @@ public class App {
         ProjectConfig projectConfig = ProjectConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
         ElasticConfig elasticConfig = ElasticConfig.load();
+        CollectorConfig collectorConfig = CollectorConfig.load();
         appLogger.info("Configuration loaded");
 
         initReporter(projectConfig);
         appLogger.info("Reporter started");
 
-        List<Page> backupPages = new ArrayList<>();
+        CopyOnWriteArrayList<Page> backupPages = new CopyOnWriteArrayList<>();
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
         ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
         BulkProcessor bulkProcessor = initializeElasticSearchBulk(elasticConfig, restHighLevelClient, elasticBulkListener);
@@ -79,8 +80,7 @@ public class App {
 
         HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBasePageConfig);
         appLogger.info("DAO interface created");
-
-        CollectorService collectorService = new CollectorService(hBaseDAO, elasticDAO);
+        CollectorService collectorService = new CollectorService(hBaseDAO, elasticDAO, collectorConfig.isExtractKeywordEnabled());
         KafkaService kafkaService = new KafkaServiceImpl(kafkaConfig, collectorService);
         appLogger.info("Services started");
 
