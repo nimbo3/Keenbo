@@ -12,22 +12,13 @@ import in.nimbo.entity.Node;
 import in.nimbo.entity.Page;
 
 import java.io.IOException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import in.nimbo.config.SparkConfig;
-import in.nimbo.dao.elastic.ElasticDAO;
-import in.nimbo.entity.Edge;
-import in.nimbo.entity.Node;
-import in.nimbo.entity.Page;
-
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.DoubleSummaryStatistics;
 import java.util.IntSummaryStatistics;
 import java.util.List;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
 
 public class SearchController {
     private static final String SEARCH_QUERY_REGEX = "^(.*?)(\\s+site:(.*))?$";

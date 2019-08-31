@@ -13,7 +13,7 @@ public class RedisLabelDAO implements LabelDAO {
     }
 
     @Override
-    public void add(String url, int label) {
+    public void add(String url, double label) {
         jedis.set(url, String.valueOf(label));
         jedis.expire(url, sparkConfig.getCacheExpire());
     }
