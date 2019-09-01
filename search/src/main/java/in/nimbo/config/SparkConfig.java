@@ -29,6 +29,7 @@ public class SparkConfig {
     private String databasePassword;
     private String databaseUser;
     private int cacheExpire;
+    private String hBaseCountFile;
 
     public static SparkConfig load() {
         SparkConfig sparkConfig = new SparkConfig();
@@ -57,10 +58,19 @@ public class SparkConfig {
             sparkConfig.setDatabaseURL(config.getString("database.url"));
             sparkConfig.setDatabaseUser(config.getString("database.user"));
             sparkConfig.setCacheExpire(config.getInt("cache.expire"));
+            sparkConfig.sethBaseCountFile(config.getString("hbase.count"));
             return sparkConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public String gethBaseCountFile() {
+        return hBaseCountFile;
+    }
+
+    public void sethBaseCountFile(String hBaseCountFile) {
+        this.hBaseCountFile = hBaseCountFile;
     }
 
     public double getWordNodeSize() {

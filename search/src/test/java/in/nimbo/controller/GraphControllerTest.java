@@ -45,4 +45,10 @@ public class GraphControllerTest {
         assertTrue(Double.valueOf(sparkConfig.getWordNodeSize()).equals(wordGraph.getNodes().get(1).getFont().getSize()));
         assertTrue(Double.valueOf(sparkConfig.getWordNodeSize()).equals(wordGraph.getNodes().get(2).getFont().getSize()));
     }
+
+    @Test
+    public void testSiteGraphWithoutParameter() throws IOException {
+        GraphResponse siteGraph = controller.siteGraph(null);
+
+    }
 }

@@ -30,6 +30,7 @@ import org.slf4j.LoggerFactory;
 import redis.clients.jedis.Jedis;
 import spark.Spark;
 
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -101,6 +102,14 @@ public class App {
         Spark.port(sparkConfig.getPort());
         Spark.path("/", () -> {
             Spark.before("/*", (request, response) -> backendLogger.info("New request for uri: {}", request.uri()));
+
+            Spark.get("/metrics", (request, response) -> {
+                String file = sparkConfig.gethBaseCountFile();
+                Scanner scanner = new Scanner(new FileInputStream(file));
+                String value = scanner.nextLine();
+                response.type("text/html");
+                return value;
+            });
 
             Spark.get("/search", ((request, response) -> {
                 String query = request.queryParamOrDefault("query", "");
