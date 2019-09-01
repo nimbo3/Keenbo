@@ -46,7 +46,7 @@ public class App {
                 in.nimbo.common.entity.GraphResult.class, in.nimbo.common.exception.ParseLinkException.class,
                 in.nimbo.common.exception.InvalidLinkException.class, in.nimbo.common.exception.LanguageDetectException.class,
                 in.nimbo.common.exception.HashException.class, in.nimbo.common.config.Config.class,
-                in.nimbo.common.config.HBaseSiteConfig.class, in.nimbo.entity.Edge.class, in.nimbo.entity.Page.class,
+                in.nimbo.entity.Edge.class, in.nimbo.entity.Page.class,
                 in.nimbo.entity.Node.class, in.nimbo.App.class, in.nimbo.config.BackwardExtractorConfig.class,
                 org.apache.hadoop.hbase.client.Result.class, org.apache.hadoop.hbase.io.ImmutableBytesWritable.class,
                 TableInputFormat.class, in.nimbo.common.entity.GraphResult.class});
