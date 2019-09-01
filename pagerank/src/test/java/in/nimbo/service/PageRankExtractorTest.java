@@ -29,6 +29,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class PageRankExtractorTest {
     private static SparkSession sparkSession;
@@ -47,7 +48,7 @@ public class PageRankExtractorTest {
     }
 
     @Test
-    public void siteExtractor() {
+    public void pageRankExtractor() {
         HBasePageConfig hBasePageConfig = HBasePageConfig.load();
         PageRankConfig pageRankConfig = PageRankConfig.load();
         pageRankConfig.setMaxIter(1);
@@ -72,9 +73,8 @@ public class PageRankExtractorTest {
         rows.add("https://com.b");
 
         JavaRDD<Result> hBaseRDD = javaSparkContext.parallelize(resultList);
-        Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaRDD<Page>> result =
+        JavaPairRDD<ImmutableBytesWritable, Put> result =
                 PageRankExtractor.extract(hBasePageConfig, pageRankConfig, sparkSession, hBaseRDD);
-        List<Page> pageRankElastic = result._2.collect();
-        assertEquals(4, pageRankElastic.size());
+        assertEquals(4, result.count());
     }
 }

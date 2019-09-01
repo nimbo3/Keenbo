@@ -5,7 +5,6 @@ import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.PageRankConfig;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
-import in.nimbo.entity.Page;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -25,18 +24,21 @@ public class PageRankExtractor {
     private PageRankExtractor() {
     }
 
-    public static Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaRDD<Page>> extract(HBasePageConfig hBasePageConfig, PageRankConfig pageRankConfig,
-                                                                                          SparkSession spark, JavaRDD<Result> hBaseRDD) {
+    public static JavaPairRDD<ImmutableBytesWritable, Put> extract(HBasePageConfig hBasePageConfig, PageRankConfig pageRankConfig,
+                                                                   SparkSession spark, JavaRDD<Result> hBaseRDD) {
         byte[] dataColumnFamily = hBasePageConfig.getDataColumnFamily();
         byte[] rankColumn = hBasePageConfig.getRankColumn();
         byte[] anchorColumnFamily = hBasePageConfig.getAnchorColumnFamily();
 
-        JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));
+        JavaRDD<Node> nodes = hBaseRDD.map(result -> {
+            String row = Bytes.toString(result.getRow());
+            return new Node(LinkUtility.hashLink(row), row);
+        });
         JavaRDD<Edge> edges = hBaseRDD.flatMap(result -> result.listCells().iterator())
                 .filter(cell -> CellUtil.matchingFamily(cell, anchorColumnFamily))
                 .map(cell -> new Edge(
-                        Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength()),
-                        LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength()))
+                        LinkUtility.hashLink(Bytes.toString(cell.getRowArray(), cell.getRowOffset(), cell.getRowLength())),
+                        LinkUtility.hashLink(LinkUtility.reverseLink(Bytes.toString(cell.getQualifierArray(), cell.getQualifierOffset(), cell.getQualifierLength())))
                 ));
 
         Dataset<Row> vertexDF = spark.createDataFrame(nodes, Node.class);
@@ -58,16 +60,12 @@ public class PageRankExtractor {
         pageRankRdd.persist(StorageLevel.DISK_ONLY());
 
         JavaPairRDD<ImmutableBytesWritable, Put> javaPairRDD = pageRankRdd.mapToPair(row -> {
-            Put put = new Put(Bytes.toBytes(row.getString(0)));
-            put.addColumn(dataColumnFamily, rankColumn, Bytes.toBytes(String.valueOf(row.getDouble(1))));
+            Put put = new Put(Bytes.toBytes(row.getString(1)));
+            put.addColumn(dataColumnFamily, rankColumn, Bytes.toBytes(String.valueOf(row.getDouble(2))));
+            System.out.println(put);
             return new Tuple2<>(new ImmutableBytesWritable(), put);
         });
 
-        JavaRDD<Page> esPageJavaRDD = pageRankRdd
-                .map(row -> new Page(
-                        LinkUtility.hashLink(LinkUtility.reverseLink(row.getString(0))),
-                        row.getDouble(1)));
-
-        return new Tuple2<>(javaPairRDD, esPageJavaRDD);
+        return javaPairRDD;
     }
 }
