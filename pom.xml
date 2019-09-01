@@ -21,6 +21,7 @@
         <module>pagerank</module>
         <module>classifier</module>
         <module>shuffler</module>
+        <module>hbase-count</module>
     </modules>
 
     <properties>
