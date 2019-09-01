@@ -144,7 +144,7 @@ public class App {
             }), transformer);
 
             Spark.get("/site-graph", (request, response) -> {
-                String link = request.queryParamOrDefault("link", "");
+                String link = request.queryParamOrDefault("link", null);
                 response.type("application/json");
                 return graphController.siteGraph(link);
             }, transformer);
