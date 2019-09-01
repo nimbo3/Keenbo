@@ -79,7 +79,7 @@ public class WordGraphExtractorServiceTest {
     private Result createResult(String rowKey, String[] keywords, String[] anchors) {
         List<Cell> cellList = new ArrayList<>();
         cellList.add(CellUtil.createCell(Bytes.toBytes(rowKey), hBaseConfig.getDataColumnFamily(),
-                hBaseConfig.getRankColumn(),
+                hBaseConfig.getPageRankColumn(),
                 new Date().getTime(), KeyValue.Type.Put, Bytes.toBytes("1"), Bytes.toBytes("1")));
         for (String anchor : anchors) {
             cellList.add(CellUtil.createCell(Bytes.toBytes(rowKey), hBaseConfig.getAnchorColumnFamily(),
