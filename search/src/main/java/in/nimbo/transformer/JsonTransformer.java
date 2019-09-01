@@ -1,6 +1,7 @@
 package in.nimbo.transformer;
 
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.google.gson.Gson;
 import spark.ResponseTransformer;
 
 public class JsonTransformer implements ResponseTransformer {

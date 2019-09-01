@@ -1,12 +1,10 @@
 package in.nimbo.entity;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class Font {
-    @JsonProperty("size")
     private double size;
 
-    public Font() {}
+    public Font() {
+    }
 
     public Font(double size) {
         this.size = size;

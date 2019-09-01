@@ -1,7 +1,7 @@
 package in.nimbo.service;
 
 import in.nimbo.App;
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.BackwardExtractorConfig;
 import in.nimbo.entity.Page;
@@ -44,7 +44,7 @@ public class BackwardExtractorTest {
 
     @Test
     public void siteExtractor() {
-        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
+        HBaseConfig hBasePageConfig = HBaseConfig.load();
         BackwardExtractorConfig backwardExtractorConfig = BackwardExtractorConfig.load();
         List<Result> resultList = new ArrayList<>();
         List<String> rows = new ArrayList<>();
@@ -52,7 +52,7 @@ public class BackwardExtractorTest {
             String row = "http://com.a" + i;
             String anchor = "https://b.com";
             List<Cell> cellList = new ArrayList<>();
-            cellList.add(CellUtil.createCell(Bytes.toBytes(row), hBasePageConfig.getDataColumnFamily(), hBasePageConfig.getRankColumn(),
+            cellList.add(CellUtil.createCell(Bytes.toBytes(row), hBasePageConfig.getDataColumnFamily(), hBasePageConfig.getPageRankColumn(),
                     new Date().getTime(), KeyValue.Type.Put, Bytes.toBytes(String.valueOf(i)), Bytes.toBytes("1")));
             cellList.add(CellUtil.createCell(Bytes.toBytes(row), hBasePageConfig.getAnchorColumnFamily(),
                     Bytes.toBytes(anchor),
@@ -61,7 +61,7 @@ public class BackwardExtractorTest {
             rows.add("a" + i + ".com");
         }
         List<Cell> cellList = new ArrayList<>();
-        cellList.add(CellUtil.createCell(Bytes.toBytes("https://com.b"), hBasePageConfig.getDataColumnFamily(), hBasePageConfig.getRankColumn(),
+        cellList.add(CellUtil.createCell(Bytes.toBytes("https://com.b"), hBasePageConfig.getDataColumnFamily(), hBasePageConfig.getPageRankColumn(),
                 new Date().getTime(), KeyValue.Type.Put, Bytes.toBytes(String.valueOf(1)), Bytes.toBytes("1")));
         resultList.add(Result.create(cellList));
         rows.add("https://com.b");

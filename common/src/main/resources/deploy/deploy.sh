@@ -9,6 +9,7 @@ echo "cloned";
 cd Keenbo;
 echo "packaging ...";
 mvn package -DskipTests > /dev/null;
+cp /root/graph/* /root/ehsan/project/Keenbo/target/conf/;
 echo "packaged";
 rm -r /root/Keenbo;
 cp -r target /root/Keenbo;

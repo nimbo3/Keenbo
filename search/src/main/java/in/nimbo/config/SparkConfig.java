@@ -12,7 +12,23 @@ public class SparkConfig {
     private int filterEdge;
     private double minNode;
     private double maxNode;
+    private double wordNodeSize;
     private double filterNode;
+    private int wordFilterEdge;
+    private int minPasswordLength;
+    private String loginError;
+    private String usernameDuplicateError;
+    private String usernameInvalidError;
+    private String emailInvalidError;
+    private String passwordWeakError;
+    private String passwordUnlikeError;
+    private String nameError;
+    private int tokenLength;
+    private String databaseURL;
+    private String databaseDriver;
+    private String databasePassword;
+    private String databaseUser;
+    private int cacheExpire;
 
     public static SparkConfig load() {
         SparkConfig sparkConfig = new SparkConfig();
@@ -25,10 +41,154 @@ public class SparkConfig {
             sparkConfig.setMinEdge(config.getInt("graph.sites.edges.min"));
             sparkConfig.setMaxEdge(config.getInt("graph.sites.edges.max"));
             sparkConfig.setFilterEdge(config.getInt("graph.sites.edges.filter"));
+            sparkConfig.setWordFilterEdge(config.getInt("graph.words.edges.filter"));
+            sparkConfig.setWordNodeSize(config.getInt("graph.words.nodes.size"));
+            sparkConfig.setMinPasswordLength(config.getInt("auth.password.min"));
+            sparkConfig.setLoginError(config.getString("auth.error.login"));
+            sparkConfig.setUsernameDuplicateError(config.getString("auth.error.register.username.duplicate"));
+            sparkConfig.setUsernameInvalidError(config.getString("auth.error.register.username.invalid"));
+            sparkConfig.setEmailInvalidError(config.getString("auth.error.register.email.invalid"));
+            sparkConfig.setPasswordWeakError(config.getString("auth.error.register.password.weak"));
+            sparkConfig.setPasswordUnlikeError(config.getString("auth.error.register.password.unlike"));
+            sparkConfig.setNameError(config.getString("auth.error.register.name"));
+            sparkConfig.setTokenLength(config.getInt("auth.token.length"));
+            sparkConfig.setDatabaseDriver(config.getString("database.driver"));
+            sparkConfig.setDatabasePassword(config.getString("database.password"));
+            sparkConfig.setDatabaseURL(config.getString("database.url"));
+            sparkConfig.setDatabaseUser(config.getString("database.user"));
+            sparkConfig.setCacheExpire(config.getInt("cache.expire"));
             return sparkConfig;
         } catch (ConfigurationException e) {
             throw new LoadConfigurationException(CONFIG_NAME, e);
         }
+    }
+
+    public double getWordNodeSize() {
+        return wordNodeSize;
+    }
+
+    public void setWordNodeSize(double wordNodeSize) {
+        this.wordNodeSize = wordNodeSize;
+    }
+
+    public int getWordFilterEdge() {
+        return wordFilterEdge;
+    }
+
+    public void setWordFilterEdge(int wordFilterEdge) {
+        this.wordFilterEdge = wordFilterEdge;
+    }
+
+    public int getCacheExpire() {
+        return cacheExpire;
+    }
+
+    public void setCacheExpire(int cacheExpire) {
+        this.cacheExpire = cacheExpire;
+    }
+
+    public String getDatabaseURL() {
+        return databaseURL;
+    }
+
+    public void setDatabaseURL(String databaseURL) {
+        this.databaseURL = databaseURL;
+    }
+
+    public String getDatabaseDriver() {
+        return databaseDriver;
+    }
+
+    public void setDatabaseDriver(String databaseDriver) {
+        this.databaseDriver = databaseDriver;
+    }
+
+    public String getDatabasePassword() {
+        return databasePassword;
+    }
+
+    public void setDatabasePassword(String databasePassword) {
+        this.databasePassword = databasePassword;
+    }
+
+    public String getDatabaseUser() {
+        return databaseUser;
+    }
+
+    public void setDatabaseUser(String databaseUser) {
+        this.databaseUser = databaseUser;
+    }
+
+    public int getTokenLength() {
+        return tokenLength;
+    }
+
+    public void setTokenLength(int tokenLength) {
+        this.tokenLength = tokenLength;
+    }
+
+    public String getNameError() {
+        return nameError;
+    }
+
+    public void setNameError(String nameError) {
+        this.nameError = nameError;
+    }
+
+    public String getPasswordUnlikeError() {
+        return passwordUnlikeError;
+    }
+
+    public void setPasswordUnlikeError(String passwordUnlikeError) {
+        this.passwordUnlikeError = passwordUnlikeError;
+    }
+
+    public String getPasswordWeakError() {
+        return passwordWeakError;
+    }
+
+    public void setPasswordWeakError(String passwordWeakError) {
+        this.passwordWeakError = passwordWeakError;
+    }
+
+    public String getEmailInvalidError() {
+        return emailInvalidError;
+    }
+
+    public void setEmailInvalidError(String emailInvalidError) {
+        this.emailInvalidError = emailInvalidError;
+    }
+
+    public String getUsernameInvalidError() {
+        return usernameInvalidError;
+    }
+
+    public void setUsernameInvalidError(String usernameInvalidError) {
+        this.usernameInvalidError = usernameInvalidError;
+    }
+
+    public String getUsernameDuplicateError() {
+        return usernameDuplicateError;
+    }
+
+    public void setUsernameDuplicateError(String usernameDuplicateError) {
+        this.usernameDuplicateError = usernameDuplicateError;
+    }
+
+    public String getLoginError() {
+        return loginError;
+    }
+
+    public void setLoginError(String loginError) {
+        this.loginError = loginError;
+    }
+
+    public int getMinPasswordLength() {
+        return minPasswordLength;
+    }
+
+    public void setMinPasswordLength(int minPasswordLength) {
+        this.minPasswordLength = minPasswordLength;
     }
 
     public int getMinEdge() {

@@ -1,6 +1,6 @@
 package in.nimbo.service;
 
-import in.nimbo.common.config.HBaseSiteConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.entity.GraphResult;
 import in.nimbo.common.utility.SparkUtility;
 import org.apache.hadoop.hbase.Cell;
@@ -22,11 +22,11 @@ public class GraphExtractor {
     private GraphExtractor() {
     }
 
-    public static GraphResult extract(HBaseSiteConfig hBaseSiteConfig, SparkSession spark, JavaRDD<Result> hBaseRDD) {
+    public static GraphResult extract(HBaseConfig hBaseConfig, SparkSession spark, JavaRDD<Result> hBaseRDD) {
         JavaSparkContext javaSparkContext = SparkUtility.getJavaSparkContext(spark);
-        byte[] infoColumnFamily = hBaseSiteConfig.getInfoColumnFamily();
-        byte[] domainColumnFamily = hBaseSiteConfig.getDomainColumnFamily();
-        byte[] siteRankColumn = hBaseSiteConfig.getRankColumn();
+        byte[] infoColumnFamily = hBaseConfig.getInfoColumnFamily();
+        byte[] domainColumnFamily = hBaseConfig.getDomainColumnFamily();
+        byte[] siteRankColumn = hBaseConfig.getSiteRankColumn();
 
         List<Result> bestNodes = hBaseRDD
                 .filter(result -> result.getColumnLatestCell(infoColumnFamily, siteRankColumn) != null)
