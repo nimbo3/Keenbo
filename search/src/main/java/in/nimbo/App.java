@@ -1,5 +1,7 @@
 package in.nimbo;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.google.gson.Gson;
 import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.config.HBaseConfig;
@@ -61,8 +63,9 @@ public class App {
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException, IOException {
         backendLogger.info("loading configurations");
-        Gson gson = new Gson();
-        JsonTransformer transformer = new JsonTransformer(gson);
+        ObjectMapper mapper = new ObjectMapper();
+        ObjectWriter writer = mapper.writer();
+        JsonTransformer transformer = new JsonTransformer(writer);
         ElasticConfig elasticConfig = ElasticConfig.load();
         SparkConfig sparkConfig = SparkConfig.load();
         HBaseConfig hBaseConfig = HBaseConfig.load();
@@ -86,7 +89,7 @@ public class App {
 
         SearchController searchController = new SearchController(elasticDAO, labelDAO);
         AuthController authController = new AuthController(authDAO, sparkConfig, random, labelDAO);
-        GraphController graphController = new GraphController(hBaseDAO, hBaseConfig, sparkConfig, gson);
+        GraphController graphController = new GraphController(hBaseDAO, hBaseConfig, sparkConfig, mapper);
 
         App app = new App(searchController, graphController, sparkConfig, transformer, restHighLevelClient, authController, authDAO, mySqlConnection);
 
@@ -100,8 +103,8 @@ public class App {
             Spark.before("/*", (request, response) -> backendLogger.info("New request for uri: {}", request.uri()));
 
             Spark.get("/search", ((request, response) -> {
-                String query = request.queryParams("query");
-                List<Page> result = searchController.search(query != null ? query : "");
+                String query = request.queryParamOrDefault("query", "");
+                List<Page> result = searchController.search(query);
                 response.type("application/json");
                 return result;
             }), transformer);
@@ -116,9 +119,8 @@ public class App {
             });
 
             Spark.post("/auth/login", ((request, response) -> {
-                String username = request.queryParams("username");
-                username = username != null ? username : "";
-                String password = request.queryParams("password");
+                String username = request.queryParamOrDefault("username", "");
+                String password = request.queryParamOrDefault("password", "");
                 response.type("application/json");
                 return authController.login(username, password);
             }), transformer);
@@ -134,15 +136,15 @@ public class App {
             }), transformer);
 
             Spark.post("/action/click", ((request, response) -> {
-                String token = request.queryParams("token");
-                String destination = request.queryParams("dest");
+                String token = request.queryParamOrDefault("token", "");
+                String destination = request.queryParamOrDefault("dest","");
                 User user = authDAO.authenticate(token);
                 response.type("application/json");
                 return authController.click(user, destination);
             }), transformer);
 
             Spark.get("/site-graph", (request, response) -> {
-                String link = request.queryParams("link");
+                String link = request.queryParamOrDefault("link", "");
                 response.type("application/json");
                 return graphController.siteGraph(link);
             }, transformer);

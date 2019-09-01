@@ -1,5 +1,7 @@
 package in.nimbo.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import in.nimbo.common.config.HBaseConfig;
@@ -27,13 +29,13 @@ public class GraphController {
     private HBaseDAO hBaseDAO;
     private HBaseConfig hBaseConfig;
     private SparkConfig config;
-    private Gson gson;
+    private ObjectMapper mapper;
 
-    public GraphController(HBaseDAO hBaseDAO, HBaseConfig hBaseConfig, SparkConfig config, Gson gson) {
+    public GraphController(HBaseDAO hBaseDAO, HBaseConfig hBaseConfig, SparkConfig config, ObjectMapper mapper) {
         this.hBaseDAO = hBaseDAO;
         this.hBaseConfig = hBaseConfig;
         this.config = config;
-        this.gson = gson;
+        this.mapper = mapper;
     }
 
     private List<Edge> getEdges(Result result, String link) {
@@ -70,9 +72,11 @@ public class GraphController {
             return siteGraph;
         }
         String siteGraphNodesJson = FileUtility.readFileFromResource("site-graph-vertices");
-        List<Node> nodeList = gson.fromJson(siteGraphNodesJson, new TypeToken<List<Node>>(){}.getType());
+        CollectionType nodeListType = mapper.getTypeFactory().constructCollectionType(List.class, Node.class);
+        CollectionType edgeListType = mapper.getTypeFactory().constructCollectionType(List.class, Edge.class);
+        List<Node> nodeList = mapper.readValue(siteGraphNodesJson, nodeListType);
         String siteGraphEdgesJson = FileUtility.readFileFromResource("site-graph-edges");
-        List<Edge> edges = gson.fromJson(siteGraphEdgesJson, new TypeToken<List<Edge>>(){}.getType());
+        List<Edge> edges = mapper.readValue(siteGraphEdgesJson, edgeListType);
         return siteGraph = getResponse(nodeList, edges);
     }
 
@@ -92,14 +96,16 @@ public class GraphController {
         return new GraphResponse(filteredNodes, filteredEdges);
     }
 
-    public GraphResponse wordGraph() {
+    public GraphResponse wordGraph() throws IOException {
         if (wordGraph != null) {
             return wordGraph;
         }
         String wordGraphNodesJson = FileUtility.readFileFromResource("word-graph-vertices");
-        List<Node> nodeList = new Gson().fromJson(wordGraphNodesJson, new TypeToken<List<Node>>(){}.getType());
         String wordGraphEdgesJson = FileUtility.readFileFromResource("word-graph-edges");
-        List<Edge> edges = new Gson().fromJson(wordGraphEdgesJson, new TypeToken<List<Edge>>(){}.getType());
+        CollectionType nodeListType = mapper.getTypeFactory().constructCollectionType(List.class, Node.class);
+        CollectionType edgeListType = mapper.getTypeFactory().constructCollectionType(List.class, Edge.class);
+        List<Node> nodeList = mapper.readValue(wordGraphNodesJson, nodeListType);
+        List<Edge> edges = mapper.readValue(wordGraphEdgesJson, edgeListType);
 
         nodeList.forEach(node -> node.getFont().setSize(config.getWordNodeSize()));
         List<Edge> filteredEdges = edges.stream().filter(edge -> edge.getWidth() > config.getWordFilterEdge()).collect(Collectors.toList());
