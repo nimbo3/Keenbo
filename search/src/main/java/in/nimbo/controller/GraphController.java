@@ -2,10 +2,10 @@ package in.nimbo.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import in.nimbo.common.config.HBaseSiteConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.FileUtility;
 import in.nimbo.config.SparkConfig;
-import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.common.dao.hbase.HBaseDAO;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Font;
 import in.nimbo.entity.GraphResponse;
@@ -25,11 +25,11 @@ public class GraphController {
     private GraphResponse wordGraph;
     private GraphResponse siteGraph;
     private HBaseDAO hBaseDAO;
-    private HBaseSiteConfig hBaseConfig;
+    private HBaseConfig hBaseConfig;
     private SparkConfig config;
     private Gson gson;
 
-    public GraphController(HBaseDAO hBaseDAO, HBaseSiteConfig hBaseConfig, SparkConfig config, Gson gson) {
+    public GraphController(HBaseDAO hBaseDAO, HBaseConfig hBaseConfig, SparkConfig config, Gson gson) {
         this.hBaseDAO = hBaseDAO;
         this.hBaseConfig = hBaseConfig;
         this.config = config;
@@ -45,7 +45,7 @@ public class GraphController {
     private Node getNode(Result result) {
         String row = Bytes.toString(result.getRow());
         double rank = Double.valueOf(Bytes.toString(result.getValue(hBaseConfig.getInfoColumnFamily()
-                , hBaseConfig.getRankColumn())));
+                , hBaseConfig.getSiteRankColumn())));
         int pageCount = Integer.valueOf(Bytes.toString(result.getValue(hBaseConfig.getInfoColumnFamily()
                 , hBaseConfig.getCountColumn())));
         Font font = new Font(rank);

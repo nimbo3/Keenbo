@@ -1,7 +1,7 @@
 package in.nimbo.service;
 
 import in.nimbo.App;
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.PageRankConfig;
 import in.nimbo.entity.Page;
@@ -24,7 +24,6 @@ import org.junit.Test;
 import scala.Tuple2;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -48,7 +47,7 @@ public class PageRankExtractorTest {
 
     @Test
     public void siteExtractor() {
-        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
+        HBaseConfig hBasePageConfig = HBaseConfig.load();
         PageRankConfig pageRankConfig = PageRankConfig.load();
         pageRankConfig.setMaxIter(1);
         List<Result> resultList = new ArrayList<>();

@@ -4,7 +4,7 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.jmx.JmxReporter;
 import in.nimbo.common.config.ElasticConfig;
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.dao.elastic.ElasticDAO;
@@ -39,7 +39,7 @@ public class App {
     }
 
     public static void main(String[] args) {
-        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
+        HBaseConfig hBasePageConfig = HBaseConfig.load();
         ProjectConfig projectConfig = ProjectConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
         ElasticConfig elasticConfig = ElasticConfig.load();

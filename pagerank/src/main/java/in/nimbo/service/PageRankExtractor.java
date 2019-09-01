@@ -1,6 +1,6 @@
 package in.nimbo.service;
 
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.config.PageRankConfig;
 import in.nimbo.entity.Edge;
@@ -25,10 +25,10 @@ public class PageRankExtractor {
     private PageRankExtractor() {
     }
 
-    public static Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaRDD<Page>> extract(HBasePageConfig hBasePageConfig, PageRankConfig pageRankConfig,
+    public static Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaRDD<Page>> extract(HBaseConfig hBasePageConfig, PageRankConfig pageRankConfig,
                                                                                           SparkSession spark, JavaRDD<Result> hBaseRDD) {
         byte[] dataColumnFamily = hBasePageConfig.getDataColumnFamily();
-        byte[] rankColumn = hBasePageConfig.getRankColumn();
+        byte[] rankColumn = hBasePageConfig.getPageRankColumn();
         byte[] anchorColumnFamily = hBasePageConfig.getAnchorColumnFamily();
 
         JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));

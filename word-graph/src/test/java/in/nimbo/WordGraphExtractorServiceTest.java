@@ -1,6 +1,6 @@
 package in.nimbo;
 
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.entity.GraphResult;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.WordGraphConfig;
@@ -29,7 +29,7 @@ import java.util.List;
 public class WordGraphExtractorServiceTest {
     private static SparkSession sparkSession;
     private static JavaSparkContext javaSparkContext;
-    private static HBasePageConfig hBaseConfig;
+    private static HBaseConfig hBaseConfig;
 
     @BeforeClass
     public static void init() {
@@ -37,7 +37,7 @@ public class WordGraphExtractorServiceTest {
         LogManager.getLogger("org").setLevel(Level.WARN);
         sparkSession = App.loadSpark(siteGraphConfig.getAppName() + " test", true);
         javaSparkContext = SparkUtility.getJavaSparkContext(sparkSession);
-        hBaseConfig = HBasePageConfig.load();
+        hBaseConfig = HBaseConfig.load();
     }
 
     @AfterClass

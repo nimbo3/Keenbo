@@ -2,7 +2,7 @@ package in.nimbo;
 
 import com.google.gson.Gson;
 import in.nimbo.common.config.ElasticConfig;
-import in.nimbo.common.config.HBaseSiteConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.controller.AuthController;
 import in.nimbo.controller.GraphController;
@@ -11,8 +11,8 @@ import in.nimbo.dao.auth.AuthDAO;
 import in.nimbo.dao.auth.MySqlAuthDAO;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
-import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.dao.hbase.HBaseDAOImpl;
+import in.nimbo.common.dao.hbase.HBaseDAO;
+import in.nimbo.common.dao.hbase.HBaseDAOImpl;
 import in.nimbo.dao.redis.LabelDAO;
 import in.nimbo.dao.redis.RedisLabelDAO;
 import in.nimbo.entity.Page;
@@ -65,7 +65,7 @@ public class App {
         JsonTransformer transformer = new JsonTransformer(gson);
         ElasticConfig elasticConfig = ElasticConfig.load();
         SparkConfig sparkConfig = SparkConfig.load();
-        HBaseSiteConfig hBaseConfig = HBaseSiteConfig.load();
+        HBaseConfig hBaseConfig = HBaseConfig.load();
         backendLogger.info("configurations loaded");
 
         Random random = new Random();
@@ -82,7 +82,7 @@ public class App {
         AuthDAO authDAO = new MySqlAuthDAO(mySqlConnection);
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         LabelDAO labelDAO = new RedisLabelDAO(jedis, sparkConfig);
-        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConfig, hBaseConnection);
+        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBaseConfig);
 
         SearchController searchController = new SearchController(elasticDAO, labelDAO);
         AuthController authController = new AuthController(authDAO, sparkConfig, random, labelDAO);
@@ -141,13 +141,13 @@ public class App {
                 return authController.click(user, destination);
             }), transformer);
 
-            Spark.get("/word-graph", (request, response) -> {
+            Spark.get("/site-graph", (request, response) -> {
                 String link = request.queryParams("link");
                 response.type("application/json");
                 return graphController.siteGraph(link);
             }, transformer);
 
-            Spark.get("/site-graph", (request, response) -> {
+            Spark.get("/word-graph", (request, response) -> {
                 response.type("application/json");
                 return graphController.wordGraph();
             }, transformer);

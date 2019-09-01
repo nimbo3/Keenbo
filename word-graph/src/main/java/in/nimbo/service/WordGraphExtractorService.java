@@ -1,7 +1,7 @@
 package in.nimbo.service;
 
 import com.vdurmont.emoji.EmojiManager;
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.entity.GraphResult;
 import in.nimbo.common.utility.LinkUtility;
 import org.apache.hadoop.hbase.Cell;
@@ -27,7 +27,7 @@ public class WordGraphExtractorService {
     private WordGraphExtractorService() {
     }
 
-    public static GraphResult extract(HBasePageConfig hBaseConfig, SparkSession spark, JavaRDD<Result> hBaseRDD) {
+    public static GraphResult extract(HBaseConfig hBaseConfig, SparkSession spark, JavaRDD<Result> hBaseRDD) {
         String badWordRegex = ".*\\-.*";
         String tagRegex = "^<.*?>$";
         String idRegex = "^@.*$";
@@ -38,7 +38,7 @@ public class WordGraphExtractorService {
                 "nov", "dec", "use", "ago", "new", "jan.", "feb.", "mar.", "apr.", "may.", "jun.", "jul.", "aug.",
                 "sep.", "oct.", "nov.", "dec.", "==", "!!", "☁️");
 
-        byte[] rankColumn = hBaseConfig.getRankColumn();
+        byte[] rankColumn = hBaseConfig.getPageRankColumn();
         byte[] anchorColumnFamily = hBaseConfig.getAnchorColumnFamily();
         byte[] dataColumnFamily = hBaseConfig.getDataColumnFamily();
 

@@ -1,6 +1,6 @@
 package in.nimbo;
 
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.PageRankConfig;
 import in.nimbo.entity.Page;
@@ -18,7 +18,7 @@ import scala.Tuple2;
 
 public class App {
     public static void main(String[] args) {
-        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
+        HBaseConfig hBasePageConfig = HBaseConfig.load();
         PageRankConfig pageRankConfig = PageRankConfig.load();
         String esIndex = pageRankConfig.getEsIndex();
         String esType = pageRankConfig.getEsType();
@@ -42,7 +42,7 @@ public class App {
         SparkSession spark = SparkUtility.getSpark(appName, isLocal);
         SparkUtility.registerKryoClasses(spark, new Class[]{
                 in.nimbo.common.utility.LinkUtility.class, in.nimbo.common.exception.ParseLinkException.class, in.nimbo.common.entity.Anchor.class,
-                in.nimbo.common.config.Config.class, HBasePageConfig.class, in.nimbo.common.utility.CloseUtility.class,
+                in.nimbo.common.config.Config.class, HBaseConfig.class, in.nimbo.common.utility.CloseUtility.class,
                 in.nimbo.common.config.RedisConfig.class, in.nimbo.common.config.ElasticConfig.class, in.nimbo.common.entity.Page.class,
                 in.nimbo.common.exception.ElasticException.class, in.nimbo.common.serializer.PageDeserializer.class,
                 in.nimbo.common.exception.InvalidLinkException.class, in.nimbo.common.serializer.PageSerializer.class,

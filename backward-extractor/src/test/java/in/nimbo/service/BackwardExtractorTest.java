@@ -1,7 +1,7 @@
 package in.nimbo.service;
 
 import in.nimbo.App;
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.BackwardExtractorConfig;
 import in.nimbo.entity.Page;
@@ -44,7 +44,7 @@ public class BackwardExtractorTest {
 
     @Test
     public void siteExtractor() {
-        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
+        HBaseConfig hBasePageConfig = HBaseConfig.load();
         BackwardExtractorConfig backwardExtractorConfig = BackwardExtractorConfig.load();
         List<Result> resultList = new ArrayList<>();
         List<String> rows = new ArrayList<>();

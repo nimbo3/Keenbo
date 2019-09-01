@@ -1,8 +1,7 @@
 package in.nimbo.service;
 
 import in.nimbo.App;
-import in.nimbo.common.config.HBasePageConfig;
-import in.nimbo.common.config.HBaseSiteConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.entity.GraphResult;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.SiteGraphConfig;
@@ -76,7 +75,7 @@ public class GraphExtractorTest {
 
     @Test
     public void siteExtractor() {
-        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
+        HBaseConfig hBasePageConfig = HBaseConfig.load();
         HBaseSiteConfig hBaseSiteConfig = HBaseSiteConfig.load();
         List<Result> resultList = new ArrayList<>();
         List<String> rows = new ArrayList<>();
