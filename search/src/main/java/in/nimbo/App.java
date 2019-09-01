@@ -60,20 +60,25 @@ public class App {
     }
 
     public static void main(String[] args) throws SQLException, ClassNotFoundException, IOException {
+        backendLogger.info("loading configurations");
         Gson gson = new Gson();
         JsonTransformer transformer = new JsonTransformer(gson);
         ElasticConfig elasticConfig = ElasticConfig.load();
         SparkConfig sparkConfig = SparkConfig.load();
         HBaseSiteConfig hBaseConfig = HBaseSiteConfig.load();
+        backendLogger.info("configurations loaded");
 
         Random random = new Random();
 
+        backendLogger.info("connecting to databases");
         Class.forName(sparkConfig.getDatabaseDriver());
         Connection mySqlConnection = DriverManager.getConnection(sparkConfig.getDatabaseURL(), sparkConfig.getDatabaseUser(), sparkConfig.getDatabasePassword());
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
         Jedis jedis = new Jedis();
         org.apache.hadoop.hbase.client.Connection hBaseConnection = ConnectionFactory.createConnection();
+        backendLogger.info("connected to databases");
 
+        backendLogger.info("initializing application");
         AuthDAO authDAO = new MySqlAuthDAO(mySqlConnection);
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         LabelDAO labelDAO = new RedisLabelDAO(jedis, sparkConfig);
