@@ -79,7 +79,7 @@ public class CrawlerService {
                     throw new InvalidLinkException("duplicated link: " + siteLink);
                 }
             } else {
-                appLogger.info("Skip link {} because of redis hit", siteLink);
+                appLogger.info("Skip link {} because of cache hit", siteLink);
                 cacheHitCounter.inc();
                 return Optional.empty();
             }
