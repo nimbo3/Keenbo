@@ -1,4 +1,4 @@
-package in.nimbo.service;
+package in.nimbo.common.service;
 
 import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
@@ -7,6 +7,7 @@ import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.common.exception.ParseLinkException;
+import in.nimbo.common.utility.LanguageDetectorUtility;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
@@ -41,7 +42,7 @@ public class ParserService {
      * @param link link of site
      * @return
      */
-    Optional<Document> getDocument(String link) {
+    public Optional<Document> getDocument(String link) {
         try {
             Connection.Response response = Jsoup.connect(link)
                     .userAgent(projectConfig.getJsoupUserAgent())
@@ -130,22 +131,6 @@ public class ParserService {
     }
 
     /**
-     * @param text text
-     * @return true if text is in English
-     */
-    boolean isEnglishLanguage(String text) {
-        try {
-            Detector detector = DetectorFactory.create();
-            detector.append(text);
-            detector.setAlpha(0);
-            return detector.getProbabilities().stream()
-                    .anyMatch(x -> x.lang.equals("en") && x.prob > projectConfig.getEnglishProbability());
-        } catch (LangDetectException e) {
-            throw new LanguageDetectException(e);
-        }
-    }
-
-    /**
      * crawl a site and return it's content as a page
      *
      * @param link link of site
@@ -161,7 +146,7 @@ public class ParserService {
             String pageContentWithoutTag = document.text().replace("\n", " ");
             if (pageContentWithoutTag.isEmpty()) {
                 parserLogger.warn("There is no content for site: {}", link);
-            } else if (isEnglishLanguage(pageContentWithoutTag)) {
+            } else if (isEnglishLanguage(pageContentWithoutTag, projectConfig.getEnglishProbability())) {
                 Set<Anchor> anchors = getAnchors(document);
                 List<Meta> metas = getMetas(document);
                 String title = getTitle(document);
@@ -176,5 +161,18 @@ public class ParserService {
             parserLogger.warn("Cannot detect language of site: {}", link);
         }
         throw new ParseLinkException();
+    }
+
+
+    public boolean isEnglishLanguage(String text, double englishProbability) {
+        try {
+            Detector detector = DetectorFactory.create();
+            detector.append(text);
+            detector.setAlpha(0);
+            return detector.getProbabilities().stream()
+                    .anyMatch(x -> x.lang.equals("en") && x.prob > englishProbability);
+        } catch (LangDetectException e) {
+            throw new LanguageDetectException(e);
+        }
     }
 }

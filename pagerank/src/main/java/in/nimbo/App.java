@@ -30,7 +30,7 @@ public class App {
         spark.sparkContext().conf().set("es.index.auto.create", pageRankConfig.getEsIndexAutoCreate());
 
         JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBasePageConfig.getPageTable());
-        hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
+        hBaseRDD.persist(StorageLevel.DISK_ONLY());
         Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaRDD<Page>> extract =
                 PageRankExtractor.extract(hBasePageConfig, pageRankConfig, spark, hBaseRDD);
         SparkUtility.saveToHBase(hBasePageConfig.getPageTable(), extract._1);

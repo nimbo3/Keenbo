@@ -1,13 +1,12 @@
-package in.nimbo.dao;
+package dao;
 
 import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.utility.LinkUtility;
-import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.dao.hbase.HBaseDAOImpl;
+import in.nimbo.common.dao.hbase.HBaseDAO;
+import in.nimbo.common.dao.hbase.HBaseDAOImpl;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
-import in.nimbo.service.keyword.KeywordExtractorService;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
 import org.apache.hadoop.hbase.TableName;
@@ -19,10 +18,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.MalformedURLException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -62,9 +58,12 @@ public class HBaseDAOTest {
             metas.add(meta);
         }
         Page page = new Page("http://www.google.com/", "Google", "content", anchors, metas, 100.0);
+        Map<String, Integer> keywords = new HashMap<>();
+        keywords.put("content", 1);
         List<Page> pages = new ArrayList<>();
         pages.add(page);
-        hBaseDAO.add(pages, true);
+        hBaseDAO.add(pages, Collections.singletonList(keywords));
+        hBaseDAO.add(pages);
         assertTrue(hBaseDAO.contains(LinkUtility.reverseLink(page.getLink())));
     }
 

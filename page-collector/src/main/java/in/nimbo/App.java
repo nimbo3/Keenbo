@@ -7,28 +7,17 @@ import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.config.HBasePageConfig;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
+import in.nimbo.common.dao.elastic.ElasticDAO;
+import in.nimbo.common.dao.elastic.ElasticDAOImpl;
+import in.nimbo.common.dao.hbase.HBaseDAO;
+import in.nimbo.common.dao.hbase.HBaseDAOImpl;
 import in.nimbo.common.entity.Page;
 import in.nimbo.config.CollectorConfig;
-import in.nimbo.dao.elastic.ElasticBulkListener;
-import in.nimbo.dao.elastic.ElasticDAO;
-import in.nimbo.dao.elastic.ElasticDAOImpl;
-import in.nimbo.dao.hbase.HBaseDAO;
-import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.service.CollectorService;
 import in.nimbo.service.kafka.KafkaService;
 import in.nimbo.service.kafka.KafkaServiceImpl;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.http.HttpHost;
-import org.elasticsearch.action.bulk.BackoffPolicy;
-import org.elasticsearch.action.bulk.BulkProcessor;
-import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
-import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.unit.ByteSizeUnit;
-import org.elasticsearch.common.unit.ByteSizeValue;
-import org.elasticsearch.common.unit.TimeValue;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,14 +28,13 @@ import java.util.concurrent.TimeUnit;
 public class App {
     private static Logger cliLogger = LoggerFactory.getLogger("cli");
     private static Logger appLogger = LoggerFactory.getLogger("collector");
-    private RestHighLevelClient restHighLevelClient;
+    private ElasticDAO elasticDAO;
     private KafkaService kafkaService;
     private HBaseDAO hBaseDAO;
 
-
-    public App(RestHighLevelClient restHighLevelClient, KafkaService kafkaService, HBaseDAO hBaseDAO) {
-        this.restHighLevelClient = restHighLevelClient;
+    public App(KafkaService kafkaService, ElasticDAO elasticDAO, HBaseDAO hBaseDAO) {
         this.kafkaService = kafkaService;
+        this.elasticDAO = elasticDAO;
         this.hBaseDAO = hBaseDAO;
     }
 
@@ -62,11 +50,7 @@ public class App {
         appLogger.info("Reporter started");
 
         CopyOnWriteArrayList<Page> backupPages = new CopyOnWriteArrayList<>();
-        RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
-        ElasticBulkListener elasticBulkListener = new ElasticBulkListener(backupPages);
-        BulkProcessor bulkProcessor = initializeElasticSearchBulk(elasticConfig, restHighLevelClient, elasticBulkListener);
-        ElasticDAO elasticDAO = new ElasticDAOImpl(elasticConfig, bulkProcessor, backupPages, restHighLevelClient);
-        elasticBulkListener.setElasticDAO(elasticDAO);
+        ElasticDAO elasticDAO = ElasticDAOImpl.createElasticDAO(elasticConfig, backupPages);
         appLogger.info("ElasticSearch started");
 
         Connection hBaseConnection = null;
@@ -85,32 +69,10 @@ public class App {
         appLogger.info("Services started");
 
         appLogger.info("Application started");
-        App app = new App(restHighLevelClient, kafkaService, hBaseDAO);
+        App app = new App(kafkaService, elasticDAO, hBaseDAO);
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
 
         app.startApp();
-    }
-
-    public static RestHighLevelClient initializeElasticSearchClient(ElasticConfig elasticConfig) {
-        RestClientBuilder restClientBuilder = RestClient.builder(new HttpHost(elasticConfig.getHost(), elasticConfig.getPort()))
-                .setRequestConfigCallback(requestConfigBuilder -> requestConfigBuilder
-                        .setConnectTimeout(elasticConfig.getConnectTimeout())
-                        .setSocketTimeout(elasticConfig.getSocketTimeout()))
-                .setMaxRetryTimeoutMillis(elasticConfig.getMaxRetryTimeoutMillis());
-        return new RestHighLevelClient(restClientBuilder);
-    }
-
-    public static BulkProcessor initializeElasticSearchBulk(ElasticConfig elasticConfig, RestHighLevelClient restHighLevelClient,
-                                                            ElasticBulkListener elasticBulkListener) {
-        BulkProcessor.Builder builder = BulkProcessor.builder(
-                (request, bulkListener) -> restHighLevelClient.bulkAsync(request, RequestOptions.DEFAULT, bulkListener),
-                elasticBulkListener);
-        builder.setBulkActions(elasticConfig.getBulkActions());
-        builder.setBulkSize(new ByteSizeValue(elasticConfig.getBulkSize(), ByteSizeUnit.valueOf(elasticConfig.getBulkSizeUnit())));
-        builder.setConcurrentRequests(elasticConfig.getConcurrentRequests());
-        builder.setBackoffPolicy(BackoffPolicy.constantBackoff(TimeValue.timeValueSeconds(elasticConfig.getBackoffDelaySeconds()),
-                elasticConfig.getBackoffMaxRetry()));
-        return builder.build();
     }
 
     private void startApp() {
@@ -122,7 +84,7 @@ public class App {
     private void stopApp() {
         kafkaService.stopSchedule();
         try {
-            restHighLevelClient.close();
+            elasticDAO.close();
             hBaseDAO.close();
         } catch (IOException e) {
             appLogger.warn("Unable to close resources", e);

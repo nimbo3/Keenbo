@@ -10,10 +10,10 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import in.nimbo.common.config.KafkaConfig;
 import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.config.RedisConfig;
-import in.nimbo.common.utility.CloseUtility;
+import in.nimbo.common.utility.LanguageDetectorUtility;
 import in.nimbo.dao.redis.RedisDAOImpl;
 import in.nimbo.service.CrawlerService;
-import in.nimbo.service.ParserService;
+import in.nimbo.common.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
 import in.nimbo.service.kafka.KafkaServiceImpl;
 import org.slf4j.Logger;
@@ -34,7 +34,7 @@ public class App {
     }
 
     public static void main(String[] args){
-        loadLanguageDetector();
+        LanguageDetectorUtility.loadLanguageDetector(appLogger);
 
         ProjectConfig projectConfig = ProjectConfig.load();
         KafkaConfig kafkaConfig = KafkaConfig.load();
@@ -61,16 +61,6 @@ public class App {
         Runtime.getRuntime().addShutdownHook(new Thread(app::stopApp));
 
         app.startApp();
-    }
-
-    private static void loadLanguageDetector() {
-        try {
-            appLogger.info("Load application profiles for language detector");
-            DetectorFactory.loadProfile("../conf/profiles");
-        } catch (LangDetectException e) {
-            cliLogger.info("Unable to load profiles of language detector. Provide \"profile\" folder for language detector.\n");
-            System.exit(1);
-        }
     }
 
     private void startApp() {

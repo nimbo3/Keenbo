@@ -1,8 +1,6 @@
-package in.nimbo.service.keyword;
+package in.nimbo.service;
 
 import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.HashMap;

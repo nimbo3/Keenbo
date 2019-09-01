@@ -10,6 +10,7 @@ import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
 import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.common.exception.ParseLinkException;
+import in.nimbo.common.service.ParserService;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.redis.RedisDAO;
 import org.jsoup.Jsoup;
@@ -20,7 +21,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
-import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -70,7 +70,7 @@ public class CrawlerServiceTest {
         Document document = Jsoup.parse(input, "UTF-8");
         documentWithoutTitle = Jsoup.parse(inputWithoutTitle, "UTF-8");
         when(parserService.getDocument(link)).thenReturn(Optional.of(document));
-        doReturn(true).when(parserService).isEnglishLanguage(anyString());
+        doReturn(true).when(parserService).isEnglishLanguage(anyString(), anyDouble());
         cache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
                 .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         crawlerService = spy(new CrawlerService(cache, redisDAO, parserService));
@@ -153,7 +153,7 @@ public class CrawlerServiceTest {
 
     @Test(expected = ParseLinkException.class)
     public void getPageLanguageDetectExceptionTest() {
-        doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString());
+        doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString(), anyDouble());
         Page returnedPage = parserService.getPage(link);
         Assert.fail();
     }

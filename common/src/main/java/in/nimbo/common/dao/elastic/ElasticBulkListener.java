@@ -1,4 +1,4 @@
-package in.nimbo.dao.elastic;
+package in.nimbo.common.dao.elastic;
 
 import in.nimbo.common.entity.Page;
 import org.elasticsearch.action.bulk.BulkItemResponse;
@@ -40,7 +40,7 @@ public class ElasticBulkListener implements BulkProcessor.Listener {
                         logger.info("Failed to index page: {}", failedPage.getLink());
                         logger.info("Retry page: {}", failedPage.getLink());
                         failCount++;
-                        elasticDAO.save(failedPage);
+                        elasticDAO.save(failedPage, true);
                     } catch (IndexOutOfBoundsException e) {
                         logger.info("Unable to find page with index {} inside {} requests", item.getItemId(), bulkRequest.numberOfActions());
                     }
@@ -58,7 +58,7 @@ public class ElasticBulkListener implements BulkProcessor.Listener {
         logger.error("Failed to execute bulk {}", executionId, throwable);
         if (!(throwable instanceof java.lang.InterruptedException)) {
             for (Page page : backupPages) {
-                elasticDAO.save(page);
+                elasticDAO.save(page, true);
             }
             logger.info("Retry all {} requests again", bulkRequest.numberOfActions());
         }
