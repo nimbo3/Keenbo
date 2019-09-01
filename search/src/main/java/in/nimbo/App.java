@@ -2,18 +2,23 @@ package in.nimbo;
 
 import com.google.gson.Gson;
 import in.nimbo.common.config.ElasticConfig;
+import in.nimbo.common.config.HBaseSiteConfig;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.controller.AuthController;
+import in.nimbo.controller.GraphController;
 import in.nimbo.controller.SearchController;
 import in.nimbo.dao.auth.AuthDAO;
 import in.nimbo.dao.auth.MySqlAuthDAO;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.elastic.ElasticDAOImpl;
+import in.nimbo.dao.hbase.HBaseDAO;
+import in.nimbo.dao.hbase.HBaseDAOImpl;
 import in.nimbo.dao.redis.LabelDAO;
 import in.nimbo.dao.redis.RedisLabelDAO;
 import in.nimbo.entity.Page;
 import in.nimbo.entity.User;
 import in.nimbo.transformer.JsonTransformer;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.http.HttpHost;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestClientBuilder;
@@ -35,6 +40,7 @@ public class App {
     private static Logger backendLogger = LoggerFactory.getLogger("backend");
     private static Logger appLogger = LoggerFactory.getLogger("cli");
     private SearchController searchController;
+    private GraphController graphController;
     private SparkConfig sparkConfig;
     private JsonTransformer transformer;
     private RestHighLevelClient client;
@@ -42,8 +48,9 @@ public class App {
     private AuthDAO authDAO;
     private Connection connection;
 
-    App(SearchController searchController, SparkConfig sparkConfig, JsonTransformer transformer, RestHighLevelClient client, AuthController authController, AuthDAO authDAO, Connection connection) {
+    App(SearchController searchController, GraphController graphController, SparkConfig sparkConfig, JsonTransformer transformer, RestHighLevelClient client, AuthController authController, AuthDAO authDAO, Connection connection) {
         this.searchController = searchController;
+        this.graphController = graphController;
         this.sparkConfig = sparkConfig;
         this.transformer = transformer;
         this.client = client;
@@ -52,11 +59,12 @@ public class App {
         this.connection = connection;
     }
 
-    public static void main(String[] args) throws SQLException, ClassNotFoundException {
+    public static void main(String[] args) throws SQLException, ClassNotFoundException, IOException {
         Gson gson = new Gson();
         JsonTransformer transformer = new JsonTransformer(gson);
         ElasticConfig elasticConfig = ElasticConfig.load();
         SparkConfig sparkConfig = SparkConfig.load();
+        HBaseSiteConfig hBaseConfig = HBaseSiteConfig.load();
 
         Random random = new Random();
 
@@ -64,15 +72,18 @@ public class App {
         Connection mySqlConnection = DriverManager.getConnection(sparkConfig.getDatabaseURL(), sparkConfig.getDatabaseUser(), sparkConfig.getDatabasePassword());
         RestHighLevelClient restHighLevelClient = initializeElasticSearchClient(elasticConfig);
         Jedis jedis = new Jedis();
+        org.apache.hadoop.hbase.client.Connection hBaseConnection = ConnectionFactory.createConnection();
 
         AuthDAO authDAO = new MySqlAuthDAO(mySqlConnection);
         ElasticDAO elasticDAO = new ElasticDAOImpl(restHighLevelClient, elasticConfig);
         LabelDAO labelDAO = new RedisLabelDAO(jedis, sparkConfig);
+        HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConfig, hBaseConnection);
 
-        SearchController searchController = new SearchController(elasticDAO, sparkConfig, gson, labelDAO);
+        SearchController searchController = new SearchController(elasticDAO, labelDAO);
         AuthController authController = new AuthController(authDAO, sparkConfig, random, labelDAO);
+        GraphController graphController = new GraphController(hBaseDAO, hBaseConfig, sparkConfig, gson);
 
-        App app = new App(searchController, sparkConfig, transformer, restHighLevelClient, authController, authDAO, mySqlConnection);
+        App app = new App(searchController, graphController, sparkConfig, transformer, restHighLevelClient, authController, authDAO, mySqlConnection);
 
         app.initSpark();
         app.startApp();
@@ -118,7 +129,7 @@ public class App {
             }), transformer);
 
             Spark.post("/action/click", ((request, response) -> {
-                String token = request.headers("token");
+                String token = request.queryParams("token");
                 String destination = request.queryParams("dest");
                 User user = authDAO.authenticate(token);
                 response.type("application/json");
@@ -126,13 +137,14 @@ public class App {
             }), transformer);
 
             Spark.get("/word-graph", (request, response) -> {
+                String link = request.queryParams("link");
                 response.type("application/json");
-                return searchController.siteGraph();
+                return graphController.siteGraph(link);
             }, transformer);
 
             Spark.get("/site-graph", (request, response) -> {
                 response.type("application/json");
-                return searchController.wordGraph();
+                return graphController.wordGraph();
             }, transformer);
 
             Spark.exception(Exception.class, (e, request, response) -> {
