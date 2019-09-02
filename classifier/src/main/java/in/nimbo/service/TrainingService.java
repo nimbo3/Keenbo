@@ -33,10 +33,6 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class TrainingService {
     private static Logger logger = LoggerFactory.getLogger("classifier");
 
-    public void extractTraining() {
-
-    }
-
     private static void runSaver() throws IOException {
         ElasticConfig elasticConfig = ElasticConfig.load();
         CopyOnWriteArrayList<Page> backupList = new CopyOnWriteArrayList<>();
