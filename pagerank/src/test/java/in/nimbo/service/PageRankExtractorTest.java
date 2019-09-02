@@ -4,7 +4,6 @@ import in.nimbo.App;
 import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.PageRankConfig;
-import in.nimbo.entity.Page;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
@@ -21,14 +20,12 @@ import org.apache.spark.sql.SparkSession;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 public class PageRankExtractorTest {
     private static SparkSession sparkSession;
@@ -47,13 +44,8 @@ public class PageRankExtractorTest {
     }
 
     @Test
-<<<<<<< HEAD
-    public void pageRankExtractor() {
-        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
-=======
     public void siteExtractor() {
         HBaseConfig hBasePageConfig = HBaseConfig.load();
->>>>>>> f1ce88f09db5bbe0298f3e1152e51ad63febc0aa
         PageRankConfig pageRankConfig = PageRankConfig.load();
         pageRankConfig.setMaxIter(1);
         List<Result> resultList = new ArrayList<>();
