@@ -40,7 +40,6 @@ public class ElasticBulkListener implements BulkProcessor.Listener {
                         logger.info("Failed to index page: {}", failedPage.getLink());
                         logger.info("Retry page: {}", failedPage.getLink());
                         failCount++;
-                        elasticDAO.save(failedPage, true);
                     } catch (IndexOutOfBoundsException e) {
                         logger.info("Unable to find page with index {} inside {} requests", item.getItemId(), bulkRequest.numberOfActions());
                     }
@@ -55,8 +54,8 @@ public class ElasticBulkListener implements BulkProcessor.Listener {
 
     @Override
     public void afterBulk(long executionId, BulkRequest bulkRequest, Throwable throwable) {
-        logger.error("Failed to execute bulk {}", executionId, throwable);
         if (!(throwable instanceof java.lang.InterruptedException)) {
+            logger.error("Failed to execute bulk {}", executionId, throwable);
             for (Page page : backupPages) {
                 elasticDAO.save(page, true);
             }

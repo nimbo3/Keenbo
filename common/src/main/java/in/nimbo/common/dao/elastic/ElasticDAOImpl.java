@@ -114,6 +114,10 @@ public class ElasticDAOImpl implements ElasticDAO {
         return client;
     }
 
+    public BulkProcessor getBulkProcessor() {
+        return bulkProcessor;
+    }
+
     private XContentBuilder createJSON(Page page, double label) throws IOException {
         XContentBuilder builder = XContentFactory.jsonBuilder();
         builder.startObject();

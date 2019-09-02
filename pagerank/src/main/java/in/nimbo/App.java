@@ -31,10 +31,9 @@ public class App {
 
         JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBasePageConfig.getPageTable());
         hBaseRDD.persist(StorageLevel.DISK_ONLY());
-        Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaRDD<Page>> extract =
+        JavaPairRDD<ImmutableBytesWritable, Put> extract =
                 PageRankExtractor.extract(hBasePageConfig, pageRankConfig, spark, hBaseRDD);
-        SparkUtility.saveToHBase(hBasePageConfig.getPageTable(), extract._1);
-        JavaEsSpark.saveToEs(extract._2, esIndex + "/" + esType);
+        SparkUtility.saveToHBase(hBasePageConfig.getPageTable(), extract);
         spark.stop();
     }
 
