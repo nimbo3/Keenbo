@@ -6,7 +6,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 
 public class ClassifierConfig {
     public enum MODE {
-        CRAWL, CLASSIFY
+        CRAWL, CLASSIFY, TRAIN
     }
 
     private static final String CONFIG_NAME = "classifier.properties";
@@ -16,6 +16,7 @@ public class ClassifierConfig {
     private String esWriteOperation;
     private String esIndexAutoCreate;
     private String esIndex;
+    private String esOutputIndex;
     private String esType;
     private String naiveBayesModelType;
     private String naiveBayesModelSaveLocation;
@@ -36,6 +37,9 @@ public class ClassifierConfig {
             else if (config.getString("app.mode").equals("classify")){
                 classifierConfig.setAppMode(MODE.CLASSIFY);
             }
+            else if (config.getString("app.mode").equals("train")) {
+                classifierConfig.setAppMode(MODE.TRAIN);
+            }
             else {
                 throw new ConfigurationException("Invalid App mode");
             }
@@ -43,6 +47,7 @@ public class ClassifierConfig {
             classifierConfig.setEsWriteOperation(config.getString("es.write.operation"));
             classifierConfig.setEsIndexAutoCreate(config.getString("es.index.auto.create"));
             classifierConfig.setEsIndex(config.getString("es.index"));
+            classifierConfig.setEsOutputIndex(config.getString("es.output.index"));
             classifierConfig.setEsType(config.getString("es.type"));
             classifierConfig.setNaiveBayesModelType(config.getString("naive.bayes.model.type"));
             classifierConfig.setHashingNumFeatures(config.getInt("hashing.num.features"));
@@ -167,5 +172,13 @@ public class ClassifierConfig {
 
     public void setAppMode(MODE appMode) {
         this.appMode = appMode;
+    }
+
+    public String getEsOutputIndex() {
+        return esOutputIndex;
+    }
+
+    public void setEsOutputIndex(String esOutputIndex) {
+        this.esOutputIndex = esOutputIndex;
     }
 }

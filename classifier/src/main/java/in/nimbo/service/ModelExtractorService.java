@@ -4,6 +4,9 @@ import in.nimbo.config.ClassifierConfig;
 import in.nimbo.entity.Data;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.Pipeline;
+import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.classification.NaiveBayes;
 import org.apache.spark.ml.classification.NaiveBayesModel;
 import org.apache.spark.ml.feature.*;
@@ -24,24 +27,26 @@ public class ModelExtractorService {
                              JavaPairRDD<String, Map<String, Object>> elasticSearchRDD) {
 
         JavaRDD<Data> dataRDD = elasticSearchRDD.map(tuple2 ->
-                new Data(modelInfo.getLabelMap().get((String) tuple2._2.get("labelContent")), (String) tuple2._2.get("content")));
+                new Data(modelInfo.getLabelDouble((String) tuple2._2.get("labelContent")), (String) tuple2._2.get("content")));
         Dataset<Row> dataset = spark.createDataFrame(dataRDD, Data.class);
 
         Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");
-        Dataset<Row> wordsData = tokenizer.transform(dataset);
 
         StopWordsRemover stopWordsRemover = new StopWordsRemover()
                 .setInputCol("words")
                 .setOutputCol("words-filtered")
                 .setStopWords(modelInfo.getStopWords());
 
-        Dataset<Row> filteredData = stopWordsRemover.transform(wordsData);
-
         HashingTF hashingTF = new HashingTF()
                 .setInputCol("words-filtered")
                 .setOutputCol("rawFeatures")
                 .setNumFeatures(classifierConfig.getHashingNumFeatures());
-        Dataset<Row> featuredData = hashingTF.transform(filteredData);
+
+        Pipeline pipeline = new Pipeline().setStages(new PipelineStage[]
+                {tokenizer, stopWordsRemover, hashingTF});
+
+        PipelineModel pipelineModel = pipeline.fit(dataset);
+        Dataset<Row> featuredData = pipelineModel.transform(dataset);
 
         IDF idf = new IDF().setInputCol("rawFeatures").setOutputCol("feature");
         IDFModel idfModel = idf.fit(featuredData);
@@ -77,6 +82,6 @@ public class ModelExtractorService {
         } catch (IOException e) {
             System.out.println("Unable to save naive bayes model: " + e.getMessage());
         }
-        NaiveBayesModel loadedModel = NaiveBayesModel.load(classifierConfig.getNaiveBayesModelSaveLocation());
+//        NaiveBayesModel loadedModel = NaiveBayesModel.load(classifierConfig.getNaiveBayesModelSaveLocation());
     }
 }

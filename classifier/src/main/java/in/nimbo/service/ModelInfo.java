@@ -1,9 +1,10 @@
 package in.nimbo.service;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ModelInfo {
+public class ModelInfo implements Serializable {
     private String[] stopWords;
     private Map<String, Double> labelMap;
 
@@ -37,7 +38,15 @@ public class ModelInfo {
         return stopWords;
     }
 
-    public Map<String, Double> getLabelMap() {
-        return labelMap;
+    public String getLabelString(Double num) {
+        for (String key : labelMap.keySet()) {
+            if(Double.compare(labelMap.get(key), num) == 0)
+                return key;
+        }
+        return "";
+    }
+
+    public Double getLabelDouble(String name) {
+        return labelMap.get(name);
     }
 }
