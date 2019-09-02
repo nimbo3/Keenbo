@@ -95,22 +95,4 @@ public class SparkUtility {
             e.printStackTrace(System.out);
         }
     }
-
-    public static StructType getNodeSchema() {
-        return new StructType(new StructField[]{
-                new StructField("id", DataTypes.StringType, false, Metadata.empty()),
-                new StructField("font", DataTypes.createStructType(
-                        new StructField[]{
-                                new StructField("size", DataTypes.DoubleType, false, Metadata.empty())
-                        }
-                ), false, Metadata.empty())});
-    }
-
-    public static StructType getEdgeSchema() {
-        return new StructType(new StructField[]{
-                new StructField("from", DataTypes.StringType, false, Metadata.empty()),
-                new StructField("to", DataTypes.StringType, false, Metadata.empty()),
-                new StructField("width", DataTypes.LongType, false, Metadata.empty())
-        });
-    }
 }
