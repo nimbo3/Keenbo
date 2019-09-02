@@ -5,18 +5,18 @@ import java.util.Map;
 
 public class ModelInfo {
     private String[] stopWords;
-    private Map<String, Double> labelMap;
+    private Map<Double, String> labelMap;
 
     public ModelInfo() {
         labelMap = new HashMap<>();
-        labelMap.put("art", 0.0);
-        labelMap.put("science", 1.0);
-        labelMap.put("health", 2.0);
-        labelMap.put("news", 3.0);
-        labelMap.put("shopping", 4.0);
-        labelMap.put("sports", 5.0);
-        labelMap.put("social", 6.0);
-        labelMap.put("other", 7.0);
+        labelMap.put(0.0, "art");
+        labelMap.put(1.0, "science");
+        labelMap.put(2.0, "health");
+        labelMap.put(3.0, "news");
+        labelMap.put(4.0, "shopping");
+        labelMap.put(5.0, "sports");
+        labelMap.put(6.0, "social");
+        labelMap.put(7.0, "other");
 
         stopWords = new String[]{"'", "-", "'s", "``", "pm", "am", "their", "our",
                 "theme", "very", "about", "during", "when", "these", "would", "else", "above", "let", "because", "if",
@@ -37,7 +37,15 @@ public class ModelInfo {
         return stopWords;
     }
 
-    public Map<String, Double> getLabelMap() {
-        return labelMap;
+    public String getLabelString(Double num) {
+        return labelMap.get(num);
+    }
+
+    public Double getLabelDouble(String name) {
+        for (Double num : labelMap.keySet()) {
+            if (labelMap.get(num).equals(name))
+                return num;
+        }
+        return 0.0;
     }
 }

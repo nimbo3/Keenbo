@@ -24,7 +24,7 @@ public class ModelExtractorService {
                              JavaPairRDD<String, Map<String, Object>> elasticSearchRDD) {
 
         JavaRDD<Data> dataRDD = elasticSearchRDD.map(tuple2 ->
-                new Data(modelInfo.getLabelMap().get((String) tuple2._2.get("labelContent")), (String) tuple2._2.get("content")));
+                new Data(modelInfo.getLabelDouble((String) tuple2._2.get("labelContent")), (String) tuple2._2.get("content")));
         Dataset<Row> dataset = spark.createDataFrame(dataRDD, Data.class);
 
         Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");

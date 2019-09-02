@@ -6,6 +6,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.classification.NaiveBayesModel;
 import org.apache.spark.ml.feature.HashingTF;
 import org.apache.spark.ml.feature.IDFModel;
+import org.apache.spark.ml.feature.StopWordsRemover;
 import org.apache.spark.ml.feature.Tokenizer;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -24,7 +25,7 @@ public class ClassifierService {
     }
 
     public static void classify(ClassifierConfig classifierConfig, SparkSession spark,
-                                JavaPairRDD<String, Map<String, Object>> elasticSearchRDD) {
+                                JavaPairRDD<String, Map<String, Object>> elasticSearchRDD, ModelInfo modelInfo) {
         NaiveBayesModel model = NaiveBayesModel.load(classifierConfig.getNaiveBayesModelSaveLocation());
         IDFModel idfModel = IDFModel.load(classifierConfig.getNaiveBayesIDFSaveLocation());
         JavaRDD<Row> dataRDD = elasticSearchRDD.map(tuple2 -> RowFactory.create(tuple2._1, tuple2._2.get("content")));
@@ -37,11 +38,18 @@ public class ClassifierService {
         Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");
         Dataset<Row> wordsData = tokenizer.transform(dataset);
 
+        StopWordsRemover stopWordsRemover = new StopWordsRemover()
+                .setInputCol("words")
+                .setOutputCol("words-filtered")
+                .setStopWords(modelInfo.getStopWords());
+
+        Dataset<Row> filteredData = stopWordsRemover.transform(wordsData);
+
         HashingTF hashingTF = new HashingTF()
                 .setInputCol("words")
                 .setOutputCol("rawFeatures")
                 .setNumFeatures(classifierConfig.getHashingNumFeatures());
-        Dataset<Row> featuredData = hashingTF.transform(wordsData);
+        Dataset<Row> featuredData = hashingTF.transform(filteredData);
 
         Dataset<Row> rescaledData = idfModel.transform(featuredData);
         Dataset<Row> features = rescaledData.select("id", "feature");
@@ -57,7 +65,7 @@ public class ClassifierService {
                     return map;
                 });
 
-        for (Tuple2<Object, Object> objectObjectTuple2 : join.map(m -> new Tuple2<>(m.get("link"), m.get("label"))).collect()) {
+        for (Tuple2<Object, String> objectObjectTuple2 : join.map(m -> new Tuple2<>(m.get("link"), modelInfo.getLabelString((double) m.get("label")))).collect()) {
             System.out.println(objectObjectTuple2);
         }
 //        JavaEsSpark.saveToEs(join, "");

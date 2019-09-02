@@ -26,7 +26,7 @@ public class App {
         } else if (classifierConfig.getAppMode() == ClassifierConfig.MODE.TRAIN) {
             runExtractModel(modelInfo);
         } else if (classifierConfig.getAppMode() == ClassifierConfig.MODE.CLASSIFY) {
-            runClassifier();
+            runClassifier(modelInfo);
         }
     }
 
@@ -42,14 +42,14 @@ public class App {
         spark.stop();
     }
 
-    private static void runClassifier() {
+    private static void runClassifier(ModelInfo modelInfo) {
         SparkSession spark = setSparkEsConfigs();
 //        JavaPairRDD<String, Map<String, Object>> elasticSearchRDD =
 //                SparkUtility.getElasticSearchRDD(spark, classifierConfig.getEsIndex(), classifierConfig.getEsType());
         JavaSparkContext javaSparkContext = SparkUtility.getJavaSparkContext(spark);
         JavaPairRDD<String, Map<String, Object>> elasticSearchRDD = JavaEsSpark.esRDD(javaSparkContext, "keen/page", "?q=rotten tomatoes");
         JavaPairRDD<String, Map<String, Object>> parallelize = javaSparkContext.parallelizePairs(elasticSearchRDD.take(100));
-        ClassifierService.classify(classifierConfig, spark, parallelize);
+        ClassifierService.classify(classifierConfig, spark, parallelize, modelInfo);
         spark.stop();
     }
 
