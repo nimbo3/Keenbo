@@ -49,6 +49,17 @@ public class GraphControllerTest {
     @Test
     public void testSiteGraphWithoutParameter() throws IOException {
         GraphResponse siteGraph = controller.siteGraph(null);
-
+        assertTrue(siteGraph.getNodes().size() == 2);
+        assertTrue(siteGraph.getNodes().get(0).getId().equals("stackoverflow.com"));
+        assertTrue(siteGraph.getNodes().get(0).getFont().getSize() == sparkConfig.getMinNode());
+        assertTrue(siteGraph.getNodes().get(1).getFont().getSize() == sparkConfig.getMaxNode());
+        assertTrue(siteGraph.getNodes().get(1).getId().equals("google.com"));
+        assertTrue(siteGraph.getEdges().size() == 2);
+        assertTrue(siteGraph.getEdges().get(0).getFrom().equals("stackoverflow.com"));
+        assertTrue(siteGraph.getEdges().get(1).getFrom().equals("google.com"));
+        assertTrue(siteGraph.getEdges().get(0).getTo().equals("google.com"));
+        assertTrue(siteGraph.getEdges().get(1).getTo().equals("stackoverflow.com"));
+        assertTrue(siteGraph.getEdges().get(0).getWidth() == sparkConfig.getMaxEdge());
+        assertTrue(siteGraph.getEdges().get(1).getWidth() == sparkConfig.getMinEdge());
     }
 }

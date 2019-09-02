@@ -6,13 +6,13 @@
     }
   },
   {
-    "id": "hi",
+    "id": "google.com",
     "font": {
-      "size": 1
+      "size": 4
     }
   },
   {
-    "id": "bye",
+    "id": "facebook.com",
     "font": {
       "size": 1
     }

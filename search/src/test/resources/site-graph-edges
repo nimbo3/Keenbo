@@ -1,12 +1,17 @@
 [
   {
-    "from": "hello",
-    "to": "hi",
+    "from": "stackoverflow.com",
+    "to": "google.com",
     "width": 10
   },
   {
-    "from": "hello",
-    "to": "bye",
+    "from": "google.com",
+    "to": "stackoverflow.com",
+    "width": 5
+  },
+  {
+    "from": "stackoverflow.com",
+    "to": "facebook.com",
     "width": 1
   }
 ]
