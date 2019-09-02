@@ -13,4 +13,6 @@ public interface AuthDAO {
     void saveClick(User user, String destination, int label);
 
     User authenticate(String token);
+
+    Integer getFavoriteLabel(String username);
 }

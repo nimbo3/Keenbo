@@ -57,7 +57,8 @@ public class ElasticDAOImpl implements ElasticDAO {
         return pages;
     }
 
-    public List<Page> search(String query, String site) {
+    @Override
+    public List<Page> search(String query, String site, Integer label) {
         try {
             SearchRequest request = new SearchRequest(config.getIndexName());
             SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
@@ -66,6 +67,10 @@ public class ElasticDAOImpl implements ElasticDAO {
             if (!site.equals("")) {
                 MatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.matchQuery("link", site);
                 boolQueryBuilder.filter(multiMatchQueryBuilder);
+            }
+            if (label != null) {
+                TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("label", label);
+                boolQueryBuilder.should(termQueryBuilder);
             }
             MultiMatchQueryBuilder multiMatchQueryBuilder = QueryBuilders.multiMatchQuery(query, "title", "link", "content", "meta", "anchors");
             multiMatchQueryBuilder.field("title", 5);

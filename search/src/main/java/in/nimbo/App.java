@@ -2,7 +2,6 @@ package in.nimbo;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import com.google.gson.Gson;
 import in.nimbo.common.config.ElasticConfig;
 import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.config.SparkConfig;
@@ -89,7 +88,7 @@ public class App {
         LabelDAO labelDAO = new RedisLabelDAO(jedis, sparkConfig);
         HBaseDAO hBaseDAO = new HBaseDAOImpl(hBaseConnection, hBaseConfig);
 
-        SearchController searchController = new SearchController(elasticDAO, labelDAO);
+        SearchController searchController = new SearchController(elasticDAO, labelDAO, authDAO);
         AuthController authController = new AuthController(authDAO, sparkConfig, random, labelDAO);
         GraphController graphController = new GraphController(hBaseDAO, hBaseConfig, sparkConfig, mapper);
 
@@ -115,6 +114,8 @@ public class App {
             Spark.get("/search", ((request, response) -> {
                 String query = request.queryParamOrDefault("query", "");
                 String mode = request.queryParamOrDefault("mode", "0");
+                String token = request.headers("token");
+                User user = authDAO.authenticate(token);
                 SearchType type;
                 switch (mode) {
                     case "2":
@@ -127,7 +128,7 @@ public class App {
                         type = SearchType.SIMPLE;
                         break;
                 }
-                List<Page> result = searchController.search(query, type);
+                List<Page> result = searchController.search(query, type, user);
                 response.type("application/json");
                 return result;
             }), transformer);

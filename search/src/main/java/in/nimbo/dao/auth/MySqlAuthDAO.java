@@ -67,7 +67,7 @@ public class MySqlAuthDAO implements AuthDAO {
 
     @Override
     public void saveClick(User user, String destination, int label) {
-        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO clicks (username, destination) VALUES (?, ?, ?)")){
+        try (PreparedStatement preparedStatement = connection.prepareStatement("INSERT INTO clicks (username, destination, label) VALUES (?, ?, ?)")){
             preparedStatement.setString(1, user.getUsername());
             preparedStatement.setString(2, destination);
             preparedStatement.setInt(3, label);
@@ -94,6 +94,20 @@ public class MySqlAuthDAO implements AuthDAO {
                 resultSet.close();
                 return null;
             }
+        } catch (SQLException e) {
+            throw new DAOException("Unable to establish database connection", e);
+        }
+    }
+
+    @Override
+    public Integer getFavoriteLabel(String username) {
+        try (PreparedStatement preparedStatement = connection.prepareStatement("SELECT label FROM clicks WHERE username=? GROUP BY label ORDER BY count(*) DESC LIMIT 1")) {
+            preparedStatement.setString(1, username);
+            ResultSet resultSet = preparedStatement.executeQuery();
+            if (resultSet.next()) {
+                return resultSet.getInt("label");
+            }
+            return null;
         } catch (SQLException e) {
             throw new DAOException("Unable to establish database connection", e);
         }
