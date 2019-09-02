@@ -35,7 +35,7 @@ public class GraphControllerTest {
         sparkConfig = SparkConfig.load();
         ObjectMapper mapper = new ObjectMapper();
         controller = new GraphController(hBaseDAO, hBaseConfig, sparkConfig, mapper);
-
+        System.out.println("creating table");
         Admin admin = connection.getAdmin();
         HColumnDescriptor[] columnDescriptors = new HColumnDescriptor[2];
         columnDescriptors[0] = new HColumnDescriptor(hBaseConfig.getDomainColumnFamily());
@@ -43,7 +43,7 @@ public class GraphControllerTest {
         HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(hBaseConfig.getSiteTable()));
         descriptor.addFamily(columnDescriptors[0]).addFamily(columnDescriptors[1]);
         admin.createTable(descriptor);
-
+        System.out.println("table created");
         Table table = connection.getTable(TableName.valueOf(hBaseConfig.getSiteTable()));
         List<Put> puts = new ArrayList<>();
         Put stackoverflowPut = new Put(Bytes.toBytes("stackoverflow.com"));
@@ -61,6 +61,7 @@ public class GraphControllerTest {
         facebookPut.addColumn(hBaseConfig.getInfoColumnFamily(), hBaseConfig.getCountColumn(), Bytes.toBytes("1"));
         puts.add(facebookPut);
         table.put(puts);
+        System.out.println("data added to table");
     }
 
     @Test
