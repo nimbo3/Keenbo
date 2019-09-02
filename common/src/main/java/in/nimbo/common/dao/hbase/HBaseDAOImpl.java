@@ -31,11 +31,13 @@ public class HBaseDAOImpl implements HBaseDAO {
 
     @Override
     public void add(List<Page> pages) {
+        checkConnection();
         addToHBase(getListOfPut(pages));
     }
 
     @Override
     public void add(List<Page> pages,  List<Map<String, Integer>> keywords) {
+        checkConnection();
         addToHBase(getListOfPut(pages, keywords));
     }
 
@@ -76,6 +78,7 @@ public class HBaseDAOImpl implements HBaseDAO {
     }
 
     private Put getPut(Page page, Map<String, Integer> keywords) {
+        checkConnection();
         Put put = getPut(page);
         for (Map.Entry<String, Integer> keyword : keywords.entrySet()) {
             put.addColumn(config.getDataColumnFamily(),
@@ -85,6 +88,7 @@ public class HBaseDAOImpl implements HBaseDAO {
     }
 
     private Put getPut(Page page) {
+        checkConnection();
         Put put = new Put(Bytes.toBytes(page.getReversedLink()));
 
         for (Anchor anchor : page.getAnchors()) {
@@ -98,6 +102,7 @@ public class HBaseDAOImpl implements HBaseDAO {
 
     @Override
     public Result get(String link) {
+        checkConnection();
         try (Table table = connection.getTable(TableName.valueOf(config.getSiteTable()))) {
             Get get = new Get(Bytes.toBytes(link));
             return table.get(get);
@@ -108,6 +113,7 @@ public class HBaseDAOImpl implements HBaseDAO {
 
     @Override
     public Result[] getBulk(List<String> links) {
+        checkConnection();
         try (Table table = connection.getTable(TableName.valueOf(config.getSiteTable()))) {
             List<Get> getList = new ArrayList<>();
             for (String link : links) {
@@ -116,6 +122,16 @@ public class HBaseDAOImpl implements HBaseDAO {
             return table.get(getList);
         } catch (IOException e) {
             throw new HBaseException(e);
+        }
+    }
+
+    private void checkConnection() {
+        if (connection.isClosed()) {
+            try {
+                connection = ConnectionFactory.createConnection();
+            } catch (IOException e) {
+                throw new HBaseException(e);
+            }
         }
     }
 }
