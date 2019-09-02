@@ -4,6 +4,7 @@ import in.nimbo.common.config.ProjectConfig;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.ClassifierConfig;
 import in.nimbo.service.ClassifierService;
+import in.nimbo.service.TrainingService;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.sql.SparkSession;
 
@@ -21,7 +22,7 @@ public class App {
     }
 
     private static void runCrawler(ClassifierConfig classifierConfig, ProjectConfig projectConfig) {
-
+        TrainingService trainingService = new TrainingService();
     }
 
     private static void runClassifier(ClassifierConfig classifierConfig) {

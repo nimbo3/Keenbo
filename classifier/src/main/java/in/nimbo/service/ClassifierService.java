@@ -6,10 +6,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.classification.NaiveBayes;
 import org.apache.spark.ml.classification.NaiveBayesModel;
-import org.apache.spark.ml.feature.HashingTF;
-import org.apache.spark.ml.feature.IDF;
-import org.apache.spark.ml.feature.IDFModel;
-import org.apache.spark.ml.feature.Tokenizer;
+import org.apache.spark.ml.feature.*;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -20,6 +17,20 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class ClassifierService {
+    private static String[] stopWords = new String[] {"'", "-", "'s", "``", "pm", "am", "their", "our",
+            "theme", "very", "about", "during", "when", "these", "would", "else", "above", "let", "because", "if",
+            "you", "they", "between", "likely", "•", "in", "&", "want", "myself", "then", "it", "am", "yourselves",
+            "an", "each", "ever", "as", "himself", "itself", "at", "among", "must", ":", "twa", "don",
+            "other", "is", "am", "are", "against", "least", "ourselves", "out", "into", "across", "how", "same", "too", "get",
+            "by", "have", "whom", "where", "after", "dear", "so", "may", "more", "could", "off", "...",
+            "the", "such", "able", "to", "under", "yours", "through", "but", "theirs", "almost", "before",
+            "own", "do", "while", "down", "that", "either", "ours", "than", "me", "only", "should", "few", "from",
+            "yourself", "up", "those", "tis", "all", "which", "below", "like", "might", "this", "its", "often",
+            "my", "both", "most", "she", "once", "herself", "since", "who", "however", "here", "no", "some",
+            "rather", "for", "why", "we", "hers", "nor", "can", "not", "and", "now", "of", "themselves", "every",
+            "just", "on", "over", "or", "will", "again", "yet", "say", "also", "any", "with", "what", "there",
+            "neither", "until", "further", "he", "ago", "use", "-lcb-", "your", "per", "lot"};
+
     private ClassifierService() {
     }
 
@@ -42,11 +53,18 @@ public class ClassifierService {
         Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");
         Dataset<Row> wordsData = tokenizer.transform(dataset);
 
-        HashingTF hashingTF = new HashingTF()
+        StopWordsRemover stopWordsRemover = new StopWordsRemover()
                 .setInputCol("words")
+                .setOutputCol("words-filtered")
+                .setStopWords(stopWords);
+
+        Dataset<Row> filteredData = stopWordsRemover.transform(wordsData);
+
+        HashingTF hashingTF = new HashingTF()
+                .setInputCol("words-filtered")
                 .setOutputCol("rawFeatures")
                 .setNumFeatures(classifierConfig.getHashingNumFeatures());
-        Dataset<Row> featuredData = hashingTF.transform(wordsData);
+        Dataset<Row> featuredData = hashingTF.transform(filteredData);
 
         IDF idf = new IDF().setInputCol("rawFeatures").setOutputCol("feature");
         IDFModel idfModel = idf.fit(featuredData);
@@ -64,9 +82,9 @@ public class ClassifierService {
                 .setLabelCol("label")
                 .setFeaturesCol("feature");
 
-        Dataset<Row>[] tmp = features.randomSplit(new double[]{0.8, 0.2});
-        Dataset<Row> training = features;
-        Dataset<Row> test = features;
+        Dataset<Row>[] tmp = features.randomSplit(new double[]{0.9, 0.2});
+        Dataset<Row> training = tmp[0];
+        Dataset<Row> test = tmp[1];
 
         NaiveBayesModel model = naiveBayes.train(training);
         model.set("modelType", classifierConfig.getNaiveBayesModelType());
