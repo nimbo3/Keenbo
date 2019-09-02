@@ -8,6 +8,7 @@ import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.text.Text;
+import org.elasticsearch.common.unit.Fuzziness;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
@@ -77,6 +78,45 @@ public class ElasticDAOImpl implements ElasticDAO {
             searchSourceBuilder.query(boolQueryBuilder);
             String[] includes = new String[]{"title", "link", "content", "label"};
             searchSourceBuilder.fetchSource(includes, null);
+            request.source(searchSourceBuilder);
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            SearchHit[] hits = response.getHits().getHits();
+            return convertHitArrayToPageList(hits);
+        } catch (IOException e) {
+            throw new ElasticException("Unable to search in elastic search", e);
+        }
+    }
+
+    @Override
+    public List<Page> exactSearch(String query) {
+        try {
+            SearchRequest request = new SearchRequest(config.getIndexName());
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            highlightContentField(searchSourceBuilder);
+            String[] includes = {"title", "link", "content", "label"};
+            searchSourceBuilder.fetchSource(includes, null);
+            TermQueryBuilder termQueryBuilder = QueryBuilders.termQuery("content", query);
+            searchSourceBuilder.query(termQueryBuilder);
+            request.source(searchSourceBuilder);
+            SearchResponse response = client.search(request, RequestOptions.DEFAULT);
+            SearchHit[] hits = response.getHits().getHits();
+            return convertHitArrayToPageList(hits);
+        } catch (IOException e) {
+            throw new ElasticException("Unable to search in elastic search", e);
+        }
+    }
+
+    @Override
+    public List<Page> fuzzySearch(String query) {
+        try {
+            SearchRequest request = new SearchRequest(config.getIndexName());
+            SearchSourceBuilder searchSourceBuilder = new SearchSourceBuilder();
+            highlightContentField(searchSourceBuilder);
+            String[] includes = {"title", "link", "content", "label"};
+            searchSourceBuilder.fetchSource(includes, null);
+            FuzzyQueryBuilder fuzzyQueryBuilder = QueryBuilders.fuzzyQuery("content", query);
+            fuzzyQueryBuilder.fuzziness(Fuzziness.TWO);
+            searchSourceBuilder.query(fuzzyQueryBuilder);
             request.source(searchSourceBuilder);
             SearchResponse response = client.search(request, RequestOptions.DEFAULT);
             SearchHit[] hits = response.getHits().getHits();
