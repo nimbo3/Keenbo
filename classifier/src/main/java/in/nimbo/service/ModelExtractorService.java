@@ -31,20 +31,16 @@ public class ModelExtractorService {
         Dataset<Row> dataset = spark.createDataFrame(dataRDD, Data.class);
 
         Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");
-//        Dataset<Row> wordsData = tokenizer.transform(dataset);
 
         StopWordsRemover stopWordsRemover = new StopWordsRemover()
                 .setInputCol("words")
                 .setOutputCol("words-filtered")
                 .setStopWords(modelInfo.getStopWords());
 
-//        Dataset<Row> filteredData = stopWordsRemover.transform(wordsData);
-
         HashingTF hashingTF = new HashingTF()
                 .setInputCol("words-filtered")
                 .setOutputCol("rawFeatures")
                 .setNumFeatures(classifierConfig.getHashingNumFeatures());
-//        Dataset<Row> featuredData = hashingTF.transform(filteredData);
 
         Pipeline pipeline = new Pipeline().setStages(new PipelineStage[]
                 {tokenizer, stopWordsRemover, hashingTF});
@@ -68,9 +64,9 @@ public class ModelExtractorService {
                 .setLabelCol("label")
                 .setFeaturesCol("feature");
 
-//        Dataset<Row>[] tmp = features.randomSplit(new double[]{0.8, 0.2});
-        Dataset<Row> training = features;
-        Dataset<Row> test = features;
+        Dataset<Row>[] tmp = features.randomSplit(new double[]{0.8, 0.2});
+        Dataset<Row> training = tmp[0];
+        Dataset<Row> test = tmp[1];
 
         NaiveBayesModel model = naiveBayes.train(training);
         model.set("modelType", classifierConfig.getNaiveBayesModelType());

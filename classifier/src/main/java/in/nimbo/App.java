@@ -44,15 +44,11 @@ public class App {
 
     private static void runClassifier(ModelInfo modelInfo) {
         SparkSession spark = setSparkEsConfigs();
-//        JavaPairRDD<String, Map<String, Object>> elasticSearchRDD =
-//                SparkUtility.getElasticSearchRDD(spark, classifierConfig.getEsIndex(), classifierConfig.getEsType());
-        JavaSparkContext javaSparkContext = SparkUtility.getJavaSparkContext(spark);
-        JavaPairRDD<String, Map<String, Object>> elasticSearchRDD = JavaEsSpark.esRDD(javaSparkContext, "keen/page");
-        JavaPairRDD<String, Map<String, Object>> parallelize = javaSparkContext.parallelizePairs(elasticSearchRDD.take(100));
-        ClassifierService.classify(classifierConfig, spark, parallelize, modelInfo);
+        JavaPairRDD<String, Map<String, Object>> elasticSearchRDD =
+                SparkUtility.getElasticSearchRDD(spark, classifierConfig.getEsIndex(), classifierConfig.getEsType());
+        ClassifierService.classify(classifierConfig, spark, elasticSearchRDD, modelInfo);
         spark.stop();
     }
-
 
     private static SparkSession setSparkEsConfigs() {
         SparkSession spark = SparkUtility.getSpark(classifierConfig.getAppName() + "-"
@@ -63,5 +59,4 @@ public class App {
         spark.sparkContext().conf().set("es.index.auto.create", classifierConfig.getEsIndexAutoCreate());
         return spark;
     }
-
 }

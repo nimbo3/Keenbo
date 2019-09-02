@@ -16,6 +16,7 @@ public class ClassifierConfig {
     private String esWriteOperation;
     private String esIndexAutoCreate;
     private String esIndex;
+    private String esOutputIndex;
     private String esType;
     private String naiveBayesModelType;
     private String naiveBayesModelSaveLocation;
@@ -46,6 +47,7 @@ public class ClassifierConfig {
             classifierConfig.setEsWriteOperation(config.getString("es.write.operation"));
             classifierConfig.setEsIndexAutoCreate(config.getString("es.index.auto.create"));
             classifierConfig.setEsIndex(config.getString("es.index"));
+            classifierConfig.setEsOutputIndex(config.getString("es.output.index"));
             classifierConfig.setEsType(config.getString("es.type"));
             classifierConfig.setNaiveBayesModelType(config.getString("naive.bayes.model.type"));
             classifierConfig.setHashingNumFeatures(config.getInt("hashing.num.features"));
@@ -170,5 +172,13 @@ public class ClassifierConfig {
 
     public void setAppMode(MODE appMode) {
         this.appMode = appMode;
+    }
+
+    public String getEsOutputIndex() {
+        return esOutputIndex;
+    }
+
+    public void setEsOutputIndex(String esOutputIndex) {
+        this.esOutputIndex = esOutputIndex;
     }
 }

@@ -16,6 +16,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.elasticsearch.spark.rdd.api.java.JavaEsSpark;
 import scala.Tuple2;
 
 import java.util.Map;
@@ -64,14 +65,10 @@ public class ClassifierService {
                 .map(tuple2 -> {
                     Map<String, Object> map = tuple2._2._1;
                     map.put("id", tuple2._1);
-                    map.put("label", tuple2._2._2);
+                    map.put("label", modelInfo.getLabelString(tuple2._2._2));
                     return map;
                 });
 
-        for (Tuple2<Object, String> objectObjectTuple2 : join.map(m -> new Tuple2<>(m.get("link"), modelInfo.getLabelString((double) m.get("label")))).collect()) {
-            System.out.println(objectObjectTuple2);
-        }
-//        JavaEsSpark.saveToEs(join, "");
-
+        JavaEsSpark.saveToEs(join, classifierConfig.getEsOutputIndex() + "/" + classifierConfig.getEsType());
     }
 }
