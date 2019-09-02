@@ -1,6 +1,6 @@
 package in.nimbo.service;
 
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.entity.Edge;
 import in.nimbo.entity.Node;
@@ -21,7 +21,7 @@ public class BackwardExtractorService {
     private BackwardExtractorService() {
     }
 
-    public static JavaRDD<Page> extractBackward(HBasePageConfig hBasePageConfig, SparkSession spark, JavaRDD<Result> hBaseRDD) {
+    public static JavaRDD<Page> extractBackward(HBaseConfig hBasePageConfig, SparkSession spark, JavaRDD<Result> hBaseRDD) {
         byte[] anchorColumnFamily = hBasePageConfig.getAnchorColumnFamily();
         JavaRDD<Node> nodes = hBaseRDD.map(result -> new Node(Bytes.toString(result.getRow())));
 

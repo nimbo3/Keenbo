@@ -1,6 +1,6 @@
 package in.nimbo.common.dao.hbase;
 
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.HBaseException;
@@ -17,10 +17,10 @@ import java.util.Map;
 
 public class HBaseDAOImpl implements HBaseDAO {
     private Logger logger = LoggerFactory.getLogger("collector");
-    private HBasePageConfig config;
+    private HBaseConfig config;
     private Connection connection;
 
-    public HBaseDAOImpl(Connection connection, HBasePageConfig config) {
+    public HBaseDAOImpl(Connection connection, HBaseConfig config) {
         this.connection = connection;
         this.config = config;
     }
@@ -92,7 +92,30 @@ public class HBaseDAOImpl implements HBaseDAO {
                     Bytes.toBytes(anchor.getHref()), Bytes.toBytes(anchor.getContent()));
         }
 
-        put.addColumn(config.getDataColumnFamily(), config.getRankColumn(), Bytes.toBytes("1"));
+        put.addColumn(config.getDataColumnFamily(), config.getPageRankColumn(), Bytes.toBytes("1"));
         return put;
+    }
+
+    @Override
+    public Result get(String link) {
+        try (Table table = connection.getTable(TableName.valueOf(config.getSiteTable()))) {
+            Get get = new Get(Bytes.toBytes(link));
+            return table.get(get);
+        } catch (IOException e) {
+            throw new HBaseException(e);
+        }
+    }
+
+    @Override
+    public Result[] getBulk(List<String> links) {
+        try (Table table = connection.getTable(TableName.valueOf(config.getSiteTable()))) {
+            List<Get> getList = new ArrayList<>();
+            for (String link : links) {
+                getList.add(new Get(Bytes.toBytes(link)));
+            }
+            return table.get(getList);
+        } catch (IOException e) {
+            throw new HBaseException(e);
+        }
     }
 }

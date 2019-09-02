@@ -1,8 +1,7 @@
 package in.nimbo.service;
 
 import in.nimbo.App;
-import in.nimbo.common.config.HBasePageConfig;
-import in.nimbo.common.config.HBaseSiteConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.entity.GraphResult;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.SiteGraphConfig;
@@ -50,12 +49,12 @@ public class GraphExtractorTest {
 
     @Test
     public void graphExtractor() {
-        HBaseSiteConfig hBaseSiteConfig = HBaseSiteConfig.load();
+        HBaseConfig hBaseSiteConfig = HBaseConfig.load();
         List<Result> resultList = new ArrayList<>();
         for (int i = 1; i <= 3; i++) {
             List<Cell> cellList = new ArrayList<>();
             cellList.add(CellUtil.createCell(Bytes.toBytes(String.valueOf(i)), hBaseSiteConfig.getInfoColumnFamily(),
-                    hBaseSiteConfig.getRankColumn(),
+                    hBaseSiteConfig.getSiteRankColumn(),
                     new Date().getTime(), KeyValue.Type.Put, Bytes.toBytes(String.valueOf(i)), Bytes.toBytes("1")));
             cellList.add(CellUtil.createCell(Bytes.toBytes(String.valueOf(i)), hBaseSiteConfig.getDomainColumnFamily(),
                     Bytes.toBytes(String.valueOf((i + 1) % 4)),
@@ -76,31 +75,30 @@ public class GraphExtractorTest {
 
     @Test
     public void siteExtractor() {
-        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
-        HBaseSiteConfig hBaseSiteConfig = HBaseSiteConfig.load();
+        HBaseConfig hBaseConfig = HBaseConfig.load();
         List<Result> resultList = new ArrayList<>();
         List<String> rows = new ArrayList<>();
         for (int i = 1; i <= 3; i++) {
             String row = "http://com.a" + i;
             String anchor = "http://b.com/" + i;
             List<Cell> cellList = new ArrayList<>();
-            cellList.add(CellUtil.createCell(Bytes.toBytes(row), hBasePageConfig.getDataColumnFamily(), hBasePageConfig.getRankColumn(),
+            cellList.add(CellUtil.createCell(Bytes.toBytes(row), hBaseConfig.getDataColumnFamily(), hBaseConfig.getPageRankColumn(),
                     new Date().getTime(), KeyValue.Type.Put, Bytes.toBytes(String.valueOf(i)), Bytes.toBytes("1")));
-            cellList.add(CellUtil.createCell(Bytes.toBytes(row), hBasePageConfig.getAnchorColumnFamily(),
+            cellList.add(CellUtil.createCell(Bytes.toBytes(row), hBaseConfig.getAnchorColumnFamily(),
                     Bytes.toBytes(anchor),
                     new Date().getTime(), KeyValue.Type.Put, Bytes.toBytes(String.valueOf(i)), Bytes.toBytes("1")));
             resultList.add(Result.create(cellList));
             rows.add("a"+ i + ".com");
         }
         List<Cell> cellList = new ArrayList<>();
-        cellList.add(CellUtil.createCell(Bytes.toBytes("https://com.b"), hBasePageConfig.getDataColumnFamily(), hBasePageConfig.getRankColumn(),
+        cellList.add(CellUtil.createCell(Bytes.toBytes("https://com.b"), hBaseConfig.getDataColumnFamily(), hBaseConfig.getPageRankColumn(),
                 new Date().getTime(), KeyValue.Type.Put, Bytes.toBytes(String.valueOf(1)), Bytes.toBytes("1")));
         resultList.add(Result.create(cellList));
         rows.add("b.com");
 
         JavaRDD<Result> hBaseRDD = javaSparkContext.parallelize(resultList);
         Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaPairRDD<ImmutableBytesWritable, Put>> result =
-                SiteExtractor.extract(hBasePageConfig, hBaseSiteConfig, sparkSession, hBaseRDD);
+                SiteExtractor.extract(hBaseConfig, sparkSession, hBaseRDD);
         Collection<Put> nodes = result._1.collectAsMap().values();
         Collection<Put> edges = result._2.collectAsMap().values();
         for (Put node : nodes) {

@@ -1,7 +1,6 @@
 package in.nimbo;
 
-import in.nimbo.common.config.HBasePageConfig;
-import in.nimbo.common.config.HBaseSiteConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.SiteGraphConfig;
@@ -23,22 +22,21 @@ import scala.Tuple2;
 public class App {
     public static void main(String[] args) {
         SiteGraphConfig siteGraphConfig = SiteGraphConfig.load();
-        HBaseSiteConfig hBaseSiteConfig = HBaseSiteConfig.load();
-        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
+        HBaseConfig hBaseConfig = HBaseConfig.load();
 
         SparkSession spark = loadSpark(siteGraphConfig.getAppName(), false);
 
         if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.EXTRACTOR) {
-            JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBasePageConfig.getPageTable());
+            JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBaseConfig.getPageTable());
             hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
             Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaPairRDD<ImmutableBytesWritable, Put>> extract =
-                    SiteExtractor.extract(hBasePageConfig, hBaseSiteConfig, spark, hBaseRDD);
-            SparkUtility.saveToHBase(hBaseSiteConfig.getSiteTable(), extract._1);
-            SparkUtility.saveToHBase(hBaseSiteConfig.getSiteTable(), extract._2);
+                    SiteExtractor.extract(hBaseConfig, spark, hBaseRDD);
+            SparkUtility.saveToHBase(hBaseConfig.getSiteTable(), extract._1);
+            SparkUtility.saveToHBase(hBaseConfig.getSiteTable(), extract._2);
         } else if (siteGraphConfig.getAppMode() == SiteGraphConfig.MODE.GRAPH) {
-            JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBaseSiteConfig.getSiteTable());
+            JavaRDD<Result> hBaseRDD = SparkUtility.getHBaseRDD(spark, hBaseConfig.getSiteTable());
             hBaseRDD.persist(StorageLevel.MEMORY_AND_DISK());
-            GraphResult graphResult = GraphExtractor.extract(hBaseSiteConfig, spark, hBaseRDD);
+            GraphResult graphResult = GraphExtractor.extract(hBaseConfig, spark, hBaseRDD);
             JavaRDD<String> nodesJson = SparkUtility.createJson(graphResult.getNodes());
             JavaRDD<String> edgesJson = SparkUtility.createJson(graphResult.getEdges());
             nodesJson.saveAsTextFile("/SiteGraphVertices");
@@ -50,7 +48,7 @@ public class App {
     public static SparkSession loadSpark(String appName, boolean isLocal) {
         SparkSession spark = SparkUtility.getSpark(appName, isLocal);
         SparkUtility.registerKryoClasses(spark, new Class[]{in.nimbo.common.entity.Meta.class,
-                in.nimbo.common.exception.LoadConfigurationException.class, HBasePageConfig.class,
+                in.nimbo.common.exception.LoadConfigurationException.class, HBaseConfig.class,
                 in.nimbo.common.config.ElasticConfig.class, in.nimbo.common.entity.Anchor.class,
                 in.nimbo.common.exception.LanguageDetectException.class, in.nimbo.common.config.ProjectConfig.class,
                 in.nimbo.common.utility.CloseUtility.class, in.nimbo.common.exception.HBaseException.class,

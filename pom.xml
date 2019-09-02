@@ -21,6 +21,7 @@
         <module>pagerank</module>
         <module>classifier</module>
         <module>shuffler</module>
+        <module>hbase-count</module>
     </modules>
 
     <properties>
@@ -240,6 +241,8 @@
                                     <includes>
                                         <include>*.sh</include>
                                         <include>init/*</include>
+                                        <include>deploy/*</include>
+                                        <include>sql/*</include>
                                     </includes>
                                 </resource>
                             </resources>

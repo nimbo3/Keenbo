@@ -1,6 +1,6 @@
 package dao;
 
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.common.dao.hbase.HBaseDAO;
 import in.nimbo.common.dao.hbase.HBaseDAOImpl;
@@ -25,12 +25,12 @@ import static org.junit.Assert.assertTrue;
 
 public class HBaseDAOTest {
     private static HBaseDAO hBaseDAO;
-    private static HBasePageConfig hBasePageConfig;
+    private static HBaseConfig hBasePageConfig;
     private static Connection connection;
 
     @BeforeClass
     public static void init() throws IOException {
-        hBasePageConfig = HBasePageConfig.load();
+        hBasePageConfig = HBaseConfig.load();
         connection = ConnectionFactory.createConnection();
         TableName tableName = TableName.valueOf(hBasePageConfig.getPageTable());
         HTableDescriptor descriptor = new HTableDescriptor(tableName);

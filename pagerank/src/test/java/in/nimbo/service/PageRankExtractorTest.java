@@ -1,7 +1,7 @@
 package in.nimbo.service;
 
 import in.nimbo.App;
-import in.nimbo.common.config.HBasePageConfig;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.PageRankConfig;
 import in.nimbo.entity.Page;
@@ -24,7 +24,6 @@ import org.junit.Test;
 import scala.Tuple2;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
@@ -48,8 +47,13 @@ public class PageRankExtractorTest {
     }
 
     @Test
+<<<<<<< HEAD
     public void pageRankExtractor() {
         HBasePageConfig hBasePageConfig = HBasePageConfig.load();
+=======
+    public void siteExtractor() {
+        HBaseConfig hBasePageConfig = HBaseConfig.load();
+>>>>>>> f1ce88f09db5bbe0298f3e1152e51ad63febc0aa
         PageRankConfig pageRankConfig = PageRankConfig.load();
         pageRankConfig.setMaxIter(1);
         List<Result> resultList = new ArrayList<>();
@@ -58,7 +62,7 @@ public class PageRankExtractorTest {
             String row = "http://com.a" + i;
             String anchor = "https://b.com";
             List<Cell> cellList = new ArrayList<>();
-            cellList.add(CellUtil.createCell(Bytes.toBytes(row), hBasePageConfig.getDataColumnFamily(), hBasePageConfig.getRankColumn(),
+            cellList.add(CellUtil.createCell(Bytes.toBytes(row), hBasePageConfig.getDataColumnFamily(), hBasePageConfig.getPageRankColumn(),
                     new Date().getTime(), KeyValue.Type.Put, Bytes.toBytes(String.valueOf(i)), Bytes.toBytes("1")));
             cellList.add(CellUtil.createCell(Bytes.toBytes(row), hBasePageConfig.getAnchorColumnFamily(),
                     Bytes.toBytes(anchor),
@@ -67,7 +71,7 @@ public class PageRankExtractorTest {
             rows.add("a"+ i + ".com");
         }
         List<Cell> cellList = new ArrayList<>();
-        cellList.add(CellUtil.createCell(Bytes.toBytes("https://com.b"), hBasePageConfig.getDataColumnFamily(), hBasePageConfig.getRankColumn(),
+        cellList.add(CellUtil.createCell(Bytes.toBytes("https://com.b"), hBasePageConfig.getDataColumnFamily(), hBasePageConfig.getPageRankColumn(),
                 new Date().getTime(), KeyValue.Type.Put, Bytes.toBytes(String.valueOf(1)), Bytes.toBytes("1")));
         resultList.add(Result.create(cellList));
         rows.add("https://com.b");

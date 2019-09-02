@@ -2,8 +2,7 @@ package in.nimbo.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import in.nimbo.common.config.ElasticConfig;
-import in.nimbo.common.config.HBasePageConfig;
-import in.nimbo.common.dao.elastic.ElasticDAO;
+import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.dao.elastic.ElasticDAOImpl;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.utility.LinkUtility;
@@ -11,8 +10,6 @@ import in.nimbo.entity.Category;
 import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
-import org.apache.http.HttpHost;
-import org.elasticsearch.action.bulk.BackoffPolicy;
 import org.elasticsearch.action.bulk.BulkProcessor;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.get.MultiGetItemResponse;
@@ -20,12 +17,7 @@ import org.elasticsearch.action.get.MultiGetRequest;
 import org.elasticsearch.action.get.MultiGetResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.client.RequestOptions;
-import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestClientBuilder;
 import org.elasticsearch.client.RestHighLevelClient;
-import org.elasticsearch.common.unit.ByteSizeUnit;
-import org.elasticsearch.common.unit.ByteSizeValue;
-import org.elasticsearch.common.unit.TimeValue;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
@@ -106,7 +98,7 @@ public class TrainingService {
     }
 
     private static void runCrawler() throws IOException {
-        HBasePageConfig hBasePageConfig = HBasePageConfig.load();
+        HBaseConfig hBaseConfig = HBaseConfig.load();
         Connection hBaseConnection = null;
         try {
             hBaseConnection = ConnectionFactory.createConnection();
@@ -122,7 +114,7 @@ public class TrainingService {
         List<Category> categories = null;
         System.out.println("data loaded");
         try (PrintWriter writer = new PrintWriter("sites.txt", "UTF-8")) {
-            try (Table table = hBaseConnection.getTable(TableName.valueOf(hBasePageConfig.getPageTable()))) {
+            try (Table table = hBaseConnection.getTable(TableName.valueOf(hBaseConfig.getPageTable()))) {
                 for (Category category : categories) {
                     for (String site : category.getSites()) {
                         String realSite = LinkUtility.reverseLink("https://" + site);
