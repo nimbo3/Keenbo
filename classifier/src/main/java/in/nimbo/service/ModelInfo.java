@@ -1,22 +1,23 @@
 package in.nimbo.service;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ModelInfo {
+public class ModelInfo implements Serializable {
     private String[] stopWords;
-    private Map<Double, String> labelMap;
+    private Map<String, Double> labelMap;
 
     public ModelInfo() {
         labelMap = new HashMap<>();
-        labelMap.put(0.0, "art");
-        labelMap.put(1.0, "science");
-        labelMap.put(2.0, "health");
-        labelMap.put(3.0, "news");
-        labelMap.put(4.0, "shopping");
-        labelMap.put(5.0, "sports");
-        labelMap.put(6.0, "social");
-        labelMap.put(7.0, "other");
+        labelMap.put("art", 0.0);
+        labelMap.put("science", 1.0);
+        labelMap.put("health", 2.0);
+        labelMap.put("news", 3.0);
+        labelMap.put("shopping", 4.0);
+        labelMap.put("sports", 5.0);
+        labelMap.put("social", 6.0);
+        labelMap.put("other", 7.0);
 
         stopWords = new String[]{"'", "-", "'s", "``", "pm", "am", "their", "our",
                 "theme", "very", "about", "during", "when", "these", "would", "else", "above", "let", "because", "if",
@@ -38,14 +39,14 @@ public class ModelInfo {
     }
 
     public String getLabelString(Double num) {
-        return labelMap.get(num);
+        for (String key : labelMap.keySet()) {
+            if(Double.compare(labelMap.get(key), num) == 0)
+                return key;
+        }
+        return "";
     }
 
     public Double getLabelDouble(String name) {
-        for (Double num : labelMap.keySet()) {
-            if (labelMap.get(num).equals(name))
-                return num;
-        }
-        return 0.0;
+        return labelMap.get(name);
     }
 }

@@ -36,7 +36,7 @@ public class ClassifierConfig {
             else if (config.getString("app.mode").equals("classify")){
                 classifierConfig.setAppMode(MODE.CLASSIFY);
             }
-            else if (config.getString("app.name").equals("train")) {
+            else if (config.getString("app.mode").equals("train")) {
                 classifierConfig.setAppMode(MODE.TRAIN);
             }
             else {

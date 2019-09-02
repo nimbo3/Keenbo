@@ -3,11 +3,11 @@ package in.nimbo.service;
 import in.nimbo.config.ClassifierConfig;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.Pipeline;
+import org.apache.spark.ml.PipelineModel;
+import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.classification.NaiveBayesModel;
-import org.apache.spark.ml.feature.HashingTF;
-import org.apache.spark.ml.feature.IDFModel;
-import org.apache.spark.ml.feature.StopWordsRemover;
-import org.apache.spark.ml.feature.Tokenizer;
+import org.apache.spark.ml.feature.*;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -26,8 +26,11 @@ public class ClassifierService {
 
     public static void classify(ClassifierConfig classifierConfig, SparkSession spark,
                                 JavaPairRDD<String, Map<String, Object>> elasticSearchRDD, ModelInfo modelInfo) {
-        NaiveBayesModel model = NaiveBayesModel.load(classifierConfig.getNaiveBayesModelSaveLocation());
+        NaiveBayesModel naiveBayesModel = NaiveBayesModel.load(classifierConfig.getNaiveBayesModelSaveLocation());
+        naiveBayesModel.setFeaturesCol("feature");
+        naiveBayesModel.setPredictionCol("label");
         IDFModel idfModel = IDFModel.load(classifierConfig.getNaiveBayesIDFSaveLocation());
+
         JavaRDD<Row> dataRDD = elasticSearchRDD.map(tuple2 -> RowFactory.create(tuple2._1, tuple2._2.get("content")));
         StructType esStruct = new StructType(new StructField[]{
                 new StructField("id", DataTypes.StringType, false, Metadata.empty()),
@@ -35,27 +38,27 @@ public class ClassifierService {
         });
         Dataset<Row> dataset = spark.createDataFrame(dataRDD, esStruct);
 
-        Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");
-        Dataset<Row> wordsData = tokenizer.transform(dataset);
+        StringIndexer stringIndexer = new StringIndexer().setInputCol("content").setOutputCol("what");
 
-        StopWordsRemover stopWordsRemover = new StopWordsRemover()
-                .setInputCol("words")
+        Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");
+        StopWordsRemover stopWordsRemover = new StopWordsRemover().setInputCol("words")
                 .setOutputCol("words-filtered")
                 .setStopWords(modelInfo.getStopWords());
-
-        Dataset<Row> filteredData = stopWordsRemover.transform(wordsData);
-
         HashingTF hashingTF = new HashingTF()
-                .setInputCol("words")
+                .setInputCol("words-filtered")
                 .setOutputCol("rawFeatures")
                 .setNumFeatures(classifierConfig.getHashingNumFeatures());
-        Dataset<Row> featuredData = hashingTF.transform(filteredData);
 
-        Dataset<Row> rescaledData = idfModel.transform(featuredData);
-        Dataset<Row> features = rescaledData.select("id", "feature");
+        Pipeline pipeline = new Pipeline().setStages(new PipelineStage[]
+                {tokenizer, stopWordsRemover, stringIndexer, hashingTF, idfModel, naiveBayesModel});
 
-        JavaPairRDD<String, Double> predictionAndLabel =
-                features.toJavaRDD().mapToPair((Row p) -> new Tuple2<>(p.getString(0), model.predict(p.getAs(1))));
+        PipelineModel pipelineModel = pipeline.fit(dataset);
+        Dataset<Row> rescaledData = pipelineModel.transform(dataset);
+        rescaledData.select("what").show(false);
+
+        JavaPairRDD<String, Double> predictionAndLabel = rescaledData.select("id", "label")
+                .toJavaRDD()
+                .mapToPair(row -> new Tuple2<>(row.getString(0), row.getDouble(1)));
 
         JavaRDD<Map<String, Object>> join = elasticSearchRDD.join(predictionAndLabel)
                 .map(tuple2 -> {

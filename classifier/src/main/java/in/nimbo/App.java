@@ -47,7 +47,7 @@ public class App {
 //        JavaPairRDD<String, Map<String, Object>> elasticSearchRDD =
 //                SparkUtility.getElasticSearchRDD(spark, classifierConfig.getEsIndex(), classifierConfig.getEsType());
         JavaSparkContext javaSparkContext = SparkUtility.getJavaSparkContext(spark);
-        JavaPairRDD<String, Map<String, Object>> elasticSearchRDD = JavaEsSpark.esRDD(javaSparkContext, "keen/page", "?q=rotten tomatoes");
+        JavaPairRDD<String, Map<String, Object>> elasticSearchRDD = JavaEsSpark.esRDD(javaSparkContext, "keen/page");
         JavaPairRDD<String, Map<String, Object>> parallelize = javaSparkContext.parallelizePairs(elasticSearchRDD.take(100));
         ClassifierService.classify(classifierConfig, spark, parallelize, modelInfo);
         spark.stop();
