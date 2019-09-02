@@ -65,9 +65,9 @@ public class GraphExtractorTest {
         GraphResult graphResult = GraphExtractor.extract(hBaseSiteConfig, sparkSession, hBaseRDD);
         List<Row> nodes = graphResult.getNodes().collectAsList();
         List<Row> edges = graphResult.getEdges().collectAsList();
-        assertEquals("[3,[3.0]]", nodes.get(0).toString());
-        assertEquals("[2,[2.0]]", nodes.get(1).toString());
-        assertEquals("[1,[1.0]]", nodes.get(2).toString());
+        assertEquals("3", nodes.get(0).getString(0));
+        assertEquals("2", nodes.get(1).getString(0));
+        assertEquals("1", nodes.get(2).getString(0));
         assertEquals("[3,0,3]", edges.get(0).toString());
         assertEquals("[2,3,2]", edges.get(1).toString());
         assertEquals("[1,2,1]", edges.get(2).toString());

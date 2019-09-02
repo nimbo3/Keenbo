@@ -13,10 +13,18 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.apache.spark.storage.StorageLevel;
+import org.graphframes.GraphFrame;
+import org.graphframes.lib.StronglyConnectedComponents;
 
 import java.util.List;
 import java.util.Objects;
+
+import static org.apache.spark.sql.functions.col;
 
 public class GraphExtractor {
     private GraphExtractor() {
@@ -38,7 +46,7 @@ public class GraphExtractor {
 
         hBaseRDD.unpersist();
         JavaRDD<Result> bestNodesRdd = javaSparkContext.parallelize(bestNodes);
-        bestNodesRdd.persist(StorageLevel.MEMORY_AND_DISK());
+        bestNodesRdd.persist(StorageLevel.DISK_ONLY());
 
         JavaRDD<Row> nodes = bestNodesRdd
                 .map(result -> result.getColumnLatestCell(infoColumnFamily, siteRankColumn))
@@ -62,9 +70,31 @@ public class GraphExtractor {
                 });
         hBaseRDD.unpersist();
 
-        Dataset<Row> vertexDF = spark.createDataFrame(nodes, SparkUtility.getNodeSchema());
-        Dataset<Row> edgeDF = spark.createDataFrame(edges, SparkUtility.getEdgeSchema());
+        StructType nodeSchema = new StructType(new StructField[]{
+                new StructField("id", DataTypes.StringType, false, Metadata.empty()),
+                new StructField("font", DataTypes.createStructType(
+                        new StructField[]{
+                                new StructField("size", DataTypes.DoubleType, false, Metadata.empty())
+                        }
+                ), false, Metadata.empty())});
 
-        return new GraphResult(vertexDF, edgeDF);
+        StructType edgeSchema = new StructType(new StructField[]{
+                new StructField("src", DataTypes.StringType, false, Metadata.empty()),
+                new StructField("dst", DataTypes.StringType, false, Metadata.empty()),
+                new StructField("width", DataTypes.LongType, false, Metadata.empty())
+        });
+
+        Dataset<Row> vertexDF = spark.createDataFrame(nodes, nodeSchema);
+        Dataset<Row> edgeDF = spark.createDataFrame(edges, edgeSchema);
+
+        spark.sparkContext().setCheckpointDir("w");
+
+        GraphFrame graphFrame = new GraphFrame(vertexDF, edgeDF);
+        graphFrame.persist(StorageLevel.DISK_ONLY());
+        Dataset<Row> components = graphFrame.connectedComponents().setIntermediateStorageLevel(StorageLevel.DISK_ONLY()).run();
+
+        Dataset<Row> finalVertices = components.select(col("id"), col("font"), col("component").alias("color"));
+        Dataset<Row> finalEdges = edgeDF.select(col("src").alias("from"), col("dst").alias("to"), col("width"));
+        return new GraphResult(finalVertices, finalEdges);
     }
 }
