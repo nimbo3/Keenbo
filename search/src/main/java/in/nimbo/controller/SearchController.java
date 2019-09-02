@@ -6,10 +6,7 @@ import in.nimbo.common.utility.FileUtility;
 import in.nimbo.config.SparkConfig;
 import in.nimbo.dao.elastic.ElasticDAO;
 import in.nimbo.dao.redis.LabelDAO;
-import in.nimbo.entity.Edge;
-import in.nimbo.entity.GraphResponse;
-import in.nimbo.entity.Node;
-import in.nimbo.entity.Page;
+import in.nimbo.entity.*;
 
 import java.io.IOException;
 import java.util.DoubleSummaryStatistics;
@@ -30,19 +27,26 @@ public class SearchController {
         this.labelDAO = labelDAO;
     }
 
-    public List<Page> search(String query) {
-        Pattern pattern = Pattern.compile(SEARCH_QUERY_REGEX);
-        Matcher matcher = pattern.matcher(query);
-        if (matcher.find()) {
-            String extractedQuery = matcher.group(1);
-            String site = matcher.group(3);
-            if (site == null) {
-                site = "";
-            }
-            List<Page> pages = elasticDAO.search(extractedQuery, site);
-            pages.forEach(page -> labelDAO.add(page.getLink(), page.getLabel()));
-            return pages;
+    public List<Page> search(String query, SearchType type) {
+        switch (type) {
+            case FUZZY:
+                return elasticDAO.exactSearch(query);
+            case EXACT:
+                return elasticDAO.exactSearch(query);
+            default:
+                Pattern pattern = Pattern.compile(SEARCH_QUERY_REGEX);
+                Matcher matcher = pattern.matcher(query);
+                if (matcher.find()) {
+                    String extractedQuery = matcher.group(1);
+                    String site = matcher.group(3);
+                    if (site == null) {
+                        site = "";
+                    }
+                    List<Page> pages = elasticDAO.search(extractedQuery, site);
+                    pages.forEach(page -> labelDAO.add(page.getLink(), page.getLabel()));
+                    return pages;
+                }
+                throw new AssertionError();
         }
-        throw new AssertionError();
     }
 }

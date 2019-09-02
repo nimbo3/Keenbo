@@ -18,6 +18,7 @@ import in.nimbo.common.dao.hbase.HBaseDAOImpl;
 import in.nimbo.dao.redis.LabelDAO;
 import in.nimbo.dao.redis.RedisLabelDAO;
 import in.nimbo.entity.Page;
+import in.nimbo.entity.SearchType;
 import in.nimbo.entity.User;
 import in.nimbo.transformer.JsonTransformer;
 import org.apache.hadoop.hbase.client.ConnectionFactory;
@@ -113,7 +114,16 @@ public class App {
 
             Spark.get("/search", ((request, response) -> {
                 String query = request.queryParamOrDefault("query", "");
-                List<Page> result = searchController.search(query);
+                String mode = request.queryParamOrDefault("mode", "0");
+                SearchType type;
+                if (mode.equals("1")) {
+                    type = SearchType.EXACT;
+                } else if (mode.equals("2")) {
+                    type = SearchType.FUZZY;
+                } else {
+                    type = SearchType.SIMPLE;
+                }
+                List<Page> result = searchController.search(query, type);
                 response.type("application/json");
                 return result;
             }), transformer);
