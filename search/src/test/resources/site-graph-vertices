@@ -1,0 +1,20 @@
+[
+  {
+    "id": "stackoverflow.com",
+    "font": {
+      "size": 2
+    }
+  },
+  {
+    "id": "google.com",
+    "font": {
+      "size": 4
+    }
+  },
+  {
+    "id": "facebook.com",
+    "font": {
+      "size": 1
+    }
+  }
+]
