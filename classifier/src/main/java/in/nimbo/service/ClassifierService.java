@@ -48,7 +48,6 @@ public class ClassifierService {
         JavaRDD<Data> dataRDD = elasticSearchRDD.map(tuple2 ->
                 new Data(labelMap.get((String) tuple2._2.get("labelContent")), (String) tuple2._2.get("content")));
         Dataset<Row> dataset = spark.createDataFrame(dataRDD, Data.class);
-        dataset.show(false);
 
         Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");
         Dataset<Row> wordsData = tokenizer.transform(dataset);
@@ -82,7 +81,7 @@ public class ClassifierService {
                 .setLabelCol("label")
                 .setFeaturesCol("feature");
 
-        Dataset<Row>[] tmp = features.randomSplit(new double[]{0.9, 0.2});
+        Dataset<Row>[] tmp = features.randomSplit(new double[]{0.8, 0.2});
         Dataset<Row> training = tmp[0];
         Dataset<Row> test = tmp[1];
 
