@@ -4,7 +4,6 @@ import in.nimbo.App;
 import in.nimbo.common.config.HBaseConfig;
 import in.nimbo.common.utility.SparkUtility;
 import in.nimbo.config.PageRankConfig;
-import in.nimbo.entity.Page;
 import org.apache.hadoop.hbase.Cell;
 import org.apache.hadoop.hbase.CellUtil;
 import org.apache.hadoop.hbase.KeyValue;
@@ -21,7 +20,6 @@ import org.apache.spark.sql.SparkSession;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -71,9 +69,8 @@ public class PageRankExtractorTest {
         rows.add("https://com.b");
 
         JavaRDD<Result> hBaseRDD = javaSparkContext.parallelize(resultList);
-        Tuple2<JavaPairRDD<ImmutableBytesWritable, Put>, JavaRDD<Page>> result =
+        JavaPairRDD<ImmutableBytesWritable, Put> result =
                 PageRankExtractor.extract(hBasePageConfig, pageRankConfig, sparkSession, hBaseRDD);
-        List<Page> pageRankElastic = result._2.collect();
-        assertEquals(4, pageRankElastic.size());
+        assertEquals(4, result.count());
     }
 }

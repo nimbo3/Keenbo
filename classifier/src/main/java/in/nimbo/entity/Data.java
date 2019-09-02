@@ -6,8 +6,8 @@ public class Data {
 
     public Data() {}
 
-    public Data(long label, String content) {
-        this.label = (double) label;
+    public Data(double label, String content) {
+        this.label = label;
         this.content = content;
     }
 
@@ -15,8 +15,8 @@ public class Data {
         return label;
     }
 
-    public void setLabel(long label) {
-        this.label = (double)label;
+    public void setLabel(double label) {
+        this.label = label;
     }
 
     public String getContent() {

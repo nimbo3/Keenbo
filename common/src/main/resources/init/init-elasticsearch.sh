@@ -219,7 +219,6 @@ curl -XPUT "http://$ELASTICSEARCH_NODE:9200/$ELASTICSEARCH_INDEX" -H 'Content-Ty
         },
         "link": {
           "type": "text",
-          "analyzer" : "custom_analyzer",
           "fields" : {
             "keyword" : {
               "type" : "keyword",
@@ -237,7 +236,6 @@ curl -XPUT "http://$ELASTICSEARCH_NODE:9200/$ELASTICSEARCH_INDEX" -H 'Content-Ty
           "properties": {
             "content": {
               "type": "text",
-              "analyzer" : "custom_analyzer",
               "fields" : {
                 "keyword" : {
                   "type" : "keyword",
@@ -247,7 +245,6 @@ curl -XPUT "http://$ELASTICSEARCH_NODE:9200/$ELASTICSEARCH_INDEX" -H 'Content-Ty
             },
             "key": {
               "type": "text",
-              "analyzer" : "custom_analyzer",
               "fields" : {
                 "keyword" : {
                   "type" : "keyword",

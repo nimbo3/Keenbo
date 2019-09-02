@@ -6,10 +6,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.ml.classification.NaiveBayes;
 import org.apache.spark.ml.classification.NaiveBayesModel;
-import org.apache.spark.ml.feature.HashingTF;
-import org.apache.spark.ml.feature.IDF;
-import org.apache.spark.ml.feature.IDFModel;
-import org.apache.spark.ml.feature.Tokenizer;
+import org.apache.spark.ml.feature.*;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.SparkSession;
@@ -18,29 +15,38 @@ import scala.Tuple2;
 import java.io.IOException;
 import java.util.Map;
 
-public class ClassifierService {
-    private ClassifierService() {
+public class ModelExtractorService {
+
+    private ModelExtractorService() {
     }
 
-    public static void extractModel(ClassifierConfig classifierConfig, SparkSession spark,
+    public static void extractModel(ClassifierConfig classifierConfig, ModelInfo modelInfo, SparkSession spark,
                              JavaPairRDD<String, Map<String, Object>> elasticSearchRDD) {
+
         JavaRDD<Data> dataRDD = elasticSearchRDD.map(tuple2 ->
-                new Data((Long) tuple2._2.get("label"), (String) tuple2._2.get("content")));
+                new Data(modelInfo.getLabelMap().get((String) tuple2._2.get("labelContent")), (String) tuple2._2.get("content")));
         Dataset<Row> dataset = spark.createDataFrame(dataRDD, Data.class);
 
         Tokenizer tokenizer = new Tokenizer().setInputCol("content").setOutputCol("words");
         Dataset<Row> wordsData = tokenizer.transform(dataset);
 
-        HashingTF hashingTF = new HashingTF()
+        StopWordsRemover stopWordsRemover = new StopWordsRemover()
                 .setInputCol("words")
+                .setOutputCol("words-filtered")
+                .setStopWords(modelInfo.getStopWords());
+
+        Dataset<Row> filteredData = stopWordsRemover.transform(wordsData);
+
+        HashingTF hashingTF = new HashingTF()
+                .setInputCol("words-filtered")
                 .setOutputCol("rawFeatures")
                 .setNumFeatures(classifierConfig.getHashingNumFeatures());
-        Dataset<Row> featuredData = hashingTF.transform(wordsData);
+        Dataset<Row> featuredData = hashingTF.transform(filteredData);
 
         IDF idf = new IDF().setInputCol("rawFeatures").setOutputCol("feature");
         IDFModel idfModel = idf.fit(featuredData);
         try {
-            idf.save(classifierConfig.getNaiveBayesIDFSaveLocation());
+            idfModel.save(classifierConfig.getNaiveBayesIDFSaveLocation());
         } catch (IOException e) {
             System.out.println("Unable to save idf model: " + e.getMessage());
         }
@@ -62,7 +68,6 @@ public class ClassifierService {
 
         JavaPairRDD<Double, Double> predictionAndLabel =
                 test.toJavaRDD().mapToPair((Row p) -> new Tuple2<>(model.predict(p.getAs(1)), p.getDouble(0)));
-        System.out.println(predictionAndLabel.collect());
 
         double accuracy = predictionAndLabel.filter(pl -> pl._1().equals(pl._2())).count() / (double) test.count();
         System.out.println(accuracy);
