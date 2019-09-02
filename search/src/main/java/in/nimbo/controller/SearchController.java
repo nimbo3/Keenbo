@@ -30,7 +30,7 @@ public class SearchController {
     public List<Page> search(String query, SearchType type) {
         switch (type) {
             case FUZZY:
-                return elasticDAO.exactSearch(query);
+                return elasticDAO.fuzzySearch(query);
             case EXACT:
                 return elasticDAO.exactSearch(query);
             default:

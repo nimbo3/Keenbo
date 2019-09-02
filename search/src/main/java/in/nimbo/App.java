@@ -116,12 +116,16 @@ public class App {
                 String query = request.queryParamOrDefault("query", "");
                 String mode = request.queryParamOrDefault("mode", "0");
                 SearchType type;
-                if (mode.equals("1")) {
-                    type = SearchType.EXACT;
-                } else if (mode.equals("2")) {
-                    type = SearchType.FUZZY;
-                } else {
-                    type = SearchType.SIMPLE;
+                switch (mode) {
+                    case "2":
+                        type = SearchType.EXACT;
+                        break;
+                    case "1":
+                        type = SearchType.FUZZY;
+                        break;
+                    default:
+                        type = SearchType.SIMPLE;
+                        break;
                 }
                 List<Page> result = searchController.search(query, type);
                 response.type("application/json");
