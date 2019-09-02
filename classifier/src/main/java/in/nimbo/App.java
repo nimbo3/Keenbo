@@ -19,8 +19,10 @@ public class App {
         ClassifierConfig classifierConfig = ClassifierConfig.load();
         if (classifierConfig.getAppMode() == ClassifierConfig.MODE.CRAWL) {
             runCrawler(classifierConfig, projectConfig);
-        } else if (classifierConfig.getAppMode() == ClassifierConfig.MODE.CLASSIFY) {
+        } else if (classifierConfig.getAppMode() == ClassifierConfig.MODE.TRAIN) {
             runExtractModel(classifierConfig, modelInfo);
+        } else if (classifierConfig.getAppMode() == ClassifierConfig.MODE.CLASSIFY) {
+
         }
     }
 

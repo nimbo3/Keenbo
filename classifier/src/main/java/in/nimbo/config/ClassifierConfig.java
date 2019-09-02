@@ -6,7 +6,7 @@ import org.apache.commons.configuration.PropertiesConfiguration;
 
 public class ClassifierConfig {
     public enum MODE {
-        CRAWL, CLASSIFY
+        CRAWL, CLASSIFY, TRAIN
     }
 
     private static final String CONFIG_NAME = "classifier.properties";
@@ -35,6 +35,9 @@ public class ClassifierConfig {
             }
             else if (config.getString("app.mode").equals("classify")){
                 classifierConfig.setAppMode(MODE.CLASSIFY);
+            }
+            else if (config.getString("app.name").equals("train")) {
+                classifierConfig.setAppMode(MODE.TRAIN);
             }
             else {
                 throw new ConfigurationException("Invalid App mode");
