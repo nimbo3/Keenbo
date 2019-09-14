@@ -1,13 +1,11 @@
-package in.nimbo.common.service;
+package in.nimbo.service;
 
 import com.cybozu.labs.langdetect.Detector;
 import com.cybozu.labs.langdetect.DetectorFactory;
 import com.cybozu.labs.langdetect.LangDetectException;
 import in.nimbo.common.config.ProjectConfig;
-import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.common.exception.ParseLinkException;
-import in.nimbo.common.utility.LanguageDetectorUtility;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.common.entity.Anchor;
 import in.nimbo.common.entity.Meta;
@@ -37,12 +35,11 @@ public class ParserService {
     }
 
     /**
-     * return document of page if it is present
      *
      * @param link link of site
-     * @return
+     * @return response of page if it is present
      */
-    public Optional<Document> getDocument(String link) {
+    public Connection.Response getResponse(String link) {
         try {
             Connection.Response response = Jsoup.connect(link)
                     .userAgent(projectConfig.getJsoupUserAgent())
@@ -50,12 +47,7 @@ public class ParserService {
                     .followRedirects(true)
                     .ignoreContentType(true)
                     .execute();
-            if (response.contentType() != null &&
-                    !response.contentType().contains("text/html")) {
-                return Optional.empty();
-            } else {
-                return Optional.of(response.parse());
-            }
+            return response;
         } catch (SSLHandshakeException e) {
             parserLogger.warn("Server certificate verification failed: {}", link);
         } catch (UnknownHostException e) {
@@ -69,14 +61,33 @@ public class ParserService {
         } catch (StringIndexOutOfBoundsException | IOException e) {
             parserLogger.warn("Unable to parse page with jsoup: {}", link);
         }
-        return Optional.empty();
+        throw new ParseLinkException("Unable to get response from link: " + link);
+    }
+
+    /**
+     *
+     * @param response response of site
+     * @return document of page if it is present
+     */
+    public Document getDocument(Connection.Response response) {
+        try {
+            if (response.contentType() == null ||
+                    response.contentType().contains("text/html")) {
+                return response.parse();
+            } else {
+                parserLogger.info("Invalid content type for crawling");
+            }
+        } catch (StringIndexOutOfBoundsException | IOException e) {
+            parserLogger.warn("Unable to parse page with jsoup: {}", response.url().toExternalForm());
+        }
+        throw new ParseLinkException("Unable to get document from link: " + response.url().toExternalForm());
     }
 
     /**
      * @param document document contain a site contents
      * @return list of all anchors in a document
      */
-    private Set<Anchor> getAnchors(Document document) {
+    Set<Anchor> getAnchors(Document document) {
         Set<Anchor> anchors = new HashSet<>();
         Elements linkElements = document.getElementsByTag("a");
         Map<String, Integer> map = new HashMap<>();
@@ -130,47 +141,13 @@ public class ParserService {
         }
     }
 
-    /**
-     * crawl a site and return it's content as a page
-     *
-     * @param link link of site
-     * @return page if able to crawl page
-     */
-    public Page getPage(String link) {
-        try {
-            Optional<Document> documentOptional = getDocument(link);
-            if (!documentOptional.isPresent()) {
-                throw new ParseLinkException("JSoup parse exception");
-            }
-            Document document = documentOptional.get();
-            String pageContentWithoutTag = document.text().replace("\n", " ");
-            if (pageContentWithoutTag.isEmpty()) {
-                parserLogger.warn("There is no content for site: {}", link);
-            } else if (isEnglishLanguage(pageContentWithoutTag, projectConfig.getEnglishProbability())) {
-                Set<Anchor> anchors = getAnchors(document);
-                List<Meta> metas = getMetas(document);
-                String title = getTitle(document);
-                if (title.isEmpty()) {
-                    title = link;
-                }
-                return new Page(link, title, pageContentWithoutTag, anchors, metas, 1.0);
-            }
-        } catch (MalformedURLException e) {
-            appLogger.warn("Unable to reverse link: {}", link);
-        } catch (LanguageDetectException e) {
-            parserLogger.warn("Cannot detect language of site: {}", link);
-        }
-        throw new ParseLinkException();
-    }
-
-
-    public boolean isEnglishLanguage(String text, double englishProbability) {
+    public boolean isEnglishLanguage(String text) {
         try {
             Detector detector = DetectorFactory.create();
             detector.append(text);
             detector.setAlpha(0);
             return detector.getProbabilities().stream()
-                    .anyMatch(x -> x.lang.equals("en") && x.prob > englishProbability);
+                    .anyMatch(x -> x.lang.equals("en") && x.prob > projectConfig.getEnglishProbability());
         } catch (LangDetectException e) {
             throw new LanguageDetectException(e);
         }

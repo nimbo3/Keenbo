@@ -5,18 +5,24 @@ import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.SharedMetricRegistries;
 import com.codahale.metrics.Timer;
 import com.github.benmanes.caffeine.cache.Cache;
+import in.nimbo.common.entity.Anchor;
+import in.nimbo.common.entity.Meta;
 import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
+import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.common.exception.ParseLinkException;
-import in.nimbo.common.service.ParserService;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.redis.RedisDAO;
+import org.jsoup.Connection;
+import org.jsoup.nodes.Document;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class CrawlerService {
     private Timer getPageTimer;
@@ -69,7 +75,7 @@ public class CrawlerService {
                     cache.put(siteDomain, LocalDateTime.now());
                     Timer.Context context = getPageTimer.time();
                     appLogger.info("Start parse link {}", siteLink);
-                    Page page = parserService.getPage(siteLink);
+                    Page page = getPage(siteLink);
                     appLogger.info("Finish parsing link {}", siteLink);
                     context.stop();
                     return Optional.of(page);
@@ -87,6 +93,42 @@ public class CrawlerService {
             appLogger.warn("Illegal URL format: " + siteLink, e);
         }
         throw new InvalidLinkException();
+    }
+
+    /**
+     * crawl a site and return it's content as a page
+     *
+     * @param link link of site
+     * @return page if able to crawl page
+     */
+    public Page getPage(String link) {
+        try {
+            Connection.Response response = parserService.getResponse(link);
+            String redirectedLink = response.url().toExternalForm();
+            if (isCrawled(redirectedLink)) {
+                throw new ParseLinkException("Url crawled after follow redirects: " + link);
+            }
+            redisDAO.add(LinkUtility.hashLinkCompressed(redirectedLink));
+            cache.put(LinkUtility.getMainDomain(redirectedLink), LocalDateTime.now());
+            Document document = parserService.getDocument(response);
+            String pageContentWithoutTag = document.text().replace("\n", " ");
+            if (pageContentWithoutTag.isEmpty()) {
+                parserLogger.warn("There is no content for site: {}", link);
+            } else if (parserService.isEnglishLanguage(pageContentWithoutTag)) {
+                Set<Anchor> anchors = parserService.getAnchors(document);
+                List<Meta> metas = parserService.getMetas(document);
+                String title = parserService.getTitle(document);
+                if (title.isEmpty()) {
+                    title = link;
+                }
+                return new Page(redirectedLink, title, pageContentWithoutTag, anchors, metas, 1.0);
+            }
+        } catch (MalformedURLException e) {
+            appLogger.warn("Unable to reverse link: {}", link);
+        } catch (LanguageDetectException e) {
+            parserLogger.warn("Cannot detect language of site: {}", link);
+        }
+        throw new ParseLinkException();
     }
 
     public boolean isCrawled(String link) {

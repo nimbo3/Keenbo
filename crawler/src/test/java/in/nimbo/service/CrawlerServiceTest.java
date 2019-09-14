@@ -10,9 +10,9 @@ import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
 import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.common.exception.ParseLinkException;
-import in.nimbo.common.service.ParserService;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.redis.RedisDAO;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Assert;
@@ -21,6 +21,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -35,7 +36,7 @@ public class CrawlerServiceTest {
     private static ProjectConfig projectConfig;
     private static Cache<String, LocalDateTime> cache;
     private static CrawlerService crawlerService;
-    private static String link;
+    private static String link, redirectLink;
     private static String invalidLink;
     private static Set<Anchor> anchors;
     private static List<Meta> metas;
@@ -54,6 +55,7 @@ public class CrawlerServiceTest {
     @Before
     public void beforeEachTest() throws MalformedURLException {
         link = "http://nimbo.in/";
+        redirectLink = "http://nimbo.in/1";
         invalidLink = "abc";
         contentWithoutTag = "nimbo Hi Header support@nimbo.in paragraph! another link";
         String title = "nimbo";
@@ -68,9 +70,13 @@ public class CrawlerServiceTest {
         String input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
         String inputWithoutTitle = TestUtility.getFileContent(Paths.get(FILE_WITHOUT_TITLE_ADDRESS));
         Document document = Jsoup.parse(input, "UTF-8");
+        Connection.Response response = mock(Connection.Response.class);
+        URL url = new URL(redirectLink);
+        when(response.url()).thenReturn(url);
         documentWithoutTitle = Jsoup.parse(inputWithoutTitle, "UTF-8");
-        when(parserService.getDocument(link)).thenReturn(Optional.of(document));
-        doReturn(true).when(parserService).isEnglishLanguage(anyString(), anyDouble());
+        doReturn(document).when(parserService).getDocument(any());
+        doReturn(response).when(parserService).getResponse(anyString());
+        doReturn(true).when(parserService).isEnglishLanguage(anyString());
         cache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
                 .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         crawlerService = spy(new CrawlerService(cache, redisDAO, parserService));
@@ -78,20 +84,20 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlTest() {
-        when(redisDAO.contains(link)).thenReturn(false);
+        doReturn(false).when(crawlerService).isCrawled(anyString());
         Page returnedPage = crawlerService.crawl(link).get();
-        Assert.assertEquals(page.getLink(), returnedPage.getLink());
+        Assert.assertEquals(redirectLink, returnedPage.getLink());
         Assert.assertEquals(page.getAnchors(), returnedPage.getAnchors());
         Assert.assertEquals(page.getMetas(), returnedPage.getMetas());
         Assert.assertEquals(page.getContent(), returnedPage.getContent());
         Assert.assertEquals(page.getTitle(), returnedPage.getTitle());
-        Assert.assertEquals(page.getLinkDepth(), returnedPage.getLinkDepth());
-        Assert.assertEquals(page.getReversedLink(), returnedPage.getReversedLink());
+        Assert.assertEquals(1, returnedPage.getLinkDepth());
+        Assert.assertEquals(LinkUtility.reverseLink(redirectLink), returnedPage.getReversedLink());
     }
 
     @Test
     public void crawlCachedLinkTest() {
-        when(redisDAO.contains(link)).thenReturn(false);
+        doReturn(false).when(crawlerService).isCrawled(anyString());
         try {
             cache.put(LinkUtility.getMainDomain(link), LocalDateTime.now());
         } catch (MalformedURLException e) {
@@ -103,7 +109,7 @@ public class CrawlerServiceTest {
 
     @Test(expected = InvalidLinkException.class)
     public void crawlRepeatedLinkTest() {
-        when(redisDAO.contains(anyString())).thenReturn(true);
+        doReturn(true).when(crawlerService).isCrawled(anyString());
         Optional<Page> returnedPage = crawlerService.crawl(link);
         Assert.fail();
     }
@@ -116,8 +122,8 @@ public class CrawlerServiceTest {
 
     @Test
     public void getPageTest() {
-        Page returnedPage = parserService.getPage(link);
-        Assert.assertEquals(link, returnedPage.getLink());
+        Page returnedPage = crawlerService.getPage(link);
+        Assert.assertEquals(redirectLink, returnedPage.getLink());
         Assert.assertEquals(contentWithoutTag, returnedPage.getContent());
         String title = "nimbo";
         Assert.assertEquals(title, returnedPage.getTitle());
@@ -125,36 +131,17 @@ public class CrawlerServiceTest {
         Assert.assertEquals(metas, returnedPage.getMetas());
     }
 
-    @Test
-    public void getPageWithoutTitleTest() {
-        when(parserService.getDocument(link)).thenReturn(Optional.of(documentWithoutTitle));
-        Page returnedPage = parserService.getPage(link);
-        Assert.assertEquals(link, returnedPage.getLink());
-        String contentWithoutTag = "Hi Header support@nimbo.in paragraph! another link";
-        Assert.assertEquals(contentWithoutTag, returnedPage.getContent());
-        Assert.assertEquals(link, returnedPage.getTitle());
-        Assert.assertEquals(anchors, returnedPage.getAnchors());
-        Assert.assertEquals(metas, returnedPage.getMetas());
-    }
-
-    @Test(expected = ParseLinkException.class)
-    public void getPageWithEmptyDocumentTest() {
-        when(parserService.getDocument(link)).thenReturn(Optional.empty());
-        Page returnedPage = parserService.getPage(link);
-        Assert.fail();
-    }
-
     @Test(expected = ParseLinkException.class)
     public void getPageMalformedURLExceptionTest() {
-        when(parserService.getDocument(invalidLink)).thenThrow(MalformedURLException.class);
-        Page returnedPage = parserService.getPage(invalidLink);
+        when(parserService.getDocument(any())).thenThrow(MalformedURLException.class);
+        Page returnedPage = crawlerService.getPage(invalidLink);
         Assert.fail();
     }
 
     @Test(expected = ParseLinkException.class)
     public void getPageLanguageDetectExceptionTest() {
-        doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString(), anyDouble());
-        Page returnedPage = parserService.getPage(link);
+        doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString());
+        Page returnedPage = crawlerService.getPage(link);
         Assert.fail();
     }
 }
