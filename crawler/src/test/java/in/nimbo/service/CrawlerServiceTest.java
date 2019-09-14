@@ -12,6 +12,7 @@ import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.common.exception.ParseLinkException;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.redis.RedisDAO;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.junit.Assert;
@@ -20,6 +21,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -34,7 +36,7 @@ public class CrawlerServiceTest {
     private static ProjectConfig projectConfig;
     private static Cache<String, LocalDateTime> cache;
     private static CrawlerService crawlerService;
-    private static String link;
+    private static String link, redirectLink;
     private static String invalidLink;
     private static Set<Anchor> anchors;
     private static List<Meta> metas;
@@ -53,6 +55,7 @@ public class CrawlerServiceTest {
     @Before
     public void beforeEachTest() throws MalformedURLException {
         link = "http://nimbo.in/";
+        redirectLink = "http://nimbo.in/1";
         invalidLink = "abc";
         contentWithoutTag = "nimbo Hi Header support@nimbo.in paragraph! another link";
         String title = "nimbo";
@@ -67,8 +70,13 @@ public class CrawlerServiceTest {
         String input = TestUtility.getFileContent(Paths.get(FILE_ADDRESS));
         String inputWithoutTitle = TestUtility.getFileContent(Paths.get(FILE_WITHOUT_TITLE_ADDRESS));
         Document document = Jsoup.parse(input, "UTF-8");
+        Connection.Response response = mock(Connection.Response.class);
+        URL url = mock(URL.class);
+        when(response.url()).thenReturn(url);
+        when(url.toExternalForm()).thenReturn(redirectLink);
         documentWithoutTitle = Jsoup.parse(inputWithoutTitle, "UTF-8");
         doReturn(document).when(parserService).getDocument(any());
+        doReturn(response).when(parserService).getResponse(anyString());
         doReturn(true).when(parserService).isEnglishLanguage(anyString());
         cache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
                 .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
@@ -77,7 +85,7 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlTest() {
-        when(redisDAO.contains(link)).thenReturn(false);
+        when(crawlerService.isCrawled(link)).thenReturn(false);
         Page returnedPage = crawlerService.crawl(link).get();
         Assert.assertEquals(page.getLink(), returnedPage.getLink());
         Assert.assertEquals(page.getAnchors(), returnedPage.getAnchors());
@@ -90,7 +98,7 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlCachedLinkTest() {
-        when(redisDAO.contains(link)).thenReturn(false);
+        when(crawlerService.isCrawled(link)).thenReturn(false);
         try {
             cache.put(LinkUtility.getMainDomain(link), LocalDateTime.now());
         } catch (MalformedURLException e) {
@@ -102,7 +110,7 @@ public class CrawlerServiceTest {
 
     @Test(expected = InvalidLinkException.class)
     public void crawlRepeatedLinkTest() {
-        when(redisDAO.contains(anyString())).thenReturn(true);
+        when(crawlerService.isCrawled(anyString())).thenReturn(true);
         Optional<Page> returnedPage = crawlerService.crawl(link);
         Assert.fail();
     }
@@ -120,18 +128,6 @@ public class CrawlerServiceTest {
         Assert.assertEquals(contentWithoutTag, returnedPage.getContent());
         String title = "nimbo";
         Assert.assertEquals(title, returnedPage.getTitle());
-        Assert.assertEquals(anchors, returnedPage.getAnchors());
-        Assert.assertEquals(metas, returnedPage.getMetas());
-    }
-
-    @Test
-    public void getPageWithoutTitleTest() {
-        when(parserService.getDocument(any())).thenReturn(documentWithoutTitle);
-        Page returnedPage = crawlerService.getPage(link);
-        Assert.assertEquals(link, returnedPage.getLink());
-        String contentWithoutTag = "Hi Header support@nimbo.in paragraph! another link";
-        Assert.assertEquals(contentWithoutTag, returnedPage.getContent());
-        Assert.assertEquals(link, returnedPage.getTitle());
         Assert.assertEquals(anchors, returnedPage.getAnchors());
         Assert.assertEquals(metas, returnedPage.getMetas());
     }
