@@ -71,9 +71,8 @@ public class CrawlerServiceTest {
         String inputWithoutTitle = TestUtility.getFileContent(Paths.get(FILE_WITHOUT_TITLE_ADDRESS));
         Document document = Jsoup.parse(input, "UTF-8");
         Connection.Response response = mock(Connection.Response.class);
-        URL url = mock(URL.class);
+        URL url = new URL(redirectLink);
         when(response.url()).thenReturn(url);
-        when(url.toExternalForm()).thenReturn(redirectLink);
         documentWithoutTitle = Jsoup.parse(inputWithoutTitle, "UTF-8");
         doReturn(document).when(parserService).getDocument(any());
         doReturn(response).when(parserService).getResponse(anyString());
