@@ -10,7 +10,6 @@ import in.nimbo.common.entity.Page;
 import in.nimbo.common.exception.InvalidLinkException;
 import in.nimbo.common.exception.LanguageDetectException;
 import in.nimbo.common.exception.ParseLinkException;
-import in.nimbo.common.service.ParserService;
 import in.nimbo.common.utility.LinkUtility;
 import in.nimbo.dao.redis.RedisDAO;
 import org.jsoup.Jsoup;
@@ -69,8 +68,8 @@ public class CrawlerServiceTest {
         String inputWithoutTitle = TestUtility.getFileContent(Paths.get(FILE_WITHOUT_TITLE_ADDRESS));
         Document document = Jsoup.parse(input, "UTF-8");
         documentWithoutTitle = Jsoup.parse(inputWithoutTitle, "UTF-8");
-        when(parserService.getDocument(link)).thenReturn(Optional.of(document));
-        doReturn(true).when(parserService).isEnglishLanguage(anyString(), anyDouble());
+        when(parserService.getDocument(any())).thenReturn(document);
+        doReturn(true).when(parserService).isEnglishLanguage(anyString());
         cache = Caffeine.newBuilder().maximumSize(projectConfig.getCaffeineMaxSize())
                 .expireAfterWrite(projectConfig.getCaffeineExpireTime(), TimeUnit.SECONDS).build();
         crawlerService = spy(new CrawlerService(cache, redisDAO, parserService));
@@ -116,7 +115,7 @@ public class CrawlerServiceTest {
 
     @Test
     public void getPageTest() {
-        Page returnedPage = parserService.getPage(link);
+        Page returnedPage = crawlerService.getPage(link);
         Assert.assertEquals(link, returnedPage.getLink());
         Assert.assertEquals(contentWithoutTag, returnedPage.getContent());
         String title = "nimbo";
@@ -127,8 +126,8 @@ public class CrawlerServiceTest {
 
     @Test
     public void getPageWithoutTitleTest() {
-        when(parserService.getDocument(link)).thenReturn(Optional.of(documentWithoutTitle));
-        Page returnedPage = parserService.getPage(link);
+        when(parserService.getDocument(any())).thenReturn(documentWithoutTitle);
+        Page returnedPage = crawlerService.getPage(link);
         Assert.assertEquals(link, returnedPage.getLink());
         String contentWithoutTag = "Hi Header support@nimbo.in paragraph! another link";
         Assert.assertEquals(contentWithoutTag, returnedPage.getContent());
@@ -138,23 +137,16 @@ public class CrawlerServiceTest {
     }
 
     @Test(expected = ParseLinkException.class)
-    public void getPageWithEmptyDocumentTest() {
-        when(parserService.getDocument(link)).thenReturn(Optional.empty());
-        Page returnedPage = parserService.getPage(link);
-        Assert.fail();
-    }
-
-    @Test(expected = ParseLinkException.class)
     public void getPageMalformedURLExceptionTest() {
-        when(parserService.getDocument(invalidLink)).thenThrow(MalformedURLException.class);
-        Page returnedPage = parserService.getPage(invalidLink);
+        when(parserService.getDocument(any())).thenThrow(MalformedURLException.class);
+        Page returnedPage = crawlerService.getPage(invalidLink);
         Assert.fail();
     }
 
     @Test(expected = ParseLinkException.class)
     public void getPageLanguageDetectExceptionTest() {
-        doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString(), anyDouble());
-        Page returnedPage = parserService.getPage(link);
+        doThrow(LanguageDetectException.class).when(parserService).isEnglishLanguage(anyString());
+        Page returnedPage = crawlerService.getPage(link);
         Assert.fail();
     }
 }

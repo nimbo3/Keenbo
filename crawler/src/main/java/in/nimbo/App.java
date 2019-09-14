@@ -13,7 +13,7 @@ import in.nimbo.common.config.RedisConfig;
 import in.nimbo.common.utility.LanguageDetectorUtility;
 import in.nimbo.dao.redis.RedisDAOImpl;
 import in.nimbo.service.CrawlerService;
-import in.nimbo.common.service.ParserService;
+import in.nimbo.service.ParserService;
 import in.nimbo.service.kafka.KafkaService;
 import in.nimbo.service.kafka.KafkaServiceImpl;
 import org.slf4j.Logger;
