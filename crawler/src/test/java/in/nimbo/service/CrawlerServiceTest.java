@@ -84,9 +84,9 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlTest() {
-        when(crawlerService.isCrawled(link)).thenReturn(false);
+        doReturn(false).when(crawlerService).isCrawled(anyString());
         Page returnedPage = crawlerService.crawl(link).get();
-        Assert.assertEquals(page.getLink(), returnedPage.getLink());
+        Assert.assertEquals(redirectLink, returnedPage.getLink());
         Assert.assertEquals(page.getAnchors(), returnedPage.getAnchors());
         Assert.assertEquals(page.getMetas(), returnedPage.getMetas());
         Assert.assertEquals(page.getContent(), returnedPage.getContent());
@@ -97,7 +97,7 @@ public class CrawlerServiceTest {
 
     @Test
     public void crawlCachedLinkTest() {
-        when(crawlerService.isCrawled(link)).thenReturn(false);
+        doReturn(false).when(crawlerService).isCrawled(anyString());
         try {
             cache.put(LinkUtility.getMainDomain(link), LocalDateTime.now());
         } catch (MalformedURLException e) {
@@ -109,7 +109,7 @@ public class CrawlerServiceTest {
 
     @Test(expected = InvalidLinkException.class)
     public void crawlRepeatedLinkTest() {
-        when(crawlerService.isCrawled(anyString())).thenReturn(true);
+        doReturn(true).when(crawlerService).isCrawled(anyString());
         Optional<Page> returnedPage = crawlerService.crawl(link);
         Assert.fail();
     }
@@ -123,7 +123,7 @@ public class CrawlerServiceTest {
     @Test
     public void getPageTest() {
         Page returnedPage = crawlerService.getPage(link);
-        Assert.assertEquals(link, returnedPage.getLink());
+        Assert.assertEquals(redirectLink, returnedPage.getLink());
         Assert.assertEquals(contentWithoutTag, returnedPage.getContent());
         String title = "nimbo";
         Assert.assertEquals(title, returnedPage.getTitle());
