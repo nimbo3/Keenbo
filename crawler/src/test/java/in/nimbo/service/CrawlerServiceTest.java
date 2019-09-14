@@ -91,8 +91,8 @@ public class CrawlerServiceTest {
         Assert.assertEquals(page.getMetas(), returnedPage.getMetas());
         Assert.assertEquals(page.getContent(), returnedPage.getContent());
         Assert.assertEquals(page.getTitle(), returnedPage.getTitle());
-        Assert.assertEquals(page.getLinkDepth(), returnedPage.getLinkDepth());
-        Assert.assertEquals(page.getReversedLink(), returnedPage.getReversedLink());
+        Assert.assertEquals(1, returnedPage.getLinkDepth());
+        Assert.assertEquals(LinkUtility.reverseLink(redirectLink), returnedPage.getReversedLink());
     }
 
     @Test
